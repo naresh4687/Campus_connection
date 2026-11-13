@@ -33,8 +33,8 @@ export default async function StudentsPage({ searchParams }: { searchParams: Pro
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold tracking-tight">Students</h1>
         <div className="flex gap-2">
-          <Link href="/college/students/import" className="inline-flex h-10 items-center rounded-md border border-border bg-surface px-4 text-sm font-medium hover:bg-background">Import from CSV</Link>
-          <Link href="/college/students/new" className="inline-flex h-10 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground">Add student</Link>
+          <Link href="/college/students/import" className="inline-flex h-10 items-center rounded-xl border border-border bg-surface px-4 text-sm font-medium hover:bg-background">Import from CSV</Link>
+          <Link href="/college/students/new" className="inline-flex h-10 items-center rounded-xl bg-primary px-4 text-sm font-medium text-primary-foreground">Add student</Link>
         </div>
       </div>
 
@@ -46,7 +46,7 @@ export default async function StudentsPage({ searchParams }: { searchParams: Pro
       <form className="flex flex-wrap items-end gap-3" role="search">
         <div className="space-y-1">
           <label htmlFor="q" className="block text-sm font-medium">Search</label>
-          <input id="q" name="q" defaultValue={q} placeholder="Name, register number or email" className="h-10 w-64 max-w-full rounded-md border border-border bg-surface px-3 text-sm" />
+          <input id="q" name="q" defaultValue={q} placeholder="Name, register number or email" className="h-10 w-64 max-w-full rounded-xl border border-border bg-surface px-3 text-sm" />
         </div>
         <Select id="dept" label="Department" defaultValue={dept ?? ""}><option value="">All</option>{depts.map((d) => <option key={d.id} value={d.id}>{d.code}</option>)}</Select>
         <Select id="year" label="Passing year" defaultValue={year ?? ""}><option value="">All</option>{years.map((y) => <option key={y} value={y}>{y}</option>)}</Select>
@@ -56,7 +56,7 @@ export default async function StudentsPage({ searchParams }: { searchParams: Pro
         <Select id="academics" label="Academics" defaultValue={academics ?? ""}>
           <option value="">Any</option>{Object.entries(ACADEMIC_LABEL).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
         </Select>
-        <button className="h-10 rounded-md border border-border bg-surface px-4 text-sm hover:bg-background">Apply filters</button>
+        <button className="h-10 rounded-xl border border-border bg-surface px-4 text-sm hover:bg-background">Apply filters</button>
         {anyFilter ? <Link href="/college/students" className="inline-flex h-10 items-center text-sm underline">Clear</Link> : null}
       </form>
 

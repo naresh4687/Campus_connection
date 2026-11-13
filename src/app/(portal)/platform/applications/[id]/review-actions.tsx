@@ -34,7 +34,7 @@ export function ReviewActions({ id, status, officialEmail, collegeId }: { id: st
 
       {status === "UNDER_REVIEW" ? (
         <div className="grid gap-6 lg:grid-cols-2">
-          <form action={approve} className="space-y-3 rounded-md border border-border p-4">
+          <form action={approve} className="space-y-3 rounded-xl border border-border p-4">
             <h3 className="font-medium">Approve</h3>
             {approveState?.error ? <Alert kind="error">{approveState.error}</Alert> : null}
             <input type="hidden" name="id" value={id} />
@@ -42,7 +42,7 @@ export function ReviewActions({ id, status, officialEmail, collegeId }: { id: st
               hint="Approving creates the college workspace and a one-time invitation for this person. You will see the link once." />
             <Button type="submit" disabled={approving}>{approving ? "Approving…" : "Approve and create invitation"}</Button>
           </form>
-          <form action={reject} className="space-y-3 rounded-md border border-border p-4">
+          <form action={reject} className="space-y-3 rounded-xl border border-border p-4">
             <h3 className="font-medium">Reject</h3>
             {rejectState?.error ? <Alert kind="error">{rejectState.error}</Alert> : null}
             <input type="hidden" name="id" value={id} />

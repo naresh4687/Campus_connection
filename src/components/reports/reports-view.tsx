@@ -24,8 +24,8 @@ export function ReportsView({ base, data, year }: { base: string; data: Data; ye
       </div>
       <form className="flex flex-wrap items-end gap-3 print:hidden" role="search" aria-label="Report filters">
         <div className="space-y-1"><label htmlFor="year" className="block text-sm font-medium">Passing year</label>
-          <select id="year" name="year" defaultValue={year ? String(year) : ""} className="h-10 rounded-md border border-border bg-surface px-3 text-sm"><option value="">All batches</option>{data.years.map((y) => <option key={y} value={y}>{y}</option>)}</select></div>
-        <button className="h-10 rounded-md border border-border bg-surface px-4 text-sm hover:bg-background">Apply</button>
+          <select id="year" name="year" defaultValue={year ? String(year) : ""} className="h-10 rounded-xl border border-border bg-surface px-3 text-sm"><option value="">All batches</option>{data.years.map((y) => <option key={y} value={y}>{y}</option>)}</select></div>
+        <button className="h-10 rounded-xl border border-border bg-surface px-4 text-sm hover:bg-background">Apply</button>
         {year ? <Link href={base} className="inline-flex h-10 items-center text-sm underline">Clear</Link> : null}
       </form>
 

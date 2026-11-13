@@ -12,7 +12,7 @@ export default async function LoginChooser({ searchParams }: { searchParams: Pro
   // A fresh account (welcome / reset) must see the sign-in choice even if another account is still signed in; the actions sign that one out.
   if (session && !sp.welcome && !sp.reset) redirect(HOME_PATH[session.role]);
   const q = sp.welcome ? "?welcome=1" : sp.reset ? "?reset=1" : "";
-  const card = "block rounded-lg border border-border bg-background p-4 hover:border-primary focus-visible:outline-2 focus-visible:outline-primary";
+  const card = "block rounded-2xl border border-border bg-background p-4 hover:border-primary focus-visible:outline-2 focus-visible:outline-primary";
   return (
     <AuthShell title="Sign in">
       <div className="space-y-4">

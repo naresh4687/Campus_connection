@@ -17,7 +17,7 @@ export function ReviewForms({ id, pending }: { id: string; pending: boolean }) {
       {done ? <Alert kind="success">{done}</Alert> : null}
       {pending && !done ? (
         <div className="grid gap-6 lg:grid-cols-2">
-          <form action={verify} className="space-y-3 rounded-md border border-border p-4">
+          <form action={verify} className="space-y-3 rounded-xl border border-border p-4">
             <h3 className="font-medium">Verify</h3>
             {vState?.error ? <Alert kind="error">{vState.error}</Alert> : null}
             <input type="hidden" name="id" value={id} />
@@ -25,7 +25,7 @@ export function ReviewForms({ id, pending }: { id: string; pending: boolean }) {
             <p className="text-xs text-muted">Verify only after checking every value against the college’s records. You cannot edit the values; if something is wrong, reject with a reason.</p>
             <Button type="submit" disabled={verifying || rejecting}>{verifying ? "Verifying…" : "Verify these values"}</Button>
           </form>
-          <form action={reject} className="space-y-3 rounded-md border border-border p-4">
+          <form action={reject} className="space-y-3 rounded-xl border border-border p-4">
             <h3 className="font-medium">Reject</h3>
             {rState?.error ? <Alert kind="error">{rState.error}</Alert> : null}
             <input type="hidden" name="id" value={id} />

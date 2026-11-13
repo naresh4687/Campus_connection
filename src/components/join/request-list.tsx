@@ -17,7 +17,7 @@ function Decide({ id }: { id: string }) {
       <div className="flex flex-wrap items-end gap-3">
         <Button type="submit" name="decision" value="approve" disabled={pending}>Approve</Button>
         <div className="space-y-1"><label htmlFor={`why-${id}`} className="block text-xs font-medium">Reason (needed to reject)</label>
-          <input id={`why-${id}`} name="reason" maxLength={500} defaultValue={state?.values?.reason ?? ""} className="h-10 w-56 max-w-full rounded-md border border-border bg-surface px-3 text-sm" /></div>
+          <input id={`why-${id}`} name="reason" maxLength={500} defaultValue={state?.values?.reason ?? ""} className="h-10 w-56 max-w-full rounded-xl border border-border bg-surface px-3 text-sm" /></div>
         <Button type="submit" name="decision" value="reject" variant="danger" disabled={pending}>Reject</Button>
       </div>
     </form>
@@ -29,7 +29,7 @@ export function RequestList({ rows }: { rows: JoinRequestRow[] }) {
   return (
     <ul className="space-y-4" aria-label="Sign-up requests">
       {rows.map((r) => (
-        <li key={r.id} className="rounded-md border border-border p-4">
+        <li key={r.id} className="rounded-xl border border-border p-4">
           <p className="flex flex-wrap items-center gap-2 text-sm"><span className="font-medium">{r.full_name}</span><span className="text-muted">{r.register_number} · {r.dept_code} · {r.degree} {r.admission_year}–{r.passing_year}</span>
             <StatusBadge value={r.status === "APPROVED" ? "APPROVED" : r.status === "REJECTED" ? "REJECTED" : "PENDING"} label={r.status === "PENDING" ? "Waiting" : r.status === "APPROVED" ? "Approved" : "Rejected"} /></p>
           <p className="mt-1 text-sm">{r.college_email} · {r.phone}{r.personal_email ? ` · ${r.personal_email}` : ""}</p>

@@ -26,10 +26,10 @@ export default async function VerificationQueue({ searchParams }: { searchParams
       <form className="flex flex-wrap items-end gap-3" role="search">
         <div className="space-y-1">
           <label htmlFor="q" className="block text-sm font-medium">Search</label>
-          <input id="q" name="q" defaultValue={q} placeholder="Student name or register number" className="h-10 w-64 max-w-full rounded-md border border-border bg-surface px-3 text-sm" />
+          <input id="q" name="q" defaultValue={q} placeholder="Student name or register number" className="h-10 w-64 max-w-full rounded-xl border border-border bg-surface px-3 text-sm" />
         </div>
         <Select id="dept" label="Department" defaultValue={dept ?? ""}><option value="">All my departments</option>{depts.map((d) => <option key={d.id} value={d.id}>{d.code}</option>)}</Select>
-        <button className="h-10 rounded-md border border-border bg-surface px-4 text-sm hover:bg-background">Apply filters</button>
+        <button className="h-10 rounded-xl border border-border bg-surface px-4 text-sm hover:bg-background">Apply filters</button>
         {q || dept ? <Link href="/coordinator/verification" className="inline-flex h-10 items-center text-sm underline">Clear</Link> : null}
       </form>
       <Table head={["Student", "Register no.", "Department", "Submitted", "Version", ""]} empty={rows.length === 0 ? <EmptyState title="Nothing to review">{q || dept ? "No pending submissions match." : "New submissions from your students will appear here."}</EmptyState> : undefined}>

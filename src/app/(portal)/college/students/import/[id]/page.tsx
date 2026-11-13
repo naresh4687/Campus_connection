@@ -16,7 +16,7 @@ export const metadata = { title: "Import — CampusConnect" };
 const RESULT_LABEL: Record<string, string> = { VALID: "Ready", ERROR: "Problem", DUPLICATE: "Duplicate", IMPORTED: "Imported" };
 
 function Stat({ label, value, testid }: { label: string; value: number; testid: string }) {
-  return <div className="rounded-lg border border-border bg-surface p-4"><p className="text-sm text-muted">{label}</p><p className="mt-1 text-3xl font-semibold tabular-nums" data-testid={testid}>{value}</p></div>;
+  return <div className="rounded-2xl border border-border bg-surface p-4"><p className="text-sm text-muted">{label}</p><p className="mt-1 text-3xl font-semibold tabular-nums" data-testid={testid}>{value}</p></div>;
 }
 
 export default async function ImportDetailPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ status?: string; page?: string }> }) {
@@ -72,7 +72,7 @@ export default async function ImportDetailPage({ params, searchParams }: { param
           <div className="flex flex-wrap items-start gap-4">
             <CommitForm id={id} ready={imp.valid_rows} />
             <CancelForm id={id} />
-            <a href={`/college/students/import/${id}/report`} className="inline-flex h-10 items-center rounded-md border border-border bg-surface px-4 text-sm font-medium hover:bg-background">Download row report (CSV)</a>
+            <a href={`/college/students/import/${id}/report`} className="inline-flex h-10 items-center rounded-xl border border-border bg-surface px-4 text-sm font-medium hover:bg-background">Download row report (CSV)</a>
           </div>
         </>
       ) : null}
@@ -86,8 +86,8 @@ export default async function ImportDetailPage({ params, searchParams }: { param
             <Stat label="With problems (skipped)" value={imp.error_rows} testid="stat-problems" />
           </div>
           <div className="flex flex-wrap gap-3 text-sm">
-            <a href={`/college/students/import/${id}/report`} className="inline-flex h-10 items-center rounded-md border border-border bg-surface px-4 font-medium hover:bg-background">Download row report (CSV)</a>
-            <Link href="/college/students" className="inline-flex h-10 items-center rounded-md bg-primary px-4 font-medium text-primary-foreground">View students</Link>
+            <a href={`/college/students/import/${id}/report`} className="inline-flex h-10 items-center rounded-xl border border-border bg-surface px-4 font-medium hover:bg-background">Download row report (CSV)</a>
+            <Link href="/college/students" className="inline-flex h-10 items-center rounded-xl bg-primary px-4 font-medium text-primary-foreground">View students</Link>
           </div>
         </section>
       ) : null}

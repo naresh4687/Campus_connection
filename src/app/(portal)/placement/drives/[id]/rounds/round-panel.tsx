@@ -15,7 +15,7 @@ export function ResultsForm({ driveId, roundId, roster, released }: { driveId: s
     <form action={run} className="space-y-3">
       <input type="hidden" name="driveId" value={driveId} /><input type="hidden" name="roundId" value={roundId} />
       {state?.error ? <Alert kind="error">{state.error}</Alert> : null}
-      <div className="overflow-x-auto rounded-md border border-border">
+      <div tabIndex={0} className="focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary overflow-x-auto rounded-xl border border-border">
         <table className="w-full text-left text-sm">
           <thead className="bg-background text-xs text-muted"><tr>{!released ? <th className="w-10 px-3 py-2"><span className="sr-only">Select</span></th> : null}<th className="px-3 py-2">Student</th><th className="px-3 py-2">Register no.</th><th className="px-3 py-2">Dept</th><th className="px-3 py-2">Decision</th></tr></thead>
           <tbody>
@@ -32,9 +32,9 @@ export function ResultsForm({ driveId, roundId, roster, released }: { driveId: s
       {!released ? (
         <div className="flex flex-wrap items-end gap-3">
           <div className="space-y-1"><label htmlFor={`res-${roundId}`} className="block text-sm font-medium">Mark ticked students as</label>
-            <select id={`res-${roundId}`} name="result" defaultValue="" className="h-10 rounded-md border border-border bg-surface px-3 text-sm"><option value="" disabled>Choose…</option><option value="SELECTED">Selected</option><option value="REJECTED">Not selected</option><option value="ABSENT">Absent</option><option value="PENDING">No decision yet</option></select></div>
+            <select id={`res-${roundId}`} name="result" defaultValue="" className="h-10 rounded-xl border border-border bg-surface px-3 text-sm"><option value="" disabled>Choose…</option><option value="SELECTED">Selected</option><option value="REJECTED">Not selected</option><option value="ABSENT">Absent</option><option value="PENDING">No decision yet</option></select></div>
           <div className="space-y-1"><label htmlFor={`note-${roundId}`} className="block text-sm font-medium">Remark (staff only)</label>
-            <input id={`note-${roundId}`} name="note" maxLength={500} defaultValue={state?.values?.note ?? ""} className="h-10 w-64 max-w-full rounded-md border border-border bg-surface px-3 text-sm" /></div>
+            <input id={`note-${roundId}`} name="note" maxLength={500} defaultValue={state?.values?.note ?? ""} className="h-10 w-64 max-w-full rounded-xl border border-border bg-surface px-3 text-sm" /></div>
           <Button type="submit" disabled={pending}>{pending ? "Saving…" : "Apply"}</Button>
         </div>
       ) : null}
@@ -45,7 +45,7 @@ export function ResultsForm({ driveId, roundId, roster, released }: { driveId: s
 export function ReleaseForm({ driveId, roundId, name }: { driveId: string; roundId: string; name: string }) {
   const [state, run, pending] = useActionState(releaseRoundAction, undefined);
   return (
-    <form action={run} className="space-y-2 rounded-md border border-border p-3">
+    <form action={run} className="space-y-2 rounded-xl border border-border p-3">
       <input type="hidden" name="driveId" value={driveId} /><input type="hidden" name="roundId" value={roundId} />
       {state?.error ? <Alert kind="error">{state.error}</Alert> : null}
       <label className="flex items-start gap-2 text-sm"><input type="checkbox" name="confirm" value="yes" className="mt-1" /><span>Release “{name}” results. Students will see their own result immediately and nothing in this round can be changed afterwards.</span></label>

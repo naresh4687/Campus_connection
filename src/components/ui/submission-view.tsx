@@ -32,7 +32,7 @@ export function HistoryItem({ s }: { s: S & { status: string; version: number; s
         {s.reviewed_by_name ? <span className="text-muted">· reviewed by {s.reviewed_by_name} on {fmtDateTime(s.reviewed_at)}</span> : null}
       </div>
       <p className="text-sm text-muted">CGPA {fmtCgpa(s.cgpa)} · 10th {fmtPct(s.tenth_percentage)} · 12th {fmtPct(s.twelfth_percentage)} · diploma {fmtPct(s.diploma_percentage)} · backlogs {s.active_backlogs} · arrears {s.historical_arrears}</p>
-      {s.rejection_reason ? <p className="rounded-md border border-danger/40 px-3 py-2 text-sm"><strong>Reason:</strong> <span className="whitespace-pre-wrap">{s.rejection_reason}</span></p> : null}
+      {s.rejection_reason ? <p className="rounded-xl border border-danger/40 px-3 py-2 text-sm"><strong>Reason:</strong> <span className="whitespace-pre-wrap">{s.rejection_reason}</span></p> : null}
       {s.review_note ? <p className="text-sm"><strong>Reviewer&apos;s note:</strong> {s.review_note}</p> : null}
     </li>
   );

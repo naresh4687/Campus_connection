@@ -9,7 +9,7 @@ export const metadata = { title: "Platform overview — CampusConnect" };
 
 function Stat({ label, value, href, hint }: { label: string; value: number; href?: string; hint?: string }) {
   const body = (
-    <div className="rounded-lg border border-border bg-surface p-4">
+    <div className="rounded-2xl border border-border bg-surface p-4">
       <p className="text-sm text-muted">{label}</p>
       <p className="mt-1 text-3xl font-semibold tabular-nums" data-testid={`stat-${label}`}>{value}</p>
       {hint ? <p className="mt-1 text-xs text-muted">{hint}</p> : null}

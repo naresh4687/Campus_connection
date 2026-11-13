@@ -25,12 +25,12 @@ export default async function CoordinatorStudents({ searchParams }: { searchPara
       <form className="flex flex-wrap items-end gap-3" role="search">
         <div className="space-y-1">
           <label htmlFor="q" className="block text-sm font-medium">Search</label>
-          <input id="q" name="q" defaultValue={q} placeholder="Name, register number or email" className="h-10 w-64 max-w-full rounded-md border border-border bg-surface px-3 text-sm" />
+          <input id="q" name="q" defaultValue={q} placeholder="Name, register number or email" className="h-10 w-64 max-w-full rounded-xl border border-border bg-surface px-3 text-sm" />
         </div>
         <Select id="dept" label="Department" defaultValue={dept ?? ""}><option value="">All my departments</option>{depts.map((d) => <option key={d.id} value={d.id}>{d.code}</option>)}</Select>
         <Select id="year" label="Passing year" defaultValue={year ?? ""}><option value="">All</option>{years.map((y) => <option key={y} value={y}>{y}</option>)}</Select>
         <Select id="academics" label="Academics" defaultValue={academics ?? ""}><option value="">Any</option>{Object.entries(ACADEMIC_LABEL).map(([v, l]) => <option key={v} value={v}>{l}</option>)}</Select>
-        <button className="h-10 rounded-md border border-border bg-surface px-4 text-sm hover:bg-background">Apply filters</button>
+        <button className="h-10 rounded-xl border border-border bg-surface px-4 text-sm hover:bg-background">Apply filters</button>
         {q || dept || year || academics ? <Link href="/coordinator/students" className="inline-flex h-10 items-center text-sm underline">Clear</Link> : null}
       </form>
       <Table head={["Student", "Register no.", "Department", "Degree", "Passing year", "Has account", "Academics"]} empty={rows.length === 0 ? <EmptyState title="No students">{depts.length === 0 ? "You are not assigned to any department yet." : "No students match."}</EmptyState> : undefined}>

@@ -10,7 +10,7 @@ export function Field({ label, id, hint, error, ...props }: InputHTMLAttributes<
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? `${id}-error` : hint ? `${id}-hint` : undefined}
         {...props}
-        className={`h-10 w-full rounded-md border bg-surface px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary ${error ? "border-danger" : "border-border"}`}
+        className={`h-10 w-full rounded-xl border bg-surface px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary ${error ? "border-danger" : "border-border"}`}
       />
       {error ? <p id={`${id}-error`} className="text-xs text-danger">{error}</p> : hint ? <p id={`${id}-hint`} className="text-xs text-muted">{hint}</p> : null}
     </div>

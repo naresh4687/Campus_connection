@@ -13,7 +13,7 @@ export const metadata = { title: "Placement overview — CampusConnect" };
 
 function Stat({ label, value, href }: { label: string; value: number; href: string }) {
   return (
-    <Link href={href} className="block rounded-lg border border-border bg-surface p-4 hover:opacity-90"><p className="text-sm text-muted">{label}</p><p className="mt-1 text-3xl font-semibold tabular-nums" data-testid={`stat-${label}`}>{value}</p></Link>
+    <Link href={href} className="block rounded-2xl border border-border bg-surface p-4 hover:opacity-90"><p className="text-sm text-muted">{label}</p><p className="mt-1 text-3xl font-semibold tabular-nums" data-testid={`stat-${label}`}>{value}</p></Link>
   );
 }
 

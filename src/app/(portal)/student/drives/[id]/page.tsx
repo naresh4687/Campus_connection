@@ -59,7 +59,7 @@ export default async function StudentDrive({ params, searchParams }: { params: P
         <Card title="Recruitment rounds">
           <ol className="space-y-3 text-sm" aria-label="Rounds">
             {rounds.map((r) => (
-              <li key={r.id} className="rounded-md border border-border p-3">
+              <li key={r.id} className="rounded-xl border border-border p-3">
                 <p className="font-medium">Round {r.round_number}: {r.name} <span className="font-normal text-muted">({roundKindLabel(r.kind)})</span></p>
                 <p className="text-muted">{r.scheduled_at ? fmtDateTime(r.scheduled_at) : "Date to be announced"}{r.venue ? ` · ${r.venue}` : ""}</p>
                 {r.instructions ? <p className="mt-1 whitespace-pre-wrap">{r.instructions}</p> : null}

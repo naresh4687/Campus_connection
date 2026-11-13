@@ -14,10 +14,10 @@ export function ShareCard({ link, enabled }: { link: string; enabled: boolean })
       {enabled ? (
         <div className="space-y-2">
           <label htmlFor="join-link" className="block text-sm font-medium">Sign-up link</label>
-          <input id="join-link" readOnly value={link} onFocus={(e) => e.currentTarget.select()} className="h-10 w-full rounded-md border border-border bg-background px-3 font-mono text-xs" />
+          <input id="join-link" readOnly value={link} onFocus={(e) => e.currentTarget.select()} className="h-10 w-full rounded-xl border border-border bg-background px-3 font-mono text-xs" />
           <div className="flex flex-wrap gap-3">
             <CopyButton value={link} label="Copy link" />
-            <a href={`https://wa.me/?text=${encodeURIComponent(message)}`} target="_blank" rel="noopener noreferrer" className="inline-flex h-10 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground">Share on WhatsApp</a>
+            <a href={`https://wa.me/?text=${encodeURIComponent(message)}`} target="_blank" rel="noopener noreferrer" className="inline-flex h-10 items-center rounded-xl bg-primary px-4 text-sm font-medium text-primary-foreground">Share on WhatsApp</a>
           </div>
         </div>
       ) : null}

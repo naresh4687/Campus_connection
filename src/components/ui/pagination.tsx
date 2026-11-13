@@ -14,7 +14,7 @@ export function Pagination({ page, total, basePath, params }: { page: number; to
   };
   const from = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
   const to = Math.min(total, page * PAGE_SIZE);
-  const link = "rounded-md border border-border px-3 py-1.5 text-sm hover:bg-background";
+  const link = "rounded-xl border border-border bg-surface px-3 py-1.5 text-sm hover:bg-tint";
   return (
     <nav aria-label="Pagination" className="flex flex-wrap items-center justify-between gap-2 pt-4 text-sm">
       <p className="text-muted" data-testid="page-summary">{total === 0 ? "No results" : `Showing ${from}–${to} of ${total}`}</p>

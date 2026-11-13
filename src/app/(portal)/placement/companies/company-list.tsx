@@ -14,11 +14,11 @@ export function CompanyList({ base, rows, total, industries, q, status, industry
       <form className="flex flex-wrap items-end gap-3" role="search">
         <div className="space-y-1">
           <label htmlFor="q" className="block text-sm font-medium">Search</label>
-          <input id="q" name="q" defaultValue={q} placeholder="Name, industry, location or contact" className="h-10 w-64 max-w-full rounded-md border border-border bg-surface px-3 text-sm" />
+          <input id="q" name="q" defaultValue={q} placeholder="Name, industry, location or contact" className="h-10 w-64 max-w-full rounded-xl border border-border bg-surface px-3 text-sm" />
         </div>
         <Select id="status" label="Status" defaultValue={status ?? ""}><option value="">Any</option><option value="ACTIVE">Active</option><option value="INACTIVE">Inactive</option></Select>
         <Select id="industry" label="Industry" defaultValue={industry ?? ""}><option value="">All</option>{industries.map((i) => <option key={i} value={i}>{i}</option>)}</Select>
-        <button className="h-10 rounded-md border border-border bg-surface px-4 text-sm hover:bg-background">Apply filters</button>
+        <button className="h-10 rounded-xl border border-border bg-surface px-4 text-sm hover:bg-background">Apply filters</button>
         {any ? <Link href={base} className="inline-flex h-10 items-center text-sm underline">Clear</Link> : null}
       </form>
       <Table head={["Company", "Industry", "Location", "Contact", "Status", "Updated"]} empty={rows.length === 0 ? <EmptyState title="No companies found">{any ? "Try different filters." : "Companies you add appear here."}</EmptyState> : undefined}>

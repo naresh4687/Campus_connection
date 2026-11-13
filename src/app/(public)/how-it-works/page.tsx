@@ -29,7 +29,7 @@ export default function HowItWorksPage() {
           </li>
         ))}
       </ol>
-      <p className="mt-10"><Link href="/apply" className="inline-flex h-11 items-center rounded-md bg-primary px-5 font-medium text-primary-foreground">Apply as a college</Link></p>
+      <p className="mt-10"><Link href="/apply" className="inline-flex h-11 items-center rounded-xl bg-primary px-5 font-medium text-primary-foreground">Apply as a college</Link></p>
     </main>
   );
 }

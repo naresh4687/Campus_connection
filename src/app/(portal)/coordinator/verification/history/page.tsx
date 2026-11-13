@@ -28,11 +28,11 @@ export default async function VerificationHistory({ searchParams }: { searchPara
       <form className="flex flex-wrap items-end gap-3" role="search">
         <div className="space-y-1">
           <label htmlFor="q" className="block text-sm font-medium">Search</label>
-          <input id="q" name="q" defaultValue={q} placeholder="Student name or register number" className="h-10 w-64 max-w-full rounded-md border border-border bg-surface px-3 text-sm" />
+          <input id="q" name="q" defaultValue={q} placeholder="Student name or register number" className="h-10 w-64 max-w-full rounded-xl border border-border bg-surface px-3 text-sm" />
         </div>
         <Select id="status" label="Outcome" defaultValue={status ?? ""}><option value="">All</option><option value="VERIFIED">Verified</option><option value="REJECTED">Rejected</option><option value="SUPERSEDED">Superseded</option></Select>
         <Select id="dept" label="Department" defaultValue={dept ?? ""}><option value="">All my departments</option>{depts.map((d) => <option key={d.id} value={d.id}>{d.code}</option>)}</Select>
-        <button className="h-10 rounded-md border border-border bg-surface px-4 text-sm hover:bg-background">Apply filters</button>
+        <button className="h-10 rounded-xl border border-border bg-surface px-4 text-sm hover:bg-background">Apply filters</button>
         {q || dept || status ? <Link href="/coordinator/verification/history" className="inline-flex h-10 items-center text-sm underline">Clear</Link> : null}
       </form>
       <Table head={["Student", "Department", "Version", "Outcome", "Reviewed by", "Reviewed"]} empty={rows.length === 0 ? <EmptyState title="No decisions yet" /> : undefined}>

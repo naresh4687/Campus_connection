@@ -27,7 +27,7 @@ export function NewDriveFlow({ aiEnabled, companies, departments, initial }: { a
             <div className="mt-4 space-y-3" aria-live="polite">
               <Alert kind="info">{state?.ok}</Alert>
               <p className="text-sm text-muted">An AI assistant read the announcement. Only values it could point to in your text are kept, and you must still check every field. Nothing is saved or published until you create the draft yourself, and eligibility is always decided by the platform from the criteria you save.</p>
-              <div className="overflow-x-auto rounded-md border border-border"><table className="w-full text-left text-sm"><caption className="sr-only">Details found in the announcement</caption>
+              <div tabIndex={0} className="focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary overflow-x-auto rounded-xl border border-border"><table className="w-full text-left text-sm"><caption className="sr-only">Details found in the announcement</caption>
                 <thead className="bg-background text-xs text-muted"><tr>{state!.table!.headers.map((h) => <th key={h} className="px-3 py-2">{h}</th>)}</tr></thead>
                 <tbody>{state!.table!.rows.map((r, i) => <tr key={i} className="border-t border-border">{r.map((c, j) => <td key={j} className="px-3 py-2 align-top">{c}</td>)}</tr>)}</tbody></table></div>
               {state?.notes && state.notes.length > 0 ? <ul className="list-disc space-y-1 pl-5 text-sm" aria-label="Things to check">{state.notes.map((n, i) => <li key={i}>{n}</li>)}</ul> : null}

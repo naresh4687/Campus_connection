@@ -19,7 +19,7 @@ export function MappingForm({ id, headers, sample, initial, validated }: { id: s
           return (
             <div key={f.key} className="space-y-1">
               <label htmlFor={`map_${f.key}`} className="block text-sm font-medium">{f.label}{f.required ? " *" : ""}</label>
-              <select id={`map_${f.key}`} name={`map_${f.key}`} defaultValue={current} key={`${f.key}-${current}`} className="h-10 w-full rounded-md border border-border bg-surface px-3 text-sm">
+              <select id={`map_${f.key}`} name={`map_${f.key}`} defaultValue={current} key={`${f.key}-${current}`} className="h-10 w-full rounded-xl border border-border bg-surface px-3 text-sm">
                 <option value="">{f.required ? "Choose a column…" : "Not in my file"}</option>
                 {headers.map((h, i) => <option key={i} value={String(i)}>{h || `(column ${i + 1})`}{sample[i] ? ` — e.g. ${sample[i].slice(0, 30)}` : ""}</option>)}
               </select>

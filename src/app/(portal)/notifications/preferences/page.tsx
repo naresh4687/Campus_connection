@@ -15,7 +15,7 @@ export default async function Preferences() {
       <p className="text-sm"><Link href="/notifications" className="underline">← Notifications</Link></p>
       <h1 className="text-2xl font-semibold tracking-tight">Notification preferences</h1>
       {cats.length === 0 ? <p className="text-sm text-muted">There are no notification categories for your role.</p> : (
-        <ul className="divide-y divide-border rounded-lg border border-border bg-surface" aria-label="Notification categories">
+        <ul className="divide-y divide-border rounded-2xl border border-border bg-surface" aria-label="Notification categories">
           {cats.map((c) => <PrefToggle key={c} category={c} label={CATEGORY_LABEL[c]} help={CATEGORY_HELP[c]} enabled={prefs[c] ?? true} essential={ESSENTIAL.has(c)} />)}
         </ul>
       )}

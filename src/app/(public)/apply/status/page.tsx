@@ -26,13 +26,13 @@ export default async function ApplicationStatusPage({ searchParams }: { searchPa
       {row ? (
         <div className="mt-6 space-y-4">
           {isNew ? <Alert kind="success">Application submitted. Save this page&apos;s link — it is the only way to check your status.</Alert> : null}
-          <div className="rounded-lg border border-border bg-surface p-6">
+          <div className="rounded-2xl border border-border bg-surface p-6">
             <p className="text-sm text-muted">Application for</p>
             <p className="text-lg font-semibold">{row.name}</p>
             <p className="mt-3"><StatusBadge value={row.status} /></p>
             <p className="mt-3 text-sm">{COPY[row.status]}</p>
             {row.status === "REJECTED" && row.decision_reason ? (
-              <div className="mt-4 rounded-md border border-border bg-background p-3 text-sm">
+              <div className="mt-4 rounded-xl border border-border bg-background p-3 text-sm">
                 <p className="font-medium">Reason</p>
                 <p className="mt-1 whitespace-pre-wrap">{row.decision_reason}</p>
                 <p className="mt-2 text-muted">You may submit a new application once the issue is addressed.</p>

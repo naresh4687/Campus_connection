@@ -22,7 +22,7 @@ export function DocumentItem({ doc, events, actions, showAccess = false }: { doc
         {deleted ? <StatusBadge value="NOT_STARTED" label="Deleted" /> : <StatusBadge value={REVIEW_TONE[doc.review_status]} label={REVIEW_LABEL[doc.review_status]} />}
         {doc.scan_status === "NOT_SCANNED" && !deleted ? <span className="text-xs text-muted">not virus-scanned</span> : null}
       </div>
-      {doc.review_status === "REJECTED" && doc.review_reason ? <p className="rounded-md border border-danger/40 px-3 py-2 text-sm"><strong>Reason:</strong> <span className="whitespace-pre-wrap">{doc.review_reason}</span> <span className="text-muted">— {doc.reviewed_by_name}</span></p> : null}
+      {doc.review_status === "REJECTED" && doc.review_reason ? <p className="rounded-xl border border-danger/40 px-3 py-2 text-sm"><strong>Reason:</strong> <span className="whitespace-pre-wrap">{doc.review_reason}</span> <span className="text-muted">— {doc.reviewed_by_name}</span></p> : null}
       {doc.review_status === "VERIFIED" ? <p className="text-xs text-muted">Verified by {doc.reviewed_by_name} on {fmtDateTime(doc.reviewed_at)}.</p> : null}
       {visible.length > 1 || (visible.length === 1 && visible[0].event !== "UPLOADED") ? (
         <details>

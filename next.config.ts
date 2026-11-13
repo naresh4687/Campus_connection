@@ -3,6 +3,8 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   output: "standalone",
   poweredByHeader: false,
+  // Dev only: hides the floating route/Turbopack badge (it renders unstyled under our strict CSP). Compile and runtime errors still show.
+  devIndicators: false,
   // Dev only: lets a phone/another PC on the LAN open the dev server by IP (otherwise Next blocks its scripts/CSS and the page is blank).
   allowedDevOrigins: ["10.46.210.202"],
   async headers() {

@@ -30,8 +30,8 @@ export default async function ApplicationsPage({ searchParams }: { searchParams:
       </div>
       <form className="flex flex-wrap gap-2" role="search">
         {status ? <input type="hidden" name="status" value={status} /> : null}
-        <input name="q" defaultValue={q} placeholder="Search name, email or district" aria-label="Search applications" className="h-10 w-72 max-w-full rounded-md border border-border bg-surface px-3 text-sm" />
-        <button className="h-10 rounded-md border border-border bg-surface px-4 text-sm hover:bg-background">Search</button>
+        <input name="q" defaultValue={q} placeholder="Search name, email or district" aria-label="Search applications" className="h-10 w-72 max-w-full rounded-xl border border-border bg-surface px-3 text-sm" />
+        <button className="h-10 rounded-xl border border-border bg-surface px-4 text-sm hover:bg-background">Search</button>
         {q ? <Link href={`/platform/applications${status ? `?status=${status}` : ""}`} className="inline-flex h-10 items-center text-sm underline">Clear</Link> : null}
       </form>
       <Table head={["College", "Location", "Submitted", "Status"]} empty={rows.length === 0 ? <EmptyState title="No applications found">{q || status ? "Try a different filter or search." : "Applications submitted from the public site appear here."}</EmptyState> : undefined}>

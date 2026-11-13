@@ -41,7 +41,7 @@ export default async function Rounds({ params, searchParams }: { params: Promise
               <StatusBadge value={released ? "APPROVED" : "PENDING"} label={released ? "Released" : "Not released"} /></p>
             <div className="mt-4 space-y-4">
               {!released ? (
-                <details className="rounded-md border border-border p-3"><summary className="cursor-pointer text-sm font-medium">Edit schedule and details</summary>
+                <details className="rounded-xl border border-border p-3"><summary className="cursor-pointer text-sm font-medium">Edit schedule and details</summary>
                   <div className="mt-3"><RoundForm driveId={id} id={r.id} initial={{ name: r.name, kind: r.kind, at: isoToIstInput(r.scheduled_at), venue: r.venue ?? "", instructions: r.instructions ?? "" }} /></div></details>
               ) : null}
               <h3 className="text-sm font-semibold">Candidates</h3>

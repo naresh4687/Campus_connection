@@ -21,12 +21,12 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
       <form className="flex flex-wrap items-end gap-3" role="search">
         <div className="space-y-1">
           <label htmlFor="action" className="block text-sm font-medium">Action</label>
-          <select id="action" name="action" defaultValue={action ?? ""} className="h-10 rounded-md border border-border bg-surface px-3 text-sm">
+          <select id="action" name="action" defaultValue={action ?? ""} className="h-10 rounded-xl border border-border bg-surface px-3 text-sm">
             <option value="">All actions</option>
             {actions.map((a) => <option key={a} value={a}>{humanize(a)}</option>)}
           </select>
         </div>
-        <button className="h-10 rounded-md border border-border bg-surface px-4 text-sm hover:bg-background">Filter</button>
+        <button className="h-10 rounded-xl border border-border bg-surface px-4 text-sm hover:bg-background">Filter</button>
         {action ? <Link href="/platform/audit" className="inline-flex h-10 items-center text-sm underline">Clear</Link> : null}
       </form>
       <Table head={["When", "Action", "By", "Subject", "Details"]} empty={rows.length === 0 ? <EmptyState title="No entries" /> : undefined}>

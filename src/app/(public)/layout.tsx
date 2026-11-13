@@ -1,5 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { Logo } from "@/components/ui/logo";
+import { ThemeSwitch } from "@/components/ui/theme-switch";
 
 const LINKS = [
   { href: "/features", label: "Features" },
@@ -10,15 +12,16 @@ const LINKS = [
 export default function PublicLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-full flex-1 flex-col">
-      <header className="border-b border-border bg-surface">
+      <header className="sticky top-0 z-20 border-b border-border bg-surface/85 backdrop-blur">
         <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3">
-          <Link href="/" className="text-lg font-semibold tracking-tight">CampusConnect</Link>
+          <Link href="/" className="flex items-center gap-2.5 font-display text-lg font-bold tracking-tight"><Logo />CampusConnect</Link>
           <nav aria-label="Main" className="flex flex-wrap gap-x-5 gap-y-1 text-sm">
-            {LINKS.map((l) => <Link key={l.href} href={l.href} className="text-muted hover:text-foreground">{l.label}</Link>)}
+            {LINKS.map((l) => <Link key={l.href} href={l.href} className="text-muted transition-colors hover:text-foreground">{l.label}</Link>)}
           </nav>
-          <div className="ml-auto flex items-center gap-3 text-sm">
-            <Link href="/login" className="text-muted hover:text-foreground">Sign in</Link>
-            <Link href="/apply" className="inline-flex h-9 items-center rounded-md bg-primary px-3 font-medium text-primary-foreground">Apply as a college</Link>
+          <div className="ml-auto flex items-center gap-2 text-sm">
+            <ThemeSwitch />
+            <Link href="/login" className="inline-flex h-10 items-center rounded-xl border border-border bg-surface px-4 font-semibold transition-colors hover:bg-tint">Sign in</Link>
+            <Link href="/apply" className="inline-flex h-10 items-center rounded-xl bg-primary px-4 font-semibold text-primary-foreground shadow-[0_6px_16px_-8px_var(--primary)] transition hover:-translate-y-px">Apply as a college</Link>
           </div>
         </div>
       </header>

@@ -23,9 +23,9 @@ export function DriveList({ base, rows, total, counts, q, status, page }: { base
       </div>
       <form className="flex flex-wrap items-end gap-3" role="search">
         <div className="space-y-1"><label htmlFor="q" className="block text-sm font-medium">Search</label>
-          <input id="q" name="q" defaultValue={q} placeholder="Job title, company or location" className="h-10 w-64 max-w-full rounded-md border border-border bg-surface px-3 text-sm" /></div>
+          <input id="q" name="q" defaultValue={q} placeholder="Job title, company or location" className="h-10 w-64 max-w-full rounded-xl border border-border bg-surface px-3 text-sm" /></div>
         <Select id="status" label="Status" defaultValue={status ?? ""}><option value="">Any</option>{Object.entries(DRIVE_STATUS_LABEL).map(([v, l]) => <option key={v} value={v}>{l}</option>)}</Select>
-        <button className="h-10 rounded-md border border-border bg-surface px-4 text-sm hover:bg-background">Apply filters</button>
+        <button className="h-10 rounded-xl border border-border bg-surface px-4 text-sm hover:bg-background">Apply filters</button>
         {any ? <Link href={base} className="inline-flex h-10 items-center text-sm underline">Clear</Link> : null}
       </form>
       <Table head={["Job", "Company", "Type", "Apply by", "Openings", "Status"]} empty={rows.length === 0 ? <EmptyState title="No drives found">{any ? "Try different filters." : "Drives you create appear here."}</EmptyState> : undefined}>

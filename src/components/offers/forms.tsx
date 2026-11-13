@@ -10,7 +10,7 @@ import type { Candidate } from "@/server/offers/queries";
 
 type Act = (p: ActionState, fd: FormData) => Promise<ActionState>;
 const hidden = (f: Record<string, string>) => Object.entries(f).map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />);
-const inputCls = "h-10 rounded-md border border-border bg-surface px-3 text-sm";
+const inputCls = "h-10 rounded-xl border border-border bg-surface px-3 text-sm";
 
 /** Native multipart form (the browser posts the file straight to the upload route). The size check here is a convenience; the server re-validates everything. */
 export function FileUpload({ action, label, button }: { action: string; label: string; button: string }) {
@@ -21,7 +21,7 @@ export function FileUpload({ action, label, button }: { action: string; label: s
       <div className="space-y-1"><label htmlFor={`f-${action}`} className="block text-sm font-medium">{label}</label>
         <input id={`f-${action}`} name="file" type="file" required accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
           onChange={(e) => { const f = e.target.files?.[0]; setProblem(f && f.size > MAX_DOCUMENT_BYTES ? "That file is larger than 5 MB." : null); }}
-          className="block w-full text-sm file:mr-3 file:h-10 file:rounded-md file:border file:border-border file:bg-surface file:px-4 file:text-sm" />
+          className="block w-full text-sm file:mr-3 file:h-10 file:rounded-xl file:border file:border-border file:bg-surface file:px-4 file:text-sm" />
         <p className="text-xs text-muted">PDF, PNG or JPEG, up to 5 MB. The content is checked; files are not virus-scanned yet.</p></div>
       <Button type="submit" variant="secondary">{button}</Button>
     </form>

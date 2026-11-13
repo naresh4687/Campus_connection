@@ -25,9 +25,9 @@ export default async function ImportPage({ searchParams }: { searchParams: Promi
         <form action="/college/students/import/upload" method="post" encType="multipart/form-data" className="max-w-xl space-y-3">
           <div className="space-y-1">
             <label htmlFor="file" className="block text-sm font-medium">CSV file</label>
-            <input id="file" name="file" type="file" accept=".csv,text/csv" required className="block w-full text-sm file:mr-3 file:h-10 file:rounded-md file:border file:border-border file:bg-surface file:px-4 file:text-sm" />
+            <input id="file" name="file" type="file" accept=".csv,text/csv" required className="block w-full text-sm file:mr-3 file:h-10 file:rounded-xl file:border file:border-border file:bg-surface file:px-4 file:text-sm" />
           </div>
-          <button type="submit" className="inline-flex h-10 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground">Upload and continue</button>
+          <button type="submit" className="inline-flex h-10 items-center rounded-xl bg-primary px-4 text-sm font-medium text-primary-foreground">Upload and continue</button>
         </form>
         <div className="mt-5 space-y-2 text-sm text-muted">
           <p>The first row must be a header. Up to {CSV_LIMITS.rows.toLocaleString("en-IN")} rows, {CSV_LIMITS.bytes / 1024 / 1024} MB, UTF-8. You choose which column holds which field in the next step.</p>

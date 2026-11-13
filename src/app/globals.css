@@ -1,35 +1,68 @@
 @import "tailwindcss";
 
-/* Design tokens (Phase 0). Components are built on these in later phases. */
+/*
+ * Design tokens: "Crimson & Flame". Components use these through the Tailwind names below, so a palette change happens here.
+ * Every text/background pair is checked by the axe accessibility tests (WCAG 2.1 AA).
+ */
 :root {
-  --background: #f8fafc;
+  --background: #faf6f5;
   --surface: #ffffff;
-  --foreground: #0f172a;
-  --muted: #64748b;
-  --border: #e2e8f0;
-  --nav: #0f1b3d;
-  --nav-foreground: #e2e8f0;
-  --primary: #4f46e5;
+  --foreground: #241817;
+  --muted: #6b5b58;
+  --border: #eadfdc;
+  --tint: #fbe9e7;
+  --nav: #3a0a0d;
+  --nav-foreground: #f3d6d3;
+  --primary: #b4161b;
   --primary-foreground: #ffffff;
+  --accent: #ff6b4a;
   --success: #15803d;
-  --warning: #b45309;
-  --danger: #b91c1c;
+  --warning: #92400e;
+  --danger: #9f1239;
+  --shadow-soft: 0 1px 2px rgb(58 10 13 / 0.05), 0 8px 24px -12px rgb(58 10 13 / 0.18);
+  color-scheme: light;
 }
 
+/* Theme: "system" follows the device; the toggle sets data-theme="light" or "dark" on <html> (from a cookie, applied on the server). */
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0b1220;
-    --surface: #111a2e;
-    --foreground: #e2e8f0;
-    --muted: #94a3b8;
-    --border: #243049;
-    --primary: #818cf8;
-    --primary-foreground: #0b1220;
+  :root:not([data-theme="light"]) {
+    --background: #160e0e;
+    --surface: #201414;
+    --foreground: #f3e8e6;
+    --muted: #af9c98;
+    --border: #3a2623;
+    --tint: #3a1a18;
+    --nav: #0f0808;
+    --nav-foreground: #e8c9c5;
+    --primary: #f87171;
+    --primary-foreground: #200808;
+    --accent: #fb923c;
     --success: #4ade80;
     --warning: #fbbf24;
-    --danger: #f87171;
+    --danger: #fb7185;
+    --shadow-soft: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px -12px rgb(0 0 0 / 0.6);
+    color-scheme: dark;
   }
 }
+:root[data-theme="dark"] {
+  --background: #160e0e;
+  --surface: #201414;
+  --foreground: #f3e8e6;
+  --muted: #af9c98;
+  --border: #3a2623;
+  --tint: #3a1a18;
+  --nav: #0f0808;
+  --nav-foreground: #e8c9c5;
+  --primary: #f87171;
+  --primary-foreground: #200808;
+  --accent: #fb923c;
+  --success: #4ade80;
+  --warning: #fbbf24;
+  --danger: #fb7185;
+  --shadow-soft: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px -12px rgb(0 0 0 / 0.6);
+  color-scheme: dark;
+}
+:root[data-theme="light"] { color-scheme: light; }
 
 @theme inline {
   --color-background: var(--background);
@@ -37,15 +70,19 @@
   --color-foreground: var(--foreground);
   --color-muted: var(--muted);
   --color-border: var(--border);
+  --color-tint: var(--tint);
   --color-nav: var(--nav);
   --color-nav-foreground: var(--nav-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-accent: var(--accent);
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-danger: var(--danger);
+  --shadow-soft: var(--shadow-soft);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-display);
 }
 
 body {
@@ -54,5 +91,30 @@ body {
   font-family: var(--font-geist-sans), system-ui, sans-serif;
 }
 
+h1, h2, h3 {
+  font-family: var(--font-display), var(--font-geist-sans), system-ui, sans-serif;
+  text-wrap: balance;
+}
+
 /* Long unbroken values (emails, URLs, tokens) must wrap instead of widening the page on narrow screens. */
 dd, dt { min-width: 0; overflow-wrap: anywhere; }
+
+/* Motion: transform only (no opacity), so text is always fully visible and contrast stays constant. */
+@keyframes rise {
+  from { transform: translateY(14px); }
+  to { transform: none; }
+}
+@keyframes drift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(30px, -24px) scale(1.12); }
+}
+.rise { animation: rise 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both; animation-delay: calc(var(--i, 0) * 80ms); }
+.drift { animation: drift 16s ease-in-out infinite; }
+.lift { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+.lift:hover { transform: translateY(-3px); box-shadow: var(--shadow-soft); }
+
+@media (prefers-reduced-motion: reduce) {
+  .rise, .drift { animation: none; }
+  .lift { transition: none; }
+  .lift:hover { transform: none; }
+}

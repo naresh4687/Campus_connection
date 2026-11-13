@@ -15,7 +15,7 @@ export function DocReviewForm({ id, backTo }: { id: string; backTo?: string }) {
       {backTo ? <input type="hidden" name="backTo" value={backTo} /> : null}
       <div className="space-y-1">
         <label htmlFor={`reason-${id}`} className="block text-xs text-muted">Reason (needed to reject)</label>
-        <input id={`reason-${id}`} name="reason" maxLength={500} defaultValue={state?.values?.reason} className="h-8 w-64 max-w-full rounded-md border border-border bg-surface px-2 text-sm" />
+        <input id={`reason-${id}`} name="reason" maxLength={500} defaultValue={state?.values?.reason} className="h-8 w-64 max-w-full rounded-xl border border-border bg-surface px-2 text-sm" />
       </div>
       <Button type="submit" name="decision" value="VERIFIED" disabled={pending} className="h-8 px-3">Verify</Button>
       <Button type="submit" name="decision" value="REJECTED" variant="danger" disabled={pending} className="h-8 px-3">Reject</Button>

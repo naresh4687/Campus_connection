@@ -1,10 +1,17 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { connection } from "next/server";
-import { Geist, Geist_Mono } from "next/font/google";
+import { THEME_COOKIE, parseTheme } from "@/lib/theme";
+import { Geist, Geist_Mono, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
+
+const display = Space_Grotesk({
+  variable: "--font-display",
   subsets: ["latin"],
 });
 
@@ -21,10 +28,12 @@ export const metadata: Metadata = {
 // Every page is rendered per request so the CSP nonce can be applied to its scripts and styles.
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   await connection();
+  const theme = parseTheme((await cookies()).get(THEME_COOKIE)?.value);
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      data-theme={theme === "system" ? undefined : theme}
+      className={`${geistSans.variable} ${geistMono.variable} ${display.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>

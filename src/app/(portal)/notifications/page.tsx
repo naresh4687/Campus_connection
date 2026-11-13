@@ -24,8 +24,8 @@ export default async function Notifications({ searchParams }: { searchParams: Pr
         <div className="flex gap-3"><Link href="/notifications/preferences" className="inline-flex h-10 items-center text-sm underline">Preferences</Link>
           <form action={markAllReadAction}><Button type="submit" variant="secondary" disabled={unread === 0 && page === 1}>Mark all as read</Button></form></div>
       </div>
-      {rows.length === 0 ? <p className="rounded-lg border border-border bg-surface p-6 text-sm text-muted">You have no notifications yet. Updates about drives, results, offers and reviews appear here.</p> : (
-        <ul className="divide-y divide-border rounded-lg border border-border bg-surface" aria-label="Notifications">
+      {rows.length === 0 ? <p className="rounded-2xl border border-border bg-surface p-6 text-sm text-muted">You have no notifications yet. Updates about drives, results, offers and reviews appear here.</p> : (
+        <ul className="divide-y divide-border rounded-2xl border border-border bg-surface" aria-label="Notifications">
           {rows.map((n) => (
             <li key={n.id} className={`p-4 ${n.read_at ? "" : "bg-background"}`}>
               <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">

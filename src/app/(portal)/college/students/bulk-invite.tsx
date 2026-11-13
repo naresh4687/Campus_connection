@@ -33,7 +33,7 @@ export function BulkInvite({ q, dept, year, eligible }: { q?: string; dept?: str
         <div className="space-y-3" data-testid="bulk-links">
           <Alert>These links are shown only now and are not stored. Download them before leaving this page.</Alert>
           <Button type="button" variant="secondary" onClick={() => download(state.table!.headers, state.table!.rows)}>Download links as CSV</Button>
-          <div className="overflow-x-auto rounded-lg border border-border">
+          <div tabIndex={0} className="focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary overflow-x-auto rounded-2xl border border-border">
             <table className="w-full min-w-[40rem] text-left text-sm">
               <thead className="border-b border-border bg-background text-xs uppercase tracking-wide text-muted"><tr>{state.table.headers.map((h) => <th key={h} scope="col" className="px-3 py-2 font-medium">{h}</th>)}</tr></thead>
               <tbody className="divide-y divide-border">

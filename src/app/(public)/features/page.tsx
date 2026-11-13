@@ -7,7 +7,7 @@ export default function FeaturesPage() {
   const available = FEATURES.filter((f) => f.status === "available");
   const coming = FEATURES.filter((f) => f.status === "in-development");
   const Card = ({ f }: { f: (typeof FEATURES)[number] }) => (
-    <li className="rounded-lg border border-border bg-surface p-5">
+    <li className="rounded-2xl border border-border bg-surface p-5">
       <p className="font-medium">{f.title}</p>
       <p className="mt-1 text-sm text-muted">{f.description}</p>
     </li>

@@ -10,7 +10,7 @@ export function PlacementList({ rows, mode }: { rows: PlacementRow[]; mode: "off
   return (
     <ul className="space-y-4" aria-label="Joining records">
       {rows.map((r) => (
-        <li key={r.selection_id} className="rounded-md border border-border p-4">
+        <li key={r.selection_id} className="rounded-xl border border-border p-4">
           <p className="flex flex-wrap items-center gap-2 text-sm"><span className="font-medium">{r.full_name}</span><span className="text-muted">{r.register_number} · {r.department_code}</span>
             <StatusBadge value={PLACEMENT_TONE[r.status]} label={PLACEMENT_LABEL[r.status]} />{r.overridden ? <StatusBadge value="PENDING" label="Overridden by administrator" /> : null}</p>
           <p className="mt-1 text-sm">{r.job_title} at {r.company_name} · joined {fmtDate(r.joined_on)}{r.designation ? ` as ${r.designation}` : ""}</p>

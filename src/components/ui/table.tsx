@@ -2,9 +2,9 @@ import type { ReactNode } from "react";
 
 export function Table({ head, children, empty }: { head: string[]; children: ReactNode; empty?: ReactNode }) {
   return (
-    <div className="overflow-x-auto rounded-lg border border-border bg-surface">
+    <div tabIndex={0} className="focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary overflow-x-auto rounded-2xl border border-border bg-surface shadow-soft">
       <table className="w-full min-w-[40rem] text-left text-sm">
-        <thead className="border-b border-border bg-background text-xs uppercase tracking-wide text-muted">
+        <thead className="border-b border-border bg-tint text-xs uppercase tracking-wide text-muted">
           <tr>{head.map((h) => <th key={h} scope="col" className="px-4 py-2.5 font-medium">{h}</th>)}</tr>
         </thead>
         <tbody className="divide-y divide-border">{children}</tbody>
