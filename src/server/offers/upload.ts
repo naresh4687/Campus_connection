@@ -1,7 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import { sql } from "kysely";
 import { NextResponse } from "next/server";
-import { MAX_DOCUMENT_BYTES, validateUpload } from "@/lib/documents";
+import { MAX_DOCUMENT_BYTES, MAX_DOCUMENT_MB, validateUpload } from "@/lib/documents";
 import { offerFileKey } from "@/lib/offers";
 import { uuidSchema } from "@/lib/validation";
 import { appBaseUrl } from "../auth/links";
@@ -25,7 +25,7 @@ export async function handleOfferUpload(req: Request, selectionId: string, kind:
   try { form = await req.formData(); } catch { return fail("The upload could not be read."); }
   const file = form.get("file");
   if (!(file instanceof File) || file.size === 0) return fail("Choose a file to upload.");
-  if (file.size > MAX_DOCUMENT_BYTES) return fail("The file is larger than 5 MB.");
+  if (file.size > MAX_DOCUMENT_BYTES) return fail(`The file is larger than ${MAX_DOCUMENT_MB} MB.`);
   const bytes = new Uint8Array(await file.arrayBuffer());
   const check = validateUpload({ filename: file.name, declaredType: file.type, bytes, kind: "OTHER" });
   if (!check.ok) return fail(check.message);

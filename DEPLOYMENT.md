@@ -37,6 +37,42 @@ Optional: `AI_EXTRACTION_ENABLED`, `ANTHROPIC_API_KEY`, `AI_MODEL`, `AI_API_BASE
 
 Rollback: the application is backward-compatible with the previous schema only if a migration was additive; migrations here are forward-only, so a rollback means restoring the database from backup (section 5) or shipping a new forward migration. Plan accordingly before releasing a destructive change.
 
+## 3a. Automated deployment on Vercel + Neon
+
+Added 2026-11-13. **Tested:** the CI commands, the role-setup script and the full database test suite against a Postgres set up the way a managed database is (admin role that is not a superuser). **Not tested:** the deploy workflow itself, which needs your real Vercel and Neon accounts. Run it once and watch it before relying on it.
+
+### How a release flows
+
+1. Push or merge to `main`. `.github/workflows/ci.yml` runs typecheck, lint, unit tests, `npm audit`, the database tests (Postgres 16) and the browser tests. Pull requests run the same checks.
+2. When CI succeeds on `main`, `.github/workflows/deploy.yml` starts and **waits for approval** (GitHub environment `production`, required reviewers).
+3. After approval it applies the database migrations to Neon, builds and deploys that exact commit to Vercel, then checks `/api/health` on the live site.
+4. `vercel.json` turns off Vercel's own deploy-on-push for `main`, so nothing reaches production except through this workflow. Other branches still get Vercel preview deployments.
+
+If a newer commit reaches `main` while a deploy is waiting for approval, the older run stops instead of rolling production back.
+
+### One-time setup (in this order)
+
+1. **Neon roles.** Generate two passwords (`openssl rand -base64 24`). With the Neon *admin* connection string (the one from the Neon console), connected to the application database:
+   `psql "$ADMIN_DATABASE_URL" -v owner_pw="$CC_OWNER_PASSWORD" -v app_pw="$CC_APP_PASSWORD" -f scripts/neon-setup-roles.sql`
+   This creates `cc_owner` (migrations), `cc_app` (the running app, row-level security applies) and `cc_auth`, and hands schema `public` to `cc_owner`. Whether your Neon project allows the role that bypasses row-level security (`cc_auth`) is the one thing only Neon can confirm; if the script reports a permission error there, stop and ask Neon support before continuing.
+2. **Connection strings.** Build two from the Neon console, replacing the user and password:
+   - `DATABASE_URL` (Vercel, Production): `cc_app`, the **pooled** connection string. Neon's integration sets `DATABASE_URL` to the admin role; override it for Production and make sure the integration does not overwrite it again (disconnect its variable sync if it does). The running app must never use the admin role, because that bypasses the per-college isolation.
+   - `MIGRATE_DATABASE_URL` (GitHub secret): `cc_owner`, the **direct (unpooled)** connection string. The migration runner takes an advisory lock and needs a normal session.
+3. **Run the migrations once by hand** to confirm they work on Neon: `MIGRATE_DATABASE_URL="..." npm run db:migrate`. Then create the platform administrator (`PLATFORM_ADMIN_PASSWORD=… npm run admin:create -- email "Name"`, with `MIGRATE_DATABASE_URL` set).
+4. **Object storage.** Vercel has no S3-compatible storage, so create a **private** bucket elsewhere (Cloudflare R2 or AWS S3) and set `S3_ENDPOINT`, `S3_PUBLIC_ENDPOINT`, `S3_REGION`, `S3_BUCKET`, `S3_ACCESS_KEY`, `S3_SECRET_KEY` (and `S3_FORCE_PATH_STYLE` as the provider needs) in Vercel. Without them, document and offer-letter uploads fail. Create the bucket with `npm run storage:init` or the provider console.
+5. **Other Vercel Production variables** (see section 2): `AUTH_PEPPER`, `AUTH_COOKIE_SECURE=true`, `APP_BASE_URL` (the public https origin), `TRUSTED_PROXY_HOPS=1`.
+6. **GitHub.** Settings → Environments → create `production`, turn on **Required reviewers**, and add yourself. Then add:
+   - environment **secrets**: `MIGRATE_DATABASE_URL`, `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID` (the two IDs are in `.vercel/project.json` after `npx vercel link`);
+   - environment **variable**: `APP_BASE_URL` (the same public origin, used for the health check).
+7. **Only now** merge `vercel.json`. Once it is on `main`, Vercel stops deploying `main` by itself, so steps 1 to 6 must already be in place or pushes will not deploy at all.
+
+### Things that behave differently on Vercel
+
+- **Upload limit.** Vercel rejects request bodies over 4.5 MB, so the app limit is 4 MB (`MAX_DOCUMENT_MB` in `src/lib/documents.ts`). Larger files would need direct-to-bucket uploads.
+- **Migrations are forward-only.** If a deploy fails after the migration ran, the database stays migrated. Read the migration before approving, and use Vercel's **Instant Rollback** for the app; restore from a Neon backup only if the migration itself was wrong.
+- **Backups.** Turn on Neon's point-in-time restore window, and repeat the restore drill (section 5) against a Neon branch.
+- **Connections.** The app sets its per-request context with a transaction-local setting, which is safe with Neon's pooled connections.
+
 ## 4. What the system already enforces (verified by tests)
 
 - Tenant isolation and role limits in the database (RLS with `FORCE`), not just in the UI. `db/tests/catalog-audit.test.ts` re-checks after every migration: the runtime role cannot insert/update/delete/truncate any table or column; every table has forced RLS or is invisible to the runtime role; every SECURITY DEFINER function is owned by `cc_auth` and pins its `search_path`; no application function is executable by PUBLIC; views are `security_invoker`; and the exact set of functions the runtime role may call equals a reviewed snapshot.

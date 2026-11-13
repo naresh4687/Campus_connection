@@ -55,7 +55,7 @@ describe("validateUpload", () => {
   it("refuses an unknown kind, an empty file and an oversized file", () => {
     expect(ok({ kind: "SELFIE" })).toMatchObject({ ok: false });
     expect(ok({ bytes: new Uint8Array() })).toMatchObject({ ok: false, message: "The file is empty." });
-    expect(ok({ bytes: new Uint8Array(MAX_DOCUMENT_BYTES + 1) })).toMatchObject({ ok: false, message: expect.stringMatching(/larger than 5 MB/) });
+    expect(ok({ bytes: new Uint8Array(MAX_DOCUMENT_BYTES + 1) })).toMatchObject({ ok: false, message: expect.stringMatching(/larger than 4 MB/) });
   });
   it("refuses content that is not PDF/PNG/JPEG whatever the name or declared type says", () => {
     expect(ok({ filename: "evil.pdf", declaredType: "application/pdf", bytes: text("<html>") })).toMatchObject({ ok: false, message: expect.stringMatching(/Only PDF, PNG and JPEG/) });

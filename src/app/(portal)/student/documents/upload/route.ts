@@ -1,7 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import { sql } from "kysely";
 import { NextResponse } from "next/server";
-import { MAX_DOCUMENT_BYTES, storageKey, validateUpload } from "@/lib/documents";
+import { MAX_DOCUMENT_BYTES, MAX_DOCUMENT_MB, storageKey, validateUpload } from "@/lib/documents";
 import { appBaseUrl } from "@/server/auth/links";
 import { allow } from "@/server/auth/rate-limit";
 import { assertSameOrigin } from "@/server/auth/request";
@@ -39,7 +39,7 @@ export async function POST(req: Request) {
   const file = form.get("file");
   const kind = String(form.get("kind") ?? "");
   if (!(file instanceof File) || file.size === 0) return fail("Choose a file to upload.");
-  if (file.size > MAX_DOCUMENT_BYTES) return fail("The file is larger than 5 MB.");
+  if (file.size > MAX_DOCUMENT_BYTES) return fail(`The file is larger than ${MAX_DOCUMENT_MB} MB.`);
 
   const bytes = new Uint8Array(await file.arrayBuffer());
   const check = validateUpload({ filename: file.name, declaredType: file.type, bytes, kind });

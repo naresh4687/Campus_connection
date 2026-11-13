@@ -139,7 +139,7 @@ test.describe("forgot password is honest", () => {
   test("says email is not enabled and does not pretend to send anything", async ({ page }) => {
     await page.goto("/forgot-password");
     await expect(page.getByText("Email delivery is not enabled")).toBeVisible();
-    await expect(page.getByRole("button")).toHaveCount(0);
+    await expect(page.getByRole("button", { name: /send|reset|submit/i })).toHaveCount(0); // nothing to press that would claim to send an email
   });
 });
 

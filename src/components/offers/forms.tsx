@@ -3,7 +3,7 @@
 import { useActionState, useState } from "react";
 import { decidePlacementAction, extendDeadlineAction, issueOfferAction, overridePlacementAction, recordJoiningAction, respondAction, selectStudentsAction, withdrawOfferAction } from "@/server/offers/actions";
 import type { ActionState } from "@/server/action-utils";
-import { MAX_DOCUMENT_BYTES } from "@/lib/documents";
+import { MAX_DOCUMENT_BYTES, MAX_DOCUMENT_MB } from "@/lib/documents";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import type { Candidate } from "@/server/offers/queries";
@@ -20,9 +20,9 @@ export function FileUpload({ action, label, button }: { action: string; label: s
       {problem ? <Alert kind="error">{problem}</Alert> : null}
       <div className="space-y-1"><label htmlFor={`f-${action}`} className="block text-sm font-medium">{label}</label>
         <input id={`f-${action}`} name="file" type="file" required accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
-          onChange={(e) => { const f = e.target.files?.[0]; setProblem(f && f.size > MAX_DOCUMENT_BYTES ? "That file is larger than 5 MB." : null); }}
+          onChange={(e) => { const f = e.target.files?.[0]; setProblem(f && f.size > MAX_DOCUMENT_BYTES ? `That file is larger than ${MAX_DOCUMENT_MB} MB.` : null); }}
           className="block w-full text-sm file:mr-3 file:h-10 file:rounded-xl file:border file:border-border file:bg-surface file:px-4 file:text-sm" />
-        <p className="text-xs text-muted">PDF, PNG or JPEG, up to 5 MB. The content is checked; files are not virus-scanned yet.</p></div>
+        <p className="text-xs text-muted">PDF, PNG or JPEG, up to {MAX_DOCUMENT_MB} MB. The content is checked; files are not virus-scanned yet.</p></div>
       <Button type="submit" variant="secondary">{button}</Button>
     </form>
   );

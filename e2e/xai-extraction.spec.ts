@@ -45,7 +45,7 @@ test.describe.serial("AI-assisted draft (stand-in provider; the real provider is
     await officer.getByRole("button", { name: "Use these details in the form below" }).click();
     await expect(officer.getByText("The form below has been filled in.")).toBeVisible();
     await expect(officer.getByLabel("Job title")).toHaveValue("Associate Data Engineer");
-    await expect(officer.getByLabel("Company", { exact: true })).toHaveValue(/[0-9a-f-]{36}/);
+    await expect(officer.getByLabel("Company", { exact: true })).toHaveValue("Orbit Analytics");
     await expect(officer.getByLabel("Openings")).toHaveValue("8");
     await expect(officer.getByLabel("Minimum CGPA")).toHaveValue("7.5");
     await expect(officer.getByLabel("Minimum 10th %")).toHaveValue("65");

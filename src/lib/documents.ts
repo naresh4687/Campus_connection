@@ -7,7 +7,9 @@ export const DOC_KINDS = [
 export type DocKind = (typeof DOC_KINDS)[number]["value"];
 export const kindLabel = (k: string) => DOC_KINDS.find((d) => d.value === k)?.label ?? k;
 
-export const MAX_DOCUMENT_BYTES = 5 * 1024 * 1024;
+/** Kept under Vercel's 4.5 MB request-body limit, so an upload that passes this check is never cut off by the host. */
+export const MAX_DOCUMENT_MB = 4;
+export const MAX_DOCUMENT_BYTES = MAX_DOCUMENT_MB * 1024 * 1024;
 export const MAX_ACTIVE_DOCUMENTS = 25;
 export const DOWNLOAD_LINK_SECONDS = 60;
 

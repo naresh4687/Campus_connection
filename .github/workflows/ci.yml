@@ -1,0 +1,138 @@
+# Runs on every push to main and every pull request. Production deploys are a separate, approved workflow (deploy.yml) that only starts after this one succeeds on main.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "22"
+
+jobs:
+  checks:
+    name: Typecheck, lint, unit tests, audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run test:unit
+      # Production dependencies only; a high-severity advisory fails the build.
+      - run: npm audit --omit=dev --audit-level=high
+
+  database:
+    name: Database tests (Postgres 16)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ci_superuser_pw
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s --health-timeout 3s --health-retries 20
+    env:
+      PGHOST: 127.0.0.1
+      PGPASSWORD: ci_superuser_pw
+      CC_OWNER_PASSWORD: ci_owner_pw
+      CC_APP_PASSWORD: ci_app_pw
+      DATABASE_URL: postgresql://cc_app:ci_app_pw@127.0.0.1:5432/campusconnect_dev
+      MIGRATE_DATABASE_URL: postgresql://cc_owner:ci_owner_pw@127.0.0.1:5432/campusconnect_dev
+      TEST_DATABASE_URL: postgresql://cc_app:ci_app_pw@127.0.0.1:5432/campusconnect_test
+      TEST_MIGRATE_DATABASE_URL: postgresql://cc_owner:ci_owner_pw@127.0.0.1:5432/campusconnect_test
+      AUTH_PEPPER: ci-only-pepper-0123456789abcdef0123456789abcdef
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      # The same role and database setup the local docker-compose database runs on first start.
+      - name: Create roles and databases
+        run: bash docker/postgres/init/01-roles-and-dbs.sh
+      - run: npm run test:db
+
+  e2e:
+    name: Browser tests (Playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ci_superuser_pw
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s --health-timeout 3s --health-retries 20
+      storage:
+        image: rustfs/rustfs:latest
+        env:
+          RUSTFS_ACCESS_KEY: ci_storage_access
+          RUSTFS_SECRET_KEY: ci_storage_secret_key
+        ports: ["9000:9000"]
+    env:
+      PGHOST: 127.0.0.1
+      PGPASSWORD: ci_superuser_pw
+      CC_OWNER_PASSWORD: ci_owner_pw
+      CC_APP_PASSWORD: ci_app_pw
+      DATABASE_URL: postgresql://cc_app:ci_app_pw@127.0.0.1:5432/campusconnect_dev
+      MIGRATE_DATABASE_URL: postgresql://cc_owner:ci_owner_pw@127.0.0.1:5432/campusconnect_dev
+      TEST_DATABASE_URL: postgresql://cc_app:ci_app_pw@127.0.0.1:5432/campusconnect_test
+      TEST_MIGRATE_DATABASE_URL: postgresql://cc_owner:ci_owner_pw@127.0.0.1:5432/campusconnect_test
+      AUTH_PEPPER: ci-only-pepper-0123456789abcdef0123456789abcdef
+      AUTH_COOKIE_SECURE: "false"
+      TRUSTED_PROXY_HOPS: "0"
+      APP_BASE_URL: http://127.0.0.1:3100
+      S3_ENDPOINT: http://127.0.0.1:9000
+      S3_PUBLIC_ENDPOINT: http://127.0.0.1:9000
+      S3_REGION: us-east-1
+      S3_BUCKET: campusconnect-private-dev
+      S3_ACCESS_KEY: ci_storage_access
+      S3_SECRET_KEY: ci_storage_secret_key
+      S3_FORCE_PATH_STYLE: "true"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - name: Create roles and databases
+        run: bash docker/postgres/init/01-roles-and-dbs.sh
+      - name: Wait for object storage
+        run: |
+          for i in $(seq 1 30); do
+            if curl -s -o /dev/null http://127.0.0.1:9000; then exit 0; fi
+            sleep 2
+          done
+          echo "object storage did not start" >&2; exit 1
+      - run: npx playwright install --with-deps chromium
+      # Builds the app, starts it on port 3100 and runs every spec (see playwright.config.ts).
+      - run: npm run e2e
+      - name: Keep the report when something fails
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-results
+          path: test-results/
+          retention-days: 7

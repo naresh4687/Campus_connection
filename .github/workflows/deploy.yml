@@ -1,0 +1,94 @@
+# Production deploy to Vercel + Neon.
+#
+# Starts only after CI succeeds on main, then WAITS for approval: the "production" environment (GitHub -> Settings -> Environments)
+# must have "Required reviewers" turned on. After approval it (1) applies database migrations to Neon, (2) builds and deploys the SAME commit
+# that passed CI to Vercel, and (3) checks /api/health on the live site.
+#
+# Migrations are forward-only (see DEPLOYMENT.md): if the deploy fails after the migration ran, the database stays migrated. The migrations are written to be
+# compatible with the previous app version for exactly this reason, but read the migration before approving.
+name: Deploy to production
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One production deploy at a time, in order.
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: "22"
+  # Pin to an exact Vercel CLI version (for example "50.1.0") once you have chosen one.
+  VERCEL_CLI_VERSION: latest
+
+jobs:
+  deploy:
+    name: Migrate, deploy, verify
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: production
+      url: ${{ vars.APP_BASE_URL }}
+    env:
+      SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SHA }}
+
+      # Approval can take a while. If a newer commit has reached main since, deploying this one would roll production back, so stop.
+      - name: Make sure this is still the latest commit on main
+        if: github.event_name == 'workflow_run'
+        run: |
+          latest=$(git ls-remote origin refs/heads/main | cut -f1)
+          if [ "$latest" != "$SHA" ]; then
+            echo "A newer commit ($latest) is on main. Skipping this deploy; the newer one will have its own run."
+            exit 1
+          fi
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+
+      # Uses the DIRECT (unpooled) Neon connection as the cc_owner role: the migration runner takes an advisory lock, which needs a session.
+      - name: Apply database migrations
+        run: npm run db:migrate
+        env:
+          MIGRATE_DATABASE_URL: ${{ secrets.MIGRATE_DATABASE_URL }}
+
+      - name: Pull Vercel project settings
+        run: npx --yes vercel@${{ env.VERCEL_CLI_VERSION }} pull --yes --environment=production --token="$VERCEL_TOKEN"
+      - name: Build
+        run: npx --yes vercel@${{ env.VERCEL_CLI_VERSION }} build --prod --token="$VERCEL_TOKEN"
+      - name: Deploy
+        id: deploy
+        run: |
+          url=$(npx --yes vercel@${{ env.VERCEL_CLI_VERSION }} deploy --prebuilt --prod --token="$VERCEL_TOKEN")
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "Deployed: $url"
+
+      - name: Check the live site is healthy
+        env:
+          BASE: ${{ vars.APP_BASE_URL }}
+        run: |
+          for i in $(seq 1 12); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" "$BASE/api/health" || true)
+            echo "attempt $i: $code"
+            if [ "$code" = "200" ]; then exit 0; fi
+            sleep 10
+          done
+          echo "Health check did not return 200. Open the deployment in Vercel, check the logs, and use 'Instant Rollback' there if needed." >&2
+          exit 1

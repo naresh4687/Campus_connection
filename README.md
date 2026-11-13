@@ -2,6 +2,12 @@
 
 College placement management SaaS (multi-tenant). See `CAMPUSCONNECT_MASTER_PLAN.md`, `TECHNICAL_DECISIONS.md`, `IMPLEMENTATION_STATUS.md`.
 
+[![CI](https://github.com/naresh4687/Campus_connection/actions/workflows/ci.yml/badge.svg)](https://github.com/naresh4687/Campus_connection/actions/workflows/ci.yml)
+
+## Automated checks and deployment
+
+Every push and pull request runs typecheck, lint, unit, database and browser tests (`.github/workflows/ci.yml`). Production deploys to Vercel + Neon go through `.github/workflows/deploy.yml` after CI passes and a reviewer approves. Setup steps are in `DEPLOYMENT.md` section 3a.
+
 ## Local development
 
 Requirements: Node 22, Docker (with Compose).

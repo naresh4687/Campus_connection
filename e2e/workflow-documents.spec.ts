@@ -87,8 +87,8 @@ test.describe.serial("private documents", () => {
   test("an oversized file is stopped in the browser, and the server refuses it too", async () => {
     await docA.goto("/student/documents");
     await docA.getByLabel("Kind of document").selectOption("OTHER");
-    await docA.setInputFiles("#file", { name: "huge.pdf", mimeType: "application/pdf", buffer: Buffer.concat([text("%PDF-1.7\n"), Buffer.alloc(5 * 1024 * 1024 + 10, 65), text("\n%%EOF\n")]) });
-    await expect(formAlert(docA)).toContainText("larger than 5 MB");
+    await docA.setInputFiles("#file", { name: "huge.pdf", mimeType: "application/pdf", buffer: Buffer.concat([text("%PDF-1.7\n"), Buffer.alloc(4 * 1024 * 1024 + 10, 65), text("\n%%EOF\n")]) });
+    await expect(formAlert(docA)).toContainText("larger than 4 MB");
     const res = await docA.request.post("/student/documents/upload", { multipart: { kind: "OTHER", file: { name: "huge.pdf", mimeType: "application/pdf", buffer: Buffer.alloc(6 * 1024 * 1024, 65) } }, headers: { origin: ORIGIN }, maxRedirects: 0 });
     expect(res.status()).toBe(413);
   });
