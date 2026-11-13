@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+/* Design tokens (Phase 0). Components are built on these in later phases. */
+:root {
+  --background: #f8fafc;
+  --surface: #ffffff;
+  --foreground: #0f172a;
+  --muted: #64748b;
+  --border: #e2e8f0;
+  --nav: #0f1b3d;
+  --nav-foreground: #e2e8f0;
+  --primary: #4f46e5;
+  --primary-foreground: #ffffff;
+  --success: #15803d;
+  --warning: #b45309;
+  --danger: #b91c1c;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0b1220;
+    --surface: #111a2e;
+    --foreground: #e2e8f0;
+    --muted: #94a3b8;
+    --border: #243049;
+    --primary: #818cf8;
+    --primary-foreground: #0b1220;
+    --success: #4ade80;
+    --warning: #fbbf24;
+    --danger: #f87171;
+  }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-nav: var(--nav);
+  --color-nav-foreground: var(--nav-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+/* Long unbroken values (emails, URLs, tokens) must wrap instead of widening the page on narrow screens. */
+dd, dt { min-width: 0; overflow-wrap: anywhere; }

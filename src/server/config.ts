@@ -1,0 +1,60 @@
+import { z } from "zod";
+
+const schema = z.object({
+  DATABASE_URL: z.string().min(1),
+  AUTH_PEPPER: z.string().min(32, "AUTH_PEPPER must be at least 32 characters"),
+  AUTH_COOKIE_SECURE: z.enum(["true", "false"]).default("true").transform((v) => v === "true"),
+  TRUSTED_PROXY_HOPS: z.coerce.number().int().min(0).max(5).default(0),
+  /** Public origin used to build one-time links (invitations/resets), e.g. https://app.example.com. Never derived from request headers in production. */
+  APP_BASE_URL: z.url().optional(),
+  // Private object storage (S3-compatible). Required for documents; validated when first used (see storageConfig()).
+  S3_ENDPOINT: z.url().optional(),
+  /** Origin browsers can reach, used when SIGNING download links. Defaults to S3_ENDPOINT. */
+  S3_PUBLIC_ENDPOINT: z.url().optional(),
+  S3_REGION: z.string().min(1).default("us-east-1"),
+  S3_BUCKET: z.string().min(3).optional(),
+  S3_ACCESS_KEY: z.string().min(1).optional(),
+  S3_SECRET_KEY: z.string().min(1).optional(),
+  S3_FORCE_PATH_STYLE: z.enum(["true", "false"]).default("true").transform((v) => v === "true"),
+});
+
+let cached: z.infer<typeof schema> | undefined;
+
+/** Server-only configuration. Throws a clear error if required variables are missing or unsafe. */
+export function config() {
+  if (!cached) {
+    const c = schema.parse(process.env);
+    if (process.env.NODE_ENV === "production") {
+      // The only escape hatch exists so the browser test suite can run a production build over plain http://127.0.0.1.
+      // The value is deliberately awkward; it must never appear in a real deployment's environment.
+      const e2eOverride = process.env.AUTH_ALLOW_INSECURE_COOKIES === "e2e-test-server-only";
+      if (!c.AUTH_COOKIE_SECURE && !e2eOverride) throw new Error("AUTH_COOKIE_SECURE must be true in production");
+      if (!c.APP_BASE_URL) throw new Error("APP_BASE_URL must be set in production (used to build invitation links)");
+      if (/dev-only|change-me/i.test(c.AUTH_PEPPER)) throw new Error("AUTH_PEPPER is a development value; set a real secret in production");
+    }
+    cached = c;
+  }
+  return cached;
+}
+
+/** Storage settings, or a clear error naming what is missing. Called only by code that actually touches storage. */
+export function storageConfig() {
+  const c = config();
+  const missing = (["S3_ENDPOINT", "S3_BUCKET", "S3_ACCESS_KEY", "S3_SECRET_KEY"] as const).filter((k) => !c[k]);
+  if (missing.length) throw new Error(`Private document storage is not configured (missing ${missing.join(", ")})`);
+  const e2eOverride = process.env.AUTH_ALLOW_INSECURE_COOKIES === "e2e-test-server-only";   // the browser-test server uses the local dev store
+  if (process.env.NODE_ENV === "production" && !e2eOverride && /dev_storage/.test(c.S3_SECRET_KEY!)) throw new Error("S3_SECRET_KEY is a development value; set real storage credentials in production");
+  return {
+    endpoint: c.S3_ENDPOINT!, publicEndpoint: c.S3_PUBLIC_ENDPOINT ?? c.S3_ENDPOINT!, region: c.S3_REGION, bucket: c.S3_BUCKET!,
+    accessKey: c.S3_ACCESS_KEY!, secretKey: c.S3_SECRET_KEY!, forcePathStyle: c.S3_FORCE_PATH_STYLE,
+  };
+}
+
+/**
+ * Optional AI announcement helper (Module 21). Off unless AI_EXTRACTION_ENABLED=true AND a key is set. AI_API_BASE exists so an operator can
+ * route through a gateway; it is configuration, never user input.
+ */
+export function aiConfig() {
+  const enabled = process.env.AI_EXTRACTION_ENABLED === "true" && !!process.env.ANTHROPIC_API_KEY;
+  return { enabled, apiKey: process.env.ANTHROPIC_API_KEY ?? "", model: process.env.AI_MODEL || "claude-sonnet-5-5", base: (process.env.AI_API_BASE || "https://api.anthropic.com").replace(/\/+$/, "") };
+}
