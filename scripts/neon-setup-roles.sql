@@ -7,7 +7,7 @@
 --   psql "$ADMIN_DATABASE_URL" -v owner_pw="$CC_OWNER_PASSWORD" -v app_pw="$CC_APP_PASSWORD" -f scripts/neon-setup-roles.sql
 --
 -- Then:
---   * DATABASE_URL in Vercel         -> cc_app   (pooled connection string)
+--   * APP_DATABASE_URL in Vercel     -> cc_app   (pooled connection string; DATABASE_URL belongs to the Neon integration)
 --   * MIGRATE_DATABASE_URL in GitHub -> cc_owner (direct, unpooled connection string)
 -- and never use the admin role for the running app: it would bypass the database's per-college isolation.
 --

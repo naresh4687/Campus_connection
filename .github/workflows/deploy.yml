@@ -31,7 +31,9 @@ env:
 jobs:
   deploy:
     name: Migrate, deploy, verify
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    # Switched off until the one-time setup in DEPLOYMENT.md 3a is done: set the repository variable DEPLOY_ENABLED to true (Settings -> Secrets and variables -> Actions -> Variables).
+    # Without this guard, GitHub would create the "production" environment on first use with no required reviewer.
+    if: vars.DEPLOY_ENABLED == 'true' && (github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success')
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment:

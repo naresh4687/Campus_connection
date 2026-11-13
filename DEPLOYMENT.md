@@ -17,7 +17,7 @@ Required in production (the app **refuses to start** with development values):
 
 | Variable | Rule |
 |---|---|
-| `DATABASE_URL` | the `cc_app` role. Never the owner. |
+| `DATABASE_URL` (or `APP_DATABASE_URL`) | the `cc_app` role. Never the owner: in production the app **refuses to start** with any other login. `APP_DATABASE_URL` wins when both are set, for platforms that manage `DATABASE_URL` themselves (see 3a). |
 | `AUTH_PEPPER` | secret, ≥ 32 random characters; must not contain `dev-only`/`change-me`. Rotating it invalidates stored hashed IPs/emails in rate-limit tables only (sessions are separate). |
 | `AUTH_COOKIE_SECURE` | `true` (uses the `__Host-` cookie prefix; requires HTTPS). |
 | `APP_BASE_URL` | the public https origin; used to build one-time invitation/reset links and redirects. |
@@ -56,7 +56,7 @@ If a newer commit reaches `main` while a deploy is waiting for approval, the old
    `psql "$ADMIN_DATABASE_URL" -v owner_pw="$CC_OWNER_PASSWORD" -v app_pw="$CC_APP_PASSWORD" -f scripts/neon-setup-roles.sql`
    This creates `cc_owner` (migrations), `cc_app` (the running app, row-level security applies) and `cc_auth`, and hands schema `public` to `cc_owner`. Whether your Neon project allows the role that bypasses row-level security (`cc_auth`) is the one thing only Neon can confirm; if the script reports a permission error there, stop and ask Neon support before continuing.
 2. **Connection strings.** Build two from the Neon console, replacing the user and password:
-   - `DATABASE_URL` (Vercel, Production): `cc_app`, the **pooled** connection string. Neon's integration sets `DATABASE_URL` to the admin role; override it for Production and make sure the integration does not overwrite it again (disconnect its variable sync if it does). The running app must never use the admin role, because that bypasses the per-college isolation.
+   - `APP_DATABASE_URL` (Vercel, Production, mark it Sensitive): `cc_app`, the **pooled** connection string, without `channel_binding`. The Neon integration owns `DATABASE_URL` in Vercel and fills it with the admin login, and Vercel does not let you override it, so the app reads `APP_DATABASE_URL` first and ignores the integration's value. In the integration's settings (Vercel → Storage → the database → Settings → Allowed Environments) choose **Production environment only**, so Preview and Development deployments do not receive the admin login either. The app refuses to start in production unless its login is `cc_app`; the admin login would bypass the per-college isolation.
    - `MIGRATE_DATABASE_URL` (GitHub secret): `cc_owner`, the **direct (unpooled)** connection string. The migration runner takes an advisory lock and needs a normal session.
 3. **Run the migrations once by hand** to confirm they work on Neon: `MIGRATE_DATABASE_URL="..." npm run db:migrate`. Then create the platform administrator (`PLATFORM_ADMIN_PASSWORD=… npm run admin:create -- email "Name"`, with `MIGRATE_DATABASE_URL` set).
 4. **Object storage.** Vercel has no S3-compatible storage, so create a **private** bucket elsewhere (Cloudflare R2 or AWS S3) and set `S3_ENDPOINT`, `S3_PUBLIC_ENDPOINT`, `S3_REGION`, `S3_BUCKET`, `S3_ACCESS_KEY`, `S3_SECRET_KEY` (and `S3_FORCE_PATH_STYLE` as the provider needs) in Vercel. Without them, document and offer-letter uploads fail. Create the bucket with `npm run storage:init` or the provider console.
@@ -64,7 +64,8 @@ If a newer commit reaches `main` while a deploy is waiting for approval, the old
 6. **GitHub.** Settings → Environments → create `production`, turn on **Required reviewers**, and add yourself. Then add:
    - environment **secrets**: `MIGRATE_DATABASE_URL`, `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID` (the two IDs are in `.vercel/project.json` after `npx vercel link`);
    - environment **variable**: `APP_BASE_URL` (the same public origin, used for the health check).
-7. **Only now** merge `vercel.json`. Once it is on `main`, Vercel stops deploying `main` by itself, so steps 1 to 6 must already be in place or pushes will not deploy at all.
+7. Add the repository **variable** `DEPLOY_ENABLED` = `true` (Settings → Secrets and variables → Actions → Variables). Until it is set, the deploy workflow skips itself, so pushing before the setup is finished is safe.
+8. **Only now** rely on `vercel.json`. Once it is on `main`, Vercel stops deploying `main` by itself, so steps 1 to 6 must already be in place or pushes will not deploy at all.
 
 ### Things that behave differently on Vercel
 

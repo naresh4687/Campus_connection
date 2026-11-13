@@ -1,7 +1,12 @@
 import { z } from "zod";
 
 const schema = z.object({
-  DATABASE_URL: z.string().min(1),
+  /**
+   * The app's database connection. Use APP_DATABASE_URL where a platform manages DATABASE_URL for you (for example the Vercel + Neon integration,
+   * which fills it with the database OWNER'S login). APP_DATABASE_URL wins when both are set. Either way, in production the login must be cc_app.
+   */
+  DATABASE_URL: z.string().min(1).optional(),
+  APP_DATABASE_URL: z.string().min(1).optional(),
   AUTH_PEPPER: z.string().min(32, "AUTH_PEPPER must be at least 32 characters"),
   AUTH_COOKIE_SECURE: z.enum(["true", "false"]).default("true").transform((v) => v === "true"),
   TRUSTED_PROXY_HOPS: z.coerce.number().int().min(0).max(5).default(0),
@@ -18,13 +23,24 @@ const schema = z.object({
   S3_FORCE_PATH_STYLE: z.enum(["true", "false"]).default("true").transform((v) => v === "true"),
 });
 
-let cached: z.infer<typeof schema> | undefined;
+/** The user name inside a connection string, or "" if it cannot be read. */
+function databaseLogin(url: string): string {
+  try { return decodeURIComponent(new URL(url).username); } catch { return ""; }
+}
+
+let cached: (Omit<z.infer<typeof schema>, "DATABASE_URL"> & { DATABASE_URL: string }) | undefined;
 
 /** Server-only configuration. Throws a clear error if required variables are missing or unsafe. */
 export function config() {
   if (!cached) {
-    const c = schema.parse(process.env);
+    const raw = schema.parse(process.env);
+    const databaseUrl = raw.APP_DATABASE_URL ?? raw.DATABASE_URL;
+    if (!databaseUrl) throw new Error("DATABASE_URL (or APP_DATABASE_URL) must be set");
+    const c = { ...raw, DATABASE_URL: databaseUrl };
     if (process.env.NODE_ENV === "production") {
+      // Row-level security is what keeps one college's data from another's, and it only applies to the restricted runtime role.
+      // The owner/admin role bypasses it, so refuse to start rather than quietly run without isolation.
+      if (databaseLogin(databaseUrl) !== "cc_app") throw new Error("The app must connect to the database as the restricted cc_app role (set APP_DATABASE_URL or DATABASE_URL accordingly), never the owner or admin role");
       // The only escape hatch exists so the browser test suite can run a production build over plain http://127.0.0.1.
       // The value is deliberately awkward; it must never appear in a real deployment's environment.
       const e2eOverride = process.env.AUTH_ALLOW_INSECURE_COOKIES === "e2e-test-server-only";
