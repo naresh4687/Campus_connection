@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
+import { NextSteps } from "@/components/ui/next-steps";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { ACADEMIC_LABEL } from "@/lib/academics";
 import { requireRole } from "@/server/auth/session";
@@ -40,14 +41,10 @@ export default async function StudentHome() {
         <p className="flex flex-wrap items-center gap-2 text-sm"><StatusBadge value={tone ?? "NOT_STARTED"} label={ACADEMIC_LABEL[ac.status]} />{ac.update_pending ? <StatusBadge value="PENDING" label="Update awaiting review" /> : null}</p>
         <p className="mt-2 text-sm text-muted">{CTA[ac.status]} <Link href="/student/academics" className="underline">Open Academics</Link>.</p>
       </Card>
-      {awaiting.length > 0 || canRegister.length > 0 ? (
-        <Card title="Needs your attention">
-          <ul className="space-y-1 text-sm" aria-label="Needs your attention">
-            {awaiting.map((o) => <li key={o.id}><Link href={`/student/offers/${o.id}`} className="underline">Respond to your offer from {o.company_name} by {fmtDateTime(o.response_deadline)}.</Link></li>)}
-            {canRegister.length > 0 ? <li><Link href="/student/drives" className="underline">{canRegister.length} open drive{canRegister.length === 1 ? "" : "s"} you are eligible for and have not registered for.</Link></li> : null}
-          </ul>
-        </Card>
-      ) : null}
+      <NextSteps items={[
+        ...awaiting.map((o) => ({ text: `Respond to your offer from ${o.company_name} by ${fmtDateTime(o.response_deadline)}.`, href: `/student/offers/${o.id}` })),
+        ...(canRegister.length > 0 ? [{ text: `${canRegister.length} open drive${canRegister.length === 1 ? "" : "s"} you are eligible for and have not registered for.`, href: "/student/drives" }] : []),
+      ]} />
       <Card title="Placement drives">
         <p className="text-sm" data-testid="drive-summary">{openDrives.length} open drive{openDrives.length === 1 ? "" : "s"} · {registered.length} registered · {offers.length} offer{offers.length === 1 ? "" : "s"}</p>
         <p className="mt-2 text-sm"><Link href="/student/drives" className="underline">Browse placement drives</Link> · <Link href="/student/offers" className="underline">My offers</Link></p>

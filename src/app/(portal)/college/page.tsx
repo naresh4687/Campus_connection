@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
+import { NextSteps } from "@/components/ui/next-steps";
 import { humanize } from "@/components/ui/status-badge";
 import { fmtDateTime } from "@/lib/format";
 import { requireRole } from "@/server/auth/session";
@@ -39,11 +40,7 @@ export default async function CollegeDashboard() {
         <p className="text-sm text-muted">{d.college?.name}</p>
       </div>
 
-      {todo.length > 0 ? (
-        <Card title="Needs your attention">
-          <ul className="space-y-1 text-sm">{todo.map((t) => <li key={t.text}><Link href={t.href} className="underline">{t.text}</Link></li>)}</ul>
-        </Card>
-      ) : null}
+      <NextSteps items={todo} />
 
       <section aria-labelledby="dep" className="space-y-3">
         <h2 id="dep" className="text-lg font-semibold">Departments</h2>

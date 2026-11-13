@@ -98,6 +98,7 @@ test.describe.serial("college administrator console", () => {
     await admin.goto("/college/staff");
     await admin.getByLabel("Email", { exact: true }).fill("new.coordinator@e2e.test");
     await admin.getByLabel("Role", { exact: true }).last().selectOption("COORDINATOR");
+    await admin.getByLabel("Department", { exact: true }).selectOption({ label: "CSE · Computer Science and Engineering" }); // a coordinator invitation names its department
     await admin.getByRole("button", { name: "Create invitation" }).click();
     const panel = admin.getByTestId("invite-link-panel");
     await expect(panel).toBeVisible();
@@ -123,7 +124,7 @@ test.describe.serial("college administrator console", () => {
     await p.close();
   });
 
-  test("the invited coordinator joins and, with nothing assigned, sees no departments", async ({ browser }) => {
+  test("the invited coordinator joins and is already assigned to the department chosen in the invitation", async ({ browser }) => {
     coord = await newContextPage(browser);
     await coord.goto(coordInvite);
     await expect(coord.getByText("Northfield Institute of Technology")).toBeVisible();
@@ -136,15 +137,17 @@ test.describe.serial("college administrator console", () => {
     await coord.getByLabel("Password").fill(coordPassword);
     await coord.getByRole("button", { name: "Sign in" }).click();
     await expectOn(coord, "/coordinator");
-    await expect(coord.getByText("You are not assigned to any department yet")).toBeVisible();
-    await expect(coord.getByRole("list", { name: "Your departments" })).toHaveCount(0);
+    await expect(coord.getByText("You are not assigned to any department yet")).toHaveCount(0);
+    const mine = coord.getByRole("list", { name: "Your departments" });
+    await expect(mine.getByRole("listitem")).toHaveCount(1);
+    await expect(mine).toContainText("CSE");
   });
 
-  test("assigning departments makes exactly those visible to the coordinator — and no others", async () => {
+  test("assigning more departments makes exactly those visible to the coordinator — and no others", async () => {
     await admin.goto("/college/staff?q=Casey");
     await admin.getByRole("link", { name: "Casey Coordinator" }).click();
-    await expect(admin.getByText("Not assigned to any department")).toBeVisible();
-    for (const label of [/CSE —/, /ECE —/]) {
+    await expect(admin.getByText("Not assigned to any department")).toHaveCount(0); // CSE came with the invitation
+    for (const label of [/ECE —/]) {
       await admin.getByLabel("Assign to a department").selectOption({ label: await admin.locator("#departmentId option", { hasText: label }).first().innerText() });
       await admin.getByRole("button", { name: "Assign" }).click();
       await expect(admin.getByText("Coordinator assigned.")).toBeVisible();

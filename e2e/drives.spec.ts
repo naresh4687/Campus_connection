@@ -23,11 +23,31 @@ test.describe.serial("placement drives", () => {
     companyUrl = officer.url().split("?")[0];
   });
 
+  test("a drive can be created for a company that does not exist yet: it is added automatically, and the same name in other letters reuses it", async () => {
+    const draft = async (companyTyped: string) => {
+      await officer.goto("/placement/drives/new");
+      await officer.getByLabel("Company", { exact: true }).fill(companyTyped);
+      await officer.getByLabel("Job title").fill("Associate Engineer");
+      await officer.getByLabel("Employment type").selectOption("FULL_TIME");
+      await officer.getByLabel("GEN").check();
+      await officer.getByLabel("2026", { exact: true }).check();
+      await officer.getByRole("button", { name: "Create draft" }).click();
+      await officer.waitForURL(/\/placement\/drives\/[0-9a-f-]{36}\?created=1$/);
+    };
+    await officer.goto("/placement/companies?q=Brand%20New%20Hiring");
+    await expect(officer.getByRole("link", { name: "Brand New Hiring Co" })).toHaveCount(0);
+    await draft("Brand New Hiring Co");
+    await expect(officer.getByText("Brand New Hiring Co").first()).toBeVisible();
+    await draft("brand new hiring co");                                                   // different letters, same company
+    await officer.goto("/placement/companies?q=Brand%20New%20Hiring");
+    await expect(officer.getByRole("link", { name: "Brand New Hiring Co" })).toHaveCount(1);
+  });
+
   test("a draft needs a company, title and type; invalid criteria are refused with kept values; a valid draft previews exactly what students will read", async () => {
     await officer.goto("/placement/drives/new");
     await officer.getByRole("button", { name: "Create draft" }).click(); await settle(officer);
-    for (const f of ["companyId", "title", "type"]) await expect(officer.locator(`#${f}-error`)).toBeVisible();
-    await officer.getByLabel("Company", { exact: true }).selectOption({ label: "Drive Test Technologies" });
+    for (const f of ["companyName", "title", "type"]) await expect(officer.locator(`#${f}-error`)).toBeVisible();
+    await officer.getByLabel("Company", { exact: true }).fill("Drive Test Technologies");
     await officer.getByLabel("Job title").fill("Graduate Engineer Trainee");
     await officer.getByLabel("Employment type").selectOption("FULL_TIME");
     await officer.getByLabel("Minimum CGPA").fill("10.5");
@@ -75,7 +95,7 @@ test.describe.serial("placement drives", () => {
     await officer.getByRole("button", { name: "Save draft" }).click();
     await expect(officer.getByText("Draft saved.")).toBeVisible();
     await officer.getByRole("button", { name: "Publish drive" }).click();
-    await expect(officer.getByText("Drive published. Eligible students can now see it.")).toBeVisible();
+    await expect(officer.getByText(/Drive published\. \d+ eligible students? can register now\./)).toBeVisible();
     await officer.reload();
     await expect(officer.getByRole("heading", { name: "Edit draft" })).toHaveCount(0);   // frozen
     await expect(officer.getByText("Published drives are frozen")).toBeVisible();
@@ -119,12 +139,12 @@ test.describe.serial("placement drives", () => {
     await officer.goto(companyUrl);
     await expect(officer.getByRole("list", { name: "Company drives" })).toContainText("Graduate Engineer Trainee (Revised)");
     await officer.getByRole("link", { name: "Create a drive" }).click();
-    await expect(officer.getByLabel("Company", { exact: true })).toHaveValue(/[0-9a-f-]{36}/);   // company preselected
+    await expect(officer.getByLabel("Company", { exact: true })).toHaveValue("Drive Test Technologies");   // company preselected
   });
 
   test("an inactive company cannot be used for drives, including one already drafted", async () => {
     await officer.goto("/placement/drives/new");
-    await officer.getByLabel("Company", { exact: true }).selectOption({ label: "Drive Test Technologies" });
+    await officer.getByLabel("Company", { exact: true }).fill("Drive Test Technologies");
     await officer.getByLabel("Job title").fill("Intern");
     await officer.getByLabel("Employment type").selectOption("INTERNSHIP");
     await officer.getByLabel("GEN").check(); await officer.getByLabel("2026", { exact: true }).check();

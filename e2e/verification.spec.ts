@@ -65,6 +65,7 @@ test.describe.serial("academic records and verification", () => {
     await admin.goto("/college/staff");
     await admin.getByLabel("Email", { exact: true }).fill("sec.coord@e2e.test");
     await admin.getByLabel("Role", { exact: true }).last().selectOption("COORDINATOR");
+    await admin.getByLabel("Department", { exact: true }).selectOption({ label: "SEC · Security Studies" });
     await admin.getByRole("button", { name: "Create invitation" }).click();
     const cLink = await admin.getByTestId("invite-link-panel").getByLabel("One-time link").inputValue();
     secCoord = await newPage(browser);
@@ -76,11 +77,6 @@ test.describe.serial("academic records and verification", () => {
     await secCoord.getByLabel("Email").fill("sec.coord@e2e.test"); await secCoord.getByLabel("Password").fill(pw);
     await secCoord.getByRole("button", { name: "Sign in" }).click();
     await expectOn(secCoord, "/coordinator");
-    await admin.goto("/college/staff?q=Sec%20Coordinator");
-    await admin.getByRole("link", { name: "Sec Coordinator" }).click();
-    await admin.getByLabel("Assign to a department").selectOption({ label: "SEC — Security Studies" });
-    await admin.getByRole("button", { name: "Assign" }).click();
-    await expect(admin.getByText("Coordinator assigned.")).toBeVisible();
   });
 
   test("a student starts with nothing submitted; the form validates every field and keeps what was typed", async () => {

@@ -26,9 +26,11 @@ export function DriveForm({ id, initial, companies, departments }: { id?: string
 
       <fieldset className="space-y-4"><legend className="text-lg font-semibold">The role</legend>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Select key={`co-${v.companyId}`} id="companyId" label="Company" required defaultValue={v.companyId ?? ""} error={e.companyId}>
-            <option value="" disabled>Choose…</option>{companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-          </Select>
+          <div>
+            <Field id="companyName" label="Company" required maxLength={150} list="company-options" autoComplete="off" defaultValue={v.companyName} error={e.companyName}
+              hint={companies.length ? "Start typing to pick an existing company, or type a new name. New companies are added automatically." : "Type the company name. It is added to your companies automatically."} />
+            <datalist id="company-options">{companies.map((c) => <option key={c.id} value={c.name} />)}</datalist>
+          </div>
           <Field id="title" label="Job title" required maxLength={150} defaultValue={v.title} error={e.title} />
         </div>
         <div className="grid gap-4 sm:grid-cols-3">

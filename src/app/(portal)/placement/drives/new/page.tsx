@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Card } from "@/components/ui/card";
 import { requireRole } from "@/server/auth/session";
 import { driveFormOptions } from "@/server/drives/queries";
 import { aiConfig } from "@/server/config";
@@ -15,9 +14,7 @@ export default async function NewDrive({ searchParams }: { searchParams: Promise
     <div className="space-y-6">
       <p className="text-sm"><Link href="/placement/drives" className="underline">← Drives</Link></p>
       <h1 className="text-2xl font-semibold tracking-tight">Create a drive</h1>
-      {companies.length === 0 ? <Card><p className="text-sm">There are no active companies. <Link href="/placement/companies/new" className="underline">Add a company</Link> first.</p></Card> : (
-        <NewDriveFlow aiEnabled={aiConfig().enabled} companies={companies} departments={departments} initial={{ companyId: companies.some((c) => c.id === company) ? company! : "" }} />
-      )}
+      <NewDriveFlow aiEnabled={aiConfig().enabled} companies={companies} departments={departments} initial={{ companyName: companies.find((c) => c.id === company)?.name ?? "" }} />
     </div>
   );
 }

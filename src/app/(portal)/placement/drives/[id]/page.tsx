@@ -32,7 +32,7 @@ export default async function DrivePage({ params, searchParams }: { params: Prom
   const counts = draft0(d.status) ? null : await driveCounts(s, id);
   const draft = d.status === "DRAFT";
   const initial: Record<string, string> = {
-    companyId: d.company_id, title: d.job_title, description: d.job_description ?? "", location: d.location ?? "", type: d.employment_type, ctc: d.ctc_lpa ?? "", ctcNote: d.ctc_note ?? "", bond: d.bond_details ?? "",
+    companyName: d.company_name, title: d.job_title, description: d.job_description ?? "", location: d.location ?? "", type: d.employment_type, ctc: d.ctc_lpa ?? "", ctcNote: d.ctc_note ?? "", bond: d.bond_details ?? "",
     qualification: d.qualification ?? "", openings: d.openings === null ? "" : String(d.openings), deadline: isoToIstInput(d.application_deadline), interview: d.interview_details ?? "", instructions: d.instructions ?? "",
     minCgpa: c.min_cgpa ?? "", minTenth: c.min_tenth ?? "", minTwelfth: c.min_twelfth ?? "", minDiploma: c.min_diploma ?? "", maxBacklogs: c.max_active_backlogs === null ? "" : String(c.max_active_backlogs),
     maxArrears: c.max_historical_arrears === null ? "" : String(c.max_historical_arrears), departments: departments.map((x) => x.id).join(","), years: c.passing_years.join(","), degrees: c.degrees.join(","),
@@ -40,7 +40,7 @@ export default async function DrivePage({ params, searchParams }: { params: Prom
   return (
     <div className="space-y-6">
       <p className="text-sm"><Link href="/placement/drives" className="underline">← Drives</Link></p>
-      {notice ? <Alert kind="success">{({ published: "Drive published. Eligible students can now see it.", unpublished: "Drive unpublished. It is a draft again and hidden from students.", closed: "Drive closed.", archived: "Drive archived." } as Record<string, string>)[notice]}</Alert> : null}
+      {notice ? <Alert kind="success">{({ published: `Drive published. ${counts ? counts.eligible : 0} eligible student${counts?.eligible === 1 ? "" : "s"} can register now. Students in the selected departments, passing years and degrees have been notified.`, unpublished: "Drive unpublished. It is a draft again and hidden from students.", closed: "Drive closed.", archived: "Drive archived." } as Record<string, string>)[notice]}</Alert> : null}
       {created ? <Alert kind="success">Draft created. Review it, then publish when it is complete.</Alert> : null}
       <div className="flex flex-wrap items-center gap-3"><h1 className="text-2xl font-semibold tracking-tight">{d.job_title}</h1><span className="text-muted">{d.company_name}</span><StatusBadge value={TONE[d.status]} label={DRIVE_STATUS_LABEL[d.status]} /></div>
       <Card title="Status"><Lifecycle id={d.id} status={d.status} />

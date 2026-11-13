@@ -37,17 +37,19 @@ test.describe.serial("college sign-up link, approval, separate sign-in pages", (
   });
   test.afterAll(async () => { for (const p of open) await p.context().close(); await closeAppDb(); });
 
-  test("sign-in starts with a clear choice: student or college staff", async ({ browser }) => {
+  test("sign-in is one full page: a Student / College staff switch and the form together; old links still work", async ({ browser }) => {
     const p = await newPage(browser);
     await p.goto("/login");
-    await expect(p.getByRole("link", { name: /I am a student/ })).toBeVisible();
-    await expect(p.getByRole("link", { name: /I work at a college/ })).toBeVisible();
-    await p.getByRole("link", { name: /I am a student/ }).click();
     await expect(p.getByRole("heading", { name: "Student sign in" })).toBeVisible();
-    await p.getByRole("link", { name: "College staff? Sign in here" }).click();
+    await expect(p.getByLabel("Email")).toBeVisible();                                      // no extra step before the form
+    await p.getByRole("button", { name: "College staff" }).click();
     await expect(p.getByRole("heading", { name: "College sign in" })).toBeVisible();
+    await expect(p.getByRole("button", { name: "College staff" })).toHaveAttribute("aria-pressed", "true");
     const a11y = await new AxeBuilder({ page: p }).withTags(TAGS).analyze();
     expect(a11y.violations.map((v) => v.id)).toEqual([]);
+    await p.goto("/login/student?welcome=1");
+    await expect(p).toHaveURL(/\/login\?welcome=1$/);
+    await expect(p.getByText("Your account is ready.")).toBeVisible();
   });
 
   test("the administrator gets one shareable link, with copy and WhatsApp buttons, and can see the switch state", async () => {
@@ -156,6 +158,7 @@ test.describe.serial("college sign-up link, approval, separate sign-in pages", (
     await admin.goto("/college/staff");
     await admin.getByLabel("Email", { exact: true }).fill(`invited.${uniqueRef}@e2e.test`);
     await admin.getByLabel("Role", { exact: true }).last().selectOption("COORDINATOR");
+    await admin.getByLabel("Department", { exact: true }).selectOption({ index: 1 });
     await admin.getByRole("button", { name: "Create invitation" }).click();
     const invite = await admin.getByTestId("invite-link-panel").getByLabel("One-time link").inputValue();
     const p = await newPage(browser, "ntfA");                                              // this browser is signed in as a student

@@ -15,11 +15,26 @@ import { requireRole, withSession } from "../auth/session";
 import { aiConfig } from "../config";
 import { driveFormOptions } from "./queries";
 
-const SCALARS = ["companyId", "title", "description", "location", "type", "ctc", "ctcNote", "bond", "qualification", "openings", "deadline", "interview", "instructions", "minCgpa", "minTenth", "minTwelfth", "minDiploma", "maxBacklogs", "maxArrears"] as const;
+const SCALARS = ["companyName", "title", "description", "location", "type", "ctc", "ctcNote", "bond", "qualification", "openings", "deadline", "interview", "instructions", "minCgpa", "minTenth", "minTwelfth", "minDiploma", "maxBacklogs", "maxArrears"] as const;
 const refresh = () => revalidatePath("/placement", "layout");
 const arr = (ids: (string | number)[], cast: string) => (ids.length ? sql`ARRAY[${sql.join(ids.map((x) => sql`${x}::${sql.raw(cast)}`))}]::${sql.raw(cast)}[]` : sql`'{}'::${sql.raw(cast)}[]`);
 
 async function officer() { await assertSameOrigin(); return requireRole("PLACEMENT_OFFICER"); }
+
+type Tx = Parameters<Parameters<typeof withSession>[1]>[0];
+
+/**
+ * The drive form takes a company NAME. An existing company (matched ignoring upper/lower case) is reused; an unknown name is added through the
+ * same audited function as the Companies page, with just the name (details can be filled in there later). All inside the drive's transaction.
+ */
+async function resolveCompany(t: Tx, name: string): Promise<string> {
+  const found = (await sql<{ id: string; status: string }>`SELECT id, status FROM companies WHERE name = ${name}::citext`.execute(t)).rows[0];
+  if (found) {
+    if (found.status !== "ACTIVE") throw Object.assign(new Error("This company is marked inactive. Reactivate it on the Companies page, or use a different name."), { code: "22023" });
+    return found.id;
+  }
+  return (await sql<{ id: string }>`SELECT placement.create_company(${name}, null, null, null, null, null, null, null) AS id`.execute(t)).rows[0].id;
+}
 
 export async function saveDriveAction(_p: ActionState, fd: FormData): Promise<ActionState> {
   const s = await officer();
@@ -34,10 +49,13 @@ export async function saveDriveAction(_p: ActionState, fd: FormData): Promise<Ac
   const v = r.data;
   let savedId = "";
   try {
-    savedId = await withSession(s, async (t) => (await sql<{ id: string }>`SELECT placement.save_drive(${id?.data ?? null}::uuid, ${v.companyId}::uuid, ${v.title}, ${v.description ?? null}, ${v.location ?? null}, ${v.type}, ${v.ctc ?? null}::numeric, ${v.ctcNote ?? null},
+    savedId = await withSession(s, async (t) => {
+      const companyId = await resolveCompany(t, v.companyName);
+      return (await sql<{ id: string }>`SELECT placement.save_drive(${id?.data ?? null}::uuid, ${companyId}::uuid, ${v.title}, ${v.description ?? null}, ${v.location ?? null}, ${v.type}, ${v.ctc ?? null}::numeric, ${v.ctcNote ?? null},
       ${v.bond ?? null}, ${v.qualification ?? null}, ${v.openings ?? null}::int, ${v.deadline ? istToIso(v.deadline) : null}::timestamptz, ${v.interview ?? null}, ${v.instructions ?? null},
       ${arr(v.departments, "uuid")}, ${arr(v.years, "int")}, ${arr(v.degrees, "text")}, ${v.minCgpa ?? null}::numeric, ${v.minTenth ?? null}::numeric, ${v.minTwelfth ?? null}::numeric, ${v.minDiploma ?? null}::numeric,
-      ${v.maxBacklogs ?? null}::int, ${v.maxArrears ?? null}::int) AS id`.execute(t)).rows[0].id);
+      ${v.maxBacklogs ?? null}::int, ${v.maxArrears ?? null}::int) AS id`.execute(t)).rows[0].id;
+    });
   } catch (e) {
     return { error: dbMessage(e), values: keep };
   }

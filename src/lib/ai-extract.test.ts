@@ -61,14 +61,16 @@ describe("verifyExtraction accepts only what the announcement supports", () => {
 describe("toFormValues maps to what exists and never invents ids", () => {
   it("maps company and departments by name/code; reports what could not be matched", () => {
     const { values, notes } = toFormValues(verifyExtraction(TEXT, ex({ departments: { value: ["CSE", "ECE"], quote: "B.E. CSE and ECE" } })).accepted, ctx);
-    expect(values).toMatchObject({ companyId: "c1", title: "Graduate Engineer Trainee", type: "FULL_TIME", ctc: "6.5", openings: "10", deadline: "2099-03-04T17:00", minCgpa: "7.5", maxBacklogs: "0", years: "2026", departments: "d1,d2" });
+    expect(values).toMatchObject({ companyName: "Acme Robotics", title: "Graduate Engineer Trainee", type: "FULL_TIME", ctc: "6.5", openings: "10", deadline: "2099-03-04T17:00", minCgpa: "7.5", maxBacklogs: "0", years: "2026", departments: "d1,d2" });
     expect(notes).toEqual([]);
     const t2 = toFormValues({ company: "Unknown Corp", departments: ["Textiles"] }, ctx);
-    expect(t2.values.companyId).toBeUndefined(); expect(t2.values.departments).toBeUndefined(); expect(t2.notes).toHaveLength(2);
+    expect(t2.values.companyName).toBe("Unknown Corp"); // a new company is fine: it is created when the drive is saved
+    expect(t2.values.departments).toBeUndefined(); expect(t2.notes).toHaveLength(1);
+    expect(toFormValues({ company: "  acme   ROBOTICS " }, ctx).values.companyName).toBe("Acme Robotics"); // an existing company keeps its saved spelling
   });
   it("never sets anything that decides eligibility or publishes: there is no status, eligibility or publish field in its output", () => {
     const { values } = toFormValues(verifyExtraction(TEXT, ex()).accepted, ctx);
-    for (const k of Object.keys(values)) expect(["companyId", "title", "location", "type", "ctc", "openings", "deadline", "minCgpa", "minTenth", "minTwelfth", "minDiploma", "maxBacklogs", "description", "years", "departments"]).toContain(k);
+    for (const k of Object.keys(values)) expect(["companyName", "title", "location", "type", "ctc", "openings", "deadline", "minCgpa", "minTenth", "minTwelfth", "minDiploma", "maxBacklogs", "description", "years", "departments"]).toContain(k);
   });
 });
 

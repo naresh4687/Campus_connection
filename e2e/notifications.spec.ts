@@ -13,7 +13,7 @@ test.describe.serial("in-app notifications", () => {
 
   async function publishDrive(title: string) {
     await officer.goto("/placement/drives/new");
-    await officer.getByLabel("Company", { exact: true }).selectOption({ label: "Notify Test Co" });
+    await officer.getByLabel("Company", { exact: true }).fill("Notify Test Co");
     await officer.getByLabel("Job title").fill(title);
     await officer.getByLabel("Employment type").selectOption("FULL_TIME");
     await officer.getByLabel("Openings").fill("2");

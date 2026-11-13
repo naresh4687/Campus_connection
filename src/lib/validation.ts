@@ -69,7 +69,12 @@ export const departmentSchema = z.object({
 });
 
 export const STAFF_ROLES = ["PLACEMENT_OFFICER", "COORDINATOR"] as const;
-export const staffInviteSchema = z.object({ email: emailField, role: z.enum(STAFF_ROLES, "Choose a role.") });
+export const staffInviteSchema = z
+  .object({ email: emailField, role: z.enum(STAFF_ROLES, "Choose a role."), departmentId: z.string().optional() })
+  .superRefine((v, ctx) => {
+    if (v.role !== "COORDINATOR") return;
+    if (!v.departmentId || !z.uuid().safeParse(v.departmentId).success) ctx.addIssue({ code: "custom", path: ["departmentId"], message: "Choose the department this coordinator will look after." });
+  });
 
 export const collegeProfileSchema = z.object({
   address: clean(500, 5),

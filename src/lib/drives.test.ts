@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { criteriaLines, driveFormSchema, isoToIstInput, istToIso, yearOptions } from "./drives";
 
-const ok = { companyId: "3f2b8c1e-5d4a-4e7b-9c1a-0b2d3e4f5a6b", title: "Software Engineer", type: "FULL_TIME", departments: [], years: [], degrees: [] };
+const ok = { companyName: "Acme Robotics", title: "Software Engineer", type: "FULL_TIME", departments: [], years: [], degrees: [] };
 
 describe("driveFormSchema", () => {
   it("only company, title and type are required for a draft; blanks are undefined, never zero", () => {
@@ -14,7 +14,7 @@ describe("driveFormSchema", () => {
   });
   it.each([
     ["no title", { title: " " }], ["bad type", { type: "VOLUNTEER" }], ["CGPA above 10", { minCgpa: "10.5" }], ["3 decimals", { minCgpa: "7.555" }], ["negative", { minTenth: "-1" }], ["percentage above 100", { minTwelfth: "101" }],
-    ["fractional backlogs", { maxBacklogs: "1.5" }], ["zero openings", { openings: "0" }], ["bad deadline", { deadline: "tomorrow" }], ["unknown degree", { degrees: ["PhD"] }], ["bad company id", { companyId: "x" }], ["CTC above 1000", { ctc: "1001" }],
+    ["fractional backlogs", { maxBacklogs: "1.5" }], ["zero openings", { openings: "0" }], ["bad deadline", { deadline: "tomorrow" }], ["unknown degree", { degrees: ["PhD"] }], ["no company name", { companyName: " " }], ["one-letter company name", { companyName: "A" }], ["CTC above 1000", { ctc: "1001" }],
   ])("rejects %s", (_l, over) => { expect(driveFormSchema.safeParse({ ...ok, ...over }).success).toBe(false); });
 });
 

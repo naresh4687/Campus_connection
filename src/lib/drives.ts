@@ -34,7 +34,7 @@ export function isoToIstInput(iso: Date | string | null): string {
 }
 
 export const driveFormSchema = z.object({
-  companyId: z.uuid("Choose a company."),
+  companyName: z.string().trim().min(2, "Enter the company name.").max(150, "At most 150 characters."),
   title: z.string().trim().min(2, "Enter the job title.").max(150),
   description: text(4000), location: z.preprocess(blank, z.string().trim().min(2, "At least 2 characters.").max(150).optional()),
   type: z.enum(EMPLOYMENT_TYPES.map((t) => t.value) as [string, ...string[]], "Choose an employment type."),

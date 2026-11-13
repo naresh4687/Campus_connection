@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
+import { NextSteps } from "@/components/ui/next-steps";
 import { fmtDate } from "@/lib/format";
 import { requireRole } from "@/server/auth/session";
 import { companyStats } from "@/server/companies/queries";
@@ -27,7 +28,7 @@ export default async function PlacementHome() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold tracking-tight">Placement overview</h1>
-      {todo.length > 0 ? <Card title="Needs your attention"><ul className="space-y-1 text-sm" aria-label="Needs your attention">{todo.map((t) => <li key={t.text}><Link href={t.href} className="underline">{t.text}</Link></li>)}</ul></Card> : null}
+      <NextSteps items={todo} />
       <section aria-labelledby="dr" className="space-y-3">
         <h2 id="dr" className="text-lg font-semibold">Drives</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

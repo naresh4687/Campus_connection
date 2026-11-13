@@ -8,7 +8,7 @@ import { EmptyState, Table, Td } from "@/components/ui/table";
 import { fmtDateTime } from "@/lib/format";
 import { requireRole } from "@/server/auth/session";
 import { revokeInvitationAction } from "@/server/college/actions";
-import { listStaff } from "@/server/college/queries";
+import { listDepartments, listStaff } from "@/server/college/queries";
 import { InviteStaffForm } from "./invite-form";
 
 export const metadata = { title: "Staff — CampusConnect" };
@@ -23,6 +23,7 @@ export default async function StaffPage({ searchParams }: { searchParams: Promis
   const status = sp.status === "ACTIVE" || sp.status === "DISABLED" ? sp.status : undefined;
   const page = parsePage(sp.page);
   const { rows, total, pending } = await listStaff(s, { q, role, status, page });
+  const departments = (await listDepartments(s)).filter((d) => d.status === "ACTIVE").map((d) => ({ id: d.id, label: `${d.code} · ${d.name}` }));
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold tracking-tight">Staff</h1>
@@ -61,7 +62,7 @@ export default async function StaffPage({ searchParams }: { searchParams: Promis
           <ul className="divide-y divide-border">
             {pending.map((i) => (
               <li key={i.id} className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm">
-                <span><span className="font-medium">{i.email}</span> <span className="text-muted">· {ROLE_LABEL[i.role]} · expires {fmtDateTime(i.expires_at)}</span></span>
+                <span><span className="font-medium">{i.email}</span> <span className="text-muted">· {ROLE_LABEL[i.role]}{i.department ? ` (${i.department})` : ""} · expires {fmtDateTime(i.expires_at)}</span></span>
                 <ActionButton action={revokeInvitationAction} fields={{ id: i.id }} label="Revoke" pendingLabel="Revoking…" small />
               </li>
             ))}
@@ -69,7 +70,7 @@ export default async function StaffPage({ searchParams }: { searchParams: Promis
         )}
       </Card>
 
-      <Card title="Invite staff"><InviteStaffForm /></Card>
+      <Card title="Invite staff"><InviteStaffForm departments={departments} /></Card>
     </div>
   );
 }

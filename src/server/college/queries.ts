@@ -52,10 +52,10 @@ export async function listStaff(s: SessionUser, f: { q?: string; role?: string; 
         COALESCE((SELECT array_agg(d.code::text ORDER BY d.code) FROM coordinator_assignments a JOIN departments d ON d.id = a.department_id
                    WHERE a.user_id = u.id AND a.ended_at IS NULL), '{}') AS departments
       FROM users u ${w} ORDER BY u.role, u.full_name, u.id LIMIT ${PAGE_SIZE} OFFSET ${(f.page - 1) * PAGE_SIZE}`.execute(t)).rows;
-    const pending = (await sql<{ id: string; email: string; role: string; expires_at: Date; created_at: Date }>`
-      SELECT id, email::text AS email, role, expires_at, created_at FROM invitations
-      WHERE role IN ('PLACEMENT_OFFICER', 'COORDINATOR') AND accepted_at IS NULL AND revoked_at IS NULL AND expires_at > now()
-      ORDER BY created_at DESC LIMIT 100`.execute(t)).rows;
+    const pending = (await sql<{ id: string; email: string; role: string; expires_at: Date; created_at: Date; department: string | null }>`
+      SELECT i.id, i.email::text AS email, i.role, i.expires_at, i.created_at, d.name::text AS department FROM invitations i LEFT JOIN departments d ON d.id = i.department_id
+      WHERE i.role IN ('PLACEMENT_OFFICER', 'COORDINATOR') AND i.accepted_at IS NULL AND i.revoked_at IS NULL AND i.expires_at > now()
+      ORDER BY i.created_at DESC LIMIT 100`.execute(t)).rows;
     return { rows, total, pending };
   });
 }

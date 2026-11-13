@@ -23,7 +23,7 @@ test.describe.serial("rounds, results and release", () => {
     await officer.getByRole("button", { name: "Add company" }).click();
     await officer.waitForURL(/\/placement\/companies\/[0-9a-f-]{36}\?created=1$/);
     await officer.goto("/placement/drives/new");
-    await officer.getByLabel("Company", { exact: true }).selectOption({ label: "Rounds Test Labs" });
+    await officer.getByLabel("Company", { exact: true }).fill("Rounds Test Labs");
     await officer.getByLabel("Job title").fill("Platform Engineer");
     await officer.getByLabel("Employment type").selectOption("FULL_TIME");
     await officer.getByLabel("Minimum CGPA").fill("7");

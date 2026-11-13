@@ -95,17 +95,17 @@ export async function unassignCoordinatorAction(_p: ActionState, fd: FormData): 
 // ───────────── staff ─────────────
 export async function inviteStaffAction(_p: ActionState, fd: FormData): Promise<ActionState> {
   const s = await admin();
-  const values = { email: str(fd, "email", 300), role: str(fd, "role", 40) };
+  const values = { email: str(fd, "email", 300), role: str(fd, "role", 40), departmentId: str(fd, "departmentId", 60) };
   const parsed = staffInviteSchema.safeParse(values);
   if (!parsed.success) return { error: "Please correct the highlighted fields.", fieldErrors: firstErrors(parsed.error), values };
   const token = newToken();
   try {
-    await withSession(s, (t) => sql`SELECT auth.create_invitation(${parsed.data.email}, ${parsed.data.role}, ${s.collegeId}::uuid, ${hashToken(token)}, ${INVITE_TTL_SECONDS})`.execute(t));
+    await withSession(s, (t) => sql`SELECT auth.create_staff_invitation(${parsed.data.email}, ${parsed.data.role}, ${s.collegeId}::uuid, ${hashToken(token)}, ${INVITE_TTL_SECONDS}, ${parsed.data.role === "COORDINATOR" ? parsed.data.departmentId! : null}::uuid)`.execute(t));
   } catch (e) {
     return { error: dbMessage(e), values };
   }
   refresh();
-  return { ok: "Invitation created.", invite: { link: await invitationLink(token), email: parsed.data.email, expires: "expires in 7 days" }, values: { role: parsed.data.role } };
+  return { ok: "Invitation created.", invite: { link: await invitationLink(token), email: parsed.data.email, expires: "expires in 7 days" }, values: { role: parsed.data.role, departmentId: parsed.data.departmentId ?? "" } };
 }
 
 export async function revokeInvitationAction(_p: ActionState, fd: FormData): Promise<ActionState> {

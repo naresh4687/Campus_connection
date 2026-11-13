@@ -367,6 +367,7 @@ test.describe.serial("student management", () => {
     await admin.goto("/college/staff");
     await admin.getByLabel("Email", { exact: true }).fill("roster.coord@e2e.test");
     await admin.getByLabel("Role", { exact: true }).last().selectOption("COORDINATOR");
+    await admin.getByLabel("Department", { exact: true }).selectOption({ label: "STU · Students Test Dept" });
     await admin.getByRole("button", { name: "Create invitation" }).click();
     const link = await admin.getByTestId("invite-link-panel").getByLabel("One-time link").inputValue();
     coord = await newPage(browser);
@@ -380,16 +381,6 @@ test.describe.serial("student management", () => {
     await coord.getByLabel("Password").fill(coordPassword);
     await coord.getByRole("button", { name: "Sign in" }).click();
     await expectOn(coord, "/coordinator");
-
-    await coord.goto("/coordinator/students");
-    await expect(coord.getByText("No students", { exact: true })).toBeVisible();                              // nothing assigned yet
-    expect((await coord.goto(existingUrl.replace(ORIGIN, "").replace("/college/", "/coordinator/")))?.status()).toBe(404);
-
-    await admin.goto("/college/staff?q=Roster");
-    await admin.getByRole("link", { name: "Roster Coordinator" }).click();
-    await admin.getByLabel("Assign to a department").selectOption({ label: "STU — Students Test Dept" });
-    await admin.getByRole("button", { name: "Assign" }).click();
-    await expect(admin.getByText("Coordinator assigned.")).toBeVisible();
 
     await coord.goto("/coordinator");
     await expect(coord.getByTestId("students-STU")).toContainText("32 students");

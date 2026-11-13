@@ -23,12 +23,13 @@ export default async function AcceptInvitePage({ searchParams }: { searchParams:
     ? (await sql<{ email: string; role: string; college_name: string }>`SELECT * FROM auth.peek_invitation(${hashToken(token)})`.execute(db())).rows[0]
     : undefined;
 
+  const department = invite && isWellFormedToken(token) ? (await sql<{ d: string | null }>`SELECT auth.peek_invitation_department(${hashToken(token)}) AS d`.execute(db())).rows[0]?.d : null;
   return (
     <AuthShell title="Accept your invitation">
       {invite && isWellFormedToken(token) ? (
         <div className="space-y-4">
           <p className="text-sm">
-            You were invited to join <strong>{invite.college_name}</strong> as a {ROLE_LABEL[invite.role] ?? "member"} using{" "}
+            You were invited to join <strong>{invite.college_name}</strong> as a {ROLE_LABEL[invite.role] ?? "member"}{department ? <> for the <strong>{department}</strong> department</> : null} using{" "}
             <strong>{invite.email}</strong>.
           </p>
           {current ? <Alert kind="info">This browser is currently signed in as {current.fullName}. Creating this account will sign that account out.</Alert> : null}

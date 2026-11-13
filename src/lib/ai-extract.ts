@@ -94,8 +94,9 @@ export function toFormValues(accepted: Verified["accepted"], ctx: { companies: {
   const values: Record<string, string> = {}; const notes: string[] = [];
   const s = (k: string, v: unknown) => { if (v !== undefined && v !== null) values[k] = String(v); };
   if (typeof accepted.company === "string") {
+    // An existing company keeps its saved spelling; a new name is simply typed in and the company is created when the drive is saved.
     const hit = ctx.companies.find((c) => norm(c.name) === norm(accepted.company as string));
-    if (hit) values.companyId = hit.id; else notes.push(`Company “${accepted.company}” is not an active company in your college. Add it first, then choose it in the form.`);
+    values.companyName = hit ? hit.name : (accepted.company as string);
   }
   s("title", accepted.title); s("location", accepted.location); s("type", accepted.employmentType); s("ctc", accepted.ctcLpa); s("openings", accepted.openings); s("deadline", accepted.deadline);
   s("minCgpa", accepted.minCgpa); s("minTenth", accepted.minTenth); s("minTwelfth", accepted.minTwelfth); s("minDiploma", accepted.minDiploma); s("maxBacklogs", accepted.maxBacklogs);

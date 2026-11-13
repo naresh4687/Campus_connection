@@ -299,3 +299,48 @@ describe("a suspended college loses all department authority", () => {
     expect(await visibleDepts(admin)).toEqual([d.id]);
   });
 });
+
+describe("coordinator invitations name a department", () => {
+  const FAKE_HASH = "$argon2id$v=19$m=19456,t=2,p=1$ZmFrZQ$ZmFrZQ";
+  const inviteTo = (a: Actor | null, email: string, role: string, college: string, dept: string | null, token = newToken()) =>
+    call(a, sql`SELECT auth.create_staff_invitation(${email}, ${role}, ${college}::uuid, ${hashToken(token)}, 3600, ${dept}::uuid)`);
+  const activeAssignments = async (user: string) =>
+    (await inspect<{ department_id: string }>("SELECT department_id FROM coordinator_assignments WHERE user_id = $1 AND ended_at IS NULL", [user])).map((r) => r.department_id);
+
+  it("accepting a coordinator invitation assigns the chosen department in the same step, and the audit log records it", async () => {
+    const d = await mkDept(w.A.admin); const email = emailFor("cdept"); const token = newToken();
+    await inviteTo(w.A.admin, email, "COORDINATOR", w.A.collegeId, d.id, token);
+    const peek = await sql<{ d: string }>`SELECT auth.peek_invitation_department(${hashToken(token)}) AS d`.execute(db());
+    expect(peek.rows[0].d).toBe(d.name);
+    const r = await sql<{ user_id: string }>`SELECT * FROM auth.accept_invitation(${hashToken(token)}, 'New Coordinator', ${FAKE_HASH})`.execute(db());
+    expect(await activeAssignments(r.rows[0].user_id)).toEqual([d.id]);
+    const audit = await inspect<{ n: string }>("SELECT count(*)::text AS n FROM audit_log WHERE action = 'COORDINATOR_ASSIGNED' AND entity_id = $1", [d.id]);
+    expect(Number(audit[0].n)).toBeGreaterThanOrEqual(1);
+  });
+
+  it("a coordinator invitation without a department, or with another college's or an inactive department, is refused", async () => {
+    const own = await mkDept(w.A.admin); const other = await mkDept(w.B.admin); const off = await mkDept(w.A.admin);
+    await as(w.A.admin, (t) => sql`SELECT college.set_department_status(${off.id}::uuid, 'INACTIVE')`.execute(t));
+    expect(await code(inviteTo(w.A.admin, emailFor("nd1"), "COORDINATOR", w.A.collegeId, null))).toBe("22023");
+    expect(await code(inviteTo(w.A.admin, emailFor("nd2"), "COORDINATOR", w.A.collegeId, other.id))).toBe("22023");
+    expect(await code(inviteTo(w.A.admin, emailFor("nd3"), "COORDINATOR", w.A.collegeId, off.id))).toBe("22023");
+    expect(await code(inviteTo(w.A.admin, emailFor("nd4"), "COORDINATOR", w.A.collegeId, own.id))).toBe("OK");
+  });
+
+  it("only coordinator invitations may name a department, and only a college admin may use the function", async () => {
+    const d = await mkDept(w.A.admin);
+    expect(await code(inviteTo(w.A.admin, emailFor("od1"), "PLACEMENT_OFFICER", w.A.collegeId, d.id))).toBe("22023");
+    expect(await code(inviteTo(w.A.admin, emailFor("od2"), "PLACEMENT_OFFICER", w.A.collegeId, null))).toBe("OK");
+    for (const who of [null, w.A.officer, w.A.coordinator, w.A.student]) {
+      expect(await code(inviteTo(who, emailFor("od3"), "COORDINATOR", w.A.collegeId, d.id)), `${who?.role ?? "anonymous"}`).toBe(DENIED);
+    }
+  });
+
+  it("if the department is deactivated before the invitation is accepted, the account is still created, just unassigned", async () => {
+    const d = await mkDept(w.A.admin); const email = emailFor("cdeact"); const token = newToken();
+    await inviteTo(w.A.admin, email, "COORDINATOR", w.A.collegeId, d.id, token);
+    await as(w.A.admin, (t) => sql`SELECT college.set_department_status(${d.id}::uuid, 'INACTIVE')`.execute(t));
+    const r = await sql<{ user_id: string }>`SELECT * FROM auth.accept_invitation(${hashToken(token)}, 'Late Coordinator', ${FAKE_HASH})`.execute(db());
+    expect(await activeAssignments(r.rows[0].user_id)).toEqual([]);
+  });
+});
