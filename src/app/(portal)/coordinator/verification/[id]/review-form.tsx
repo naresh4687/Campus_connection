@@ -16,7 +16,7 @@ export function ReviewForms({ id, pending }: { id: string; pending: boolean }) {
     <div className="space-y-4">
       {done ? <Alert kind="success">{done}</Alert> : null}
       {pending && !done ? (
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid gap-6 @3xl:grid-cols-2">
           <form action={verify} className="space-y-3 rounded-xl border border-border p-4">
             <h3 className="font-medium">Verify</h3>
             {vState?.error ? <Alert kind="error">{vState.error}</Alert> : null}

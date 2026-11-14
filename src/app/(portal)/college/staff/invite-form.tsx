@@ -17,7 +17,7 @@ export function InviteStaffForm({ departments }: { departments: { id: string; la
     <div className="space-y-4">
       <form action={action} className="max-w-xl space-y-4" noValidate>
         {state?.error ? <Alert kind="error">{state.error}</Alert> : null}
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 @xl:grid-cols-2">
           <Field id="email" label="Email" type="email" required defaultValue={state?.invite ? "" : v.email} error={e.email} />
           <Select id="role" label="Role" required value={role || (v.role ?? "")} onChange={(ev) => setRole(ev.target.value)} error={e.role}>
             <option value="" disabled>Choose…</option>

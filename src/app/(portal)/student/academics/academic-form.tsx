@@ -19,15 +19,15 @@ export function AcademicForm({ initial, updating, evidence }: { initial: Academi
     <form action={action} className="max-w-2xl space-y-4" noValidate>
       {state?.error ? <Alert kind="error">{state.error}</Alert> : null}
       {state?.ok ? <Alert kind="success">{state.ok}</Alert> : null}
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 @xl:grid-cols-2">
         <Field id="cgpa" label="Overall CGPA (out of 10)" inputMode="decimal" required defaultValue={v.cgpa} error={e.cgpa} hint="Up to two decimal places." />
         <Field id="tenth" label="10th percentage" inputMode="decimal" required defaultValue={v.tenth} error={e.tenth} />
       </div>
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 @xl:grid-cols-2">
         <Field id="twelfth" label="12th percentage" inputMode="decimal" defaultValue={v.twelfth} error={e.twelfth} hint="Leave blank if you came through a diploma." />
         <Field id="diploma" label="Diploma percentage" inputMode="decimal" defaultValue={v.diploma} error={e.diploma} hint="Leave blank if you did not do a diploma." />
       </div>
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 @xl:grid-cols-2">
         <Field id="backlogs" label="Active backlogs" inputMode="numeric" required defaultValue={v.backlogs} error={e.backlogs} hint="Type 0 if you have none." />
         <Field id="arrears" label="Historical arrears" inputMode="numeric" required defaultValue={v.arrears} error={e.arrears} hint="Total arrears you have had in the past, including cleared ones. Type 0 if none." />
       </div>

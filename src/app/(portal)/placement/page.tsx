@@ -31,7 +31,7 @@ export default async function PlacementHome() {
       <NextSteps items={todo} />
       <section aria-labelledby="dr" className="space-y-3">
         <h2 id="dr" className="text-lg font-semibold">Drives</h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 @xl:grid-cols-2 @3xl:grid-cols-4">
           <StatTile label="Draft drives" value={ds.draft} href="/placement/drives?status=DRAFT" />
           <StatTile label="Published drives" value={ds.published} href="/placement/drives?status=PUBLISHED" />
           <StatTile label="Closed drives" value={ds.closed} href="/placement/drives?status=CLOSED" />
@@ -41,7 +41,7 @@ export default async function PlacementHome() {
       <Card title="Placement funnel"><FunnelView f={f} /><p className="mt-2 text-xs text-muted">Only verified placements count as placements. <Link href="/placement/placements" className="underline">Open placements</Link>.</p></Card>
       <section aria-labelledby="co" className="space-y-3">
         <h2 id="co" className="text-lg font-semibold">Companies</h2>
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 @xl:grid-cols-3">
           <Stat label="Companies" value={c.total} href="/placement/companies" />
           <Stat label="Active companies" value={c.active} href="/placement/companies?status=ACTIVE" />
           <Stat label="Inactive companies" value={c.inactive} href="/placement/companies?status=INACTIVE" />

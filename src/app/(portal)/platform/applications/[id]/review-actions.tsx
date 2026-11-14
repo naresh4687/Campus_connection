@@ -33,7 +33,7 @@ export function ReviewActions({ id, status, officialEmail, collegeId }: { id: st
       ) : null}
 
       {status === "UNDER_REVIEW" ? (
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid gap-6 @3xl:grid-cols-2">
           <form action={approve} className="space-y-3 rounded-xl border border-border p-4">
             <h3 className="font-medium">Approve</h3>
             {approveState?.error ? <Alert kind="error">{approveState.error}</Alert> : null}

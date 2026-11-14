@@ -44,7 +44,7 @@ export default async function CollegeDashboard() {
 
       <section aria-labelledby="dep" className="space-y-3">
         <h2 id="dep" className="text-lg font-semibold">Departments</h2>
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 @xl:grid-cols-3">
           <Stat label="Active departments" value={d.dep.active} href="/college/departments" />
           <Stat label="Inactive departments" value={d.dep.inactive} href="/college/departments" />
           <Stat label="Departments without a coordinator" value={d.dep.without_coordinator} />
@@ -53,7 +53,7 @@ export default async function CollegeDashboard() {
 
       <section aria-labelledby="stu" className="space-y-3">
         <h2 id="stu" className="text-lg font-semibold">Students</h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 @xl:grid-cols-2 @3xl:grid-cols-4">
           <Stat label="Students" value={d.stu.total} href="/college/students" />
           <Stat label="Not yet invited" value={d.stu.not_invited} href="/college/students?account=NOT_INVITED" />
           <Stat label="Invited" value={d.stu.invited} href="/college/students?account=INVITED" />
@@ -63,7 +63,7 @@ export default async function CollegeDashboard() {
 
       <section aria-labelledby="acad" className="space-y-3">
         <h2 id="acad" className="text-lg font-semibold">Academic verification</h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 @xl:grid-cols-2 @3xl:grid-cols-4">
           <Stat label="Verified records" value={d.ac.verified} href="/college/students?academics=VERIFIED" />
           <Stat label="Awaiting review" value={d.ac.pending} href="/college/students?academics=PENDING" />
           <Stat label="Needs correction" value={d.ac.rejected} href="/college/students?academics=REJECTED" />
@@ -73,7 +73,7 @@ export default async function CollegeDashboard() {
 
       <section aria-labelledby="plc" className="space-y-3">
         <h2 id="plc" className="text-lg font-semibold">Placement</h2>
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 @xl:grid-cols-3">
           <Stat label="Published drives" value={ds.published} href="/college/drives?status=PUBLISHED" />
           <Stat label="Closed drives" value={ds.closed} href="/college/drives?status=CLOSED" />
           <Stat label="Draft drives" value={ds.draft} href="/college/drives?status=DRAFT" />
@@ -84,7 +84,7 @@ export default async function CollegeDashboard() {
 
       <section aria-labelledby="staff" className="space-y-3">
         <h2 id="staff" className="text-lg font-semibold">Staff</h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 @xl:grid-cols-2 @3xl:grid-cols-4">
           <Stat label="Placement officers" value={d.staff.officers} href="/college/staff?role=PLACEMENT_OFFICER" hint={d.staff.officers_disabled ? `${d.staff.officers_disabled} disabled` : undefined} />
           <Stat label="Coordinators" value={d.staff.coordinators} href="/college/staff?role=COORDINATOR" hint={d.staff.coordinators_disabled ? `${d.staff.coordinators_disabled} disabled` : undefined} />
           <Stat label="Coordinators without a department" value={d.staff.unassigned} />

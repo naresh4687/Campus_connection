@@ -24,7 +24,7 @@ export default async function CoordinatorHome() {
       </Card>
       <section aria-labelledby="part" className="space-y-3">
         <h2 id="part" className="text-lg font-semibold">Drive participation in your departments</h2>
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 @xl:grid-cols-3">
           <StatTile label="Active registrations" value={part.registrations} />
           <StatTile label="Students registered" value={part.students} />
           <StatTile label="Drives with your students" value={part.drives} />

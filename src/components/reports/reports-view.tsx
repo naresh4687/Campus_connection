@@ -31,7 +31,7 @@ export function ReportsView({ base, data, year }: { base: string; data: Data; ye
 
       <section aria-labelledby="kpi" className="space-y-3">
         <h2 id="kpi" className="text-lg font-semibold">Headline numbers</h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 @xl:grid-cols-2 @3xl:grid-cols-4">
           <StatTile label="Students in scope" value={totals.students} />
           <StatTile label="Students placed" value={totals.placed} hint="Verified placements only" />
           <StatTile label="Placement rate" value={pctText(totals.placed, totals.students)} hint="Placed ÷ students in scope" />

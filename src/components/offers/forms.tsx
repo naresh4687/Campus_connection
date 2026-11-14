@@ -121,7 +121,7 @@ export function JoiningForm({ selectionId, proofId, initial }: { selectionId: st
     <form action={run} className="space-y-3">
       {hidden({ selectionId, ...(proofId ? { fileId: proofId } : {}) })}
       {state?.error ? <Alert kind="error">{state.error}</Alert> : null}
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-3 @xl:grid-cols-2">
         <div className="space-y-1"><label htmlFor="joinedOn" className="block text-sm font-medium">Date you joined</label><input id="joinedOn" name="joinedOn" type="date" defaultValue={v.joinedOn ?? ""} className={`${inputCls} w-full`} required /></div>
         <div className="space-y-1"><label htmlFor="designation" className="block text-sm font-medium">Designation (optional)</label><input id="designation" name="designation" maxLength={150} defaultValue={v.designation ?? ""} className={`${inputCls} w-full`} /></div>
       </div>

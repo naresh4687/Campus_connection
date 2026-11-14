@@ -20,7 +20,7 @@ export function DepartmentForm({ id, initial }: Props) {
       {state?.error ? <Alert kind="error">{state.error}</Alert> : null}
       {state?.ok ? <Alert kind="success">{state.ok}</Alert> : null}
       {id ? <input type="hidden" name="id" value={id} /> : null}
-      <div className="grid gap-4 sm:grid-cols-[1fr_9rem]">
+      <div className="grid gap-4 @xl:grid-cols-[1fr_9rem]">
         <Field id="name" label="Department name" required maxLength={100} defaultValue={state?.ok && !id ? "" : v.name} error={e.name} />
         <Field id="code" label="Code" required maxLength={12} defaultValue={state?.ok && !id ? "" : v.code} error={e.code} hint="e.g. CSE" />
       </div>

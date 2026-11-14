@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { cookies } from "next/headers";
 import { connection } from "next/server";
 import { THEME_COOKIE, parseTheme } from "@/lib/theme";
@@ -24,6 +24,9 @@ export const metadata: Metadata = {
   title: "CampusConnect",
   description: "College placement management platform for engineering colleges.",
 };
+
+// Zoom stays enabled (no maximumScale). viewportFit "cover" lets the layout use the safe-area insets on notched phones.
+export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover" };
 
 // Every page is rendered per request so the CSP nonce can be applied to its scripts and styles.
 export default async function RootLayout({ children }: LayoutProps<"/">) {

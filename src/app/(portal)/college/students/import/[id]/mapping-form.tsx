@@ -13,7 +13,7 @@ export function MappingForm({ id, headers, sample, initial, validated }: { id: s
       {state?.error ? <Alert kind="error">{state.error}</Alert> : null}
       <input type="hidden" name="id" value={id} />
       <p className="text-sm text-muted">Tell us which column of your file holds each field. We have guessed from the headers — check them. The first data row is shown to help.</p>
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 @xl:grid-cols-2">
         {STUDENT_FIELDS.map((f) => {
           const current = state?.values?.[`map_${f.key}`] ?? (initial[f.key] === null ? "" : String(initial[f.key]));
           return (

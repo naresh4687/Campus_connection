@@ -18,7 +18,7 @@ export function RoundForm({ driveId, id, initial }: { driveId: string; id?: stri
     <form action={run} className="space-y-3" noValidate>
       <input type="hidden" name="driveId" value={driveId} />{id ? <input type="hidden" name="id" value={id} /> : null}
       {state?.error ? <Alert kind="error">{state.error}</Alert> : null}
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-3 @xl:grid-cols-2">
         <Field id={`name-${p}`} name="name" label="Round name" maxLength={100} defaultValue={v.name} error={e.name} required />
         <Select key={`kind-${p}-${v.kind}`} id={`kind-${p}`} name="kind" label="Round type" defaultValue={v.kind ?? ""} error={e.kind} required><option value="">Choose…</option>{ROUND_KINDS.map((k) => <option key={k.value} value={k.value}>{k.label}</option>)}</Select>
         <Field id={`at-${p}`} name="at" label="Date and time (IST)" type="datetime-local" defaultValue={v.at} error={e.at} />

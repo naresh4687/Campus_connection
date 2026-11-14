@@ -19,7 +19,7 @@ export function ProfileForm({ initial }: { initial: Initial }) {
       {state?.error ? <Alert kind="error">{state.error}</Alert> : null}
       {state?.ok ? <Alert kind="success">{state.ok}</Alert> : null}
       <Field id="address" label="Address" required maxLength={500} defaultValue={v.address} error={e.address} />
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 @xl:grid-cols-2">
         <Select key={`state-${v.state}`} id="state" label="State / union territory" required defaultValue={v.state} error={e.state}>
           <option value="" disabled>Choose…</option>
           {INDIAN_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
@@ -27,7 +27,7 @@ export function ProfileForm({ initial }: { initial: Initial }) {
         <Field id="district" label="District" required maxLength={100} defaultValue={v.district} error={e.district} />
       </div>
       <Field id="website" label="Website" type="url" required defaultValue={v.website} error={e.website} />
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 @xl:grid-cols-2">
         <Field id="contactPerson" label="Contact person" required maxLength={120} defaultValue={v.contactPerson} error={e.contactPerson} />
         <Field id="phone" label="Phone" type="tel" required defaultValue={v.phone} error={e.phone} />
       </div>

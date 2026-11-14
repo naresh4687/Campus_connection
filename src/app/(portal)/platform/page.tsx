@@ -27,7 +27,7 @@ export default async function PlatformOverview() {
 
       <section aria-labelledby="apps" className="space-y-3">
         <h2 id="apps" className="text-lg font-semibold">College applications</h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 @xl:grid-cols-2 @3xl:grid-cols-4">
           <Stat label="Awaiting review" value={o.apps.submitted} href="/platform/applications?status=SUBMITTED" />
           <Stat label="Under review" value={o.apps.under_review} href="/platform/applications?status=UNDER_REVIEW" />
           <Stat label="Approved" value={o.apps.approved} href="/platform/applications?status=APPROVED" />
@@ -37,14 +37,14 @@ export default async function PlatformOverview() {
 
       <section aria-labelledby="cols" className="space-y-3">
         <h2 id="cols" className="text-lg font-semibold">Colleges</h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 @xl:grid-cols-2 @3xl:grid-cols-4">
           <Stat label="Colleges" value={o.cols.total} href="/platform/colleges" />
           <Stat label="Access active" value={o.cols.active} href="/platform/colleges?access=ACTIVE" />
           <Stat label="Access suspended" value={o.cols.suspended} href="/platform/colleges?access=SUSPENDED" />
           <Stat label="Without an administrator" value={o.collegesWithoutAdmin} hint="Active colleges whose administrator has not accepted an invitation" />
         </div>
         <Card title="Commercial status (manual record)">
-          <dl className="grid grid-cols-2 gap-x-6 gap-y-1 text-sm sm:grid-cols-5">
+          <dl className="grid grid-cols-2 gap-x-6 gap-y-1 text-sm @2xl:grid-cols-5">
             {([["NOT_STARTED", o.cols.not_started], ["PENDING", o.cols.pending], ["ACTIVE", o.cols.commercial_active], ["EXPIRED", o.cols.expired], ["SUSPENDED", o.cols.commercial_suspended]] as const).map(([k, n]) => (
               <div key={k}><dt className="text-muted">{humanize(k)}</dt><dd className="text-lg font-semibold tabular-nums">{n}</dd></div>
             ))}
@@ -52,7 +52,7 @@ export default async function PlatformOverview() {
         </Card>
       </section>
 
-      <section aria-labelledby="inbox" className="grid gap-4 sm:grid-cols-2">
+      <section aria-labelledby="inbox" className="grid gap-4 @xl:grid-cols-2">
         <h2 id="inbox" className="sr-only">Inbox and activity</h2>
         <Stat label="New inquiries" value={o.newInquiries} href="/platform/inquiries?status=NEW" />
         <Card title="Recent platform activity">

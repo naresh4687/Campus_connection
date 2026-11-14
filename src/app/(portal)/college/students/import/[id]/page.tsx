@@ -62,7 +62,7 @@ export default async function ImportDetailPage({ params, searchParams }: { param
         <>
           <section aria-labelledby="sum" className="space-y-3">
             <h2 id="sum" className="text-lg font-semibold">3. Review before importing</h2>
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid gap-4 @xl:grid-cols-3">
               <Stat label="Ready to import" value={imp.valid_rows} testid="stat-ready" />
               <Stat label="Duplicates (skipped)" value={imp.duplicate_rows} testid="stat-duplicates" />
               <Stat label="With problems (skipped)" value={imp.error_rows} testid="stat-problems" />
@@ -80,7 +80,7 @@ export default async function ImportDetailPage({ params, searchParams }: { param
       {committed ? (
         <section aria-labelledby="res" className="space-y-3">
           <h2 id="res" className="text-lg font-semibold">Result</h2>
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-4 @xl:grid-cols-3">
             <Stat label="Students created" value={imp.imported_rows} testid="stat-imported" />
             <Stat label="Duplicates (skipped)" value={imp.duplicate_rows} testid="stat-duplicates" />
             <Stat label="With problems (skipped)" value={imp.error_rows} testid="stat-problems" />
