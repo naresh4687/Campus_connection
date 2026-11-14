@@ -62,7 +62,7 @@ export default async function Home() {
 
           {/* Illustration only: shows the kind of screen, not real data. */}
           <div className="rise relative mx-auto w-full max-w-md [--i:3]" aria-hidden="true">
-            <div className="rounded-3xl border border-border bg-surface p-5 shadow-soft">
+            <div className="relative rounded-3xl border border-border bg-surface p-5 shadow-soft">
               <div className="flex items-center justify-between">
                 <p className="font-display text-lg font-bold">Software Engineer</p>
                 <span className="rounded-full border border-success/40 px-2.5 py-0.5 text-xs font-medium text-success">Open</span>
@@ -78,11 +78,11 @@ export default async function Home() {
                   <div key={r} className="flex items-center gap-3 rounded-xl border border-border px-3 py-2 text-sm"><span className={`h-2.5 w-2.5 rounded-full ${i === 0 ? "bg-success" : "bg-border"}`} />{r}</div>
                 ))}
               </div>
+              <div className="lift absolute -bottom-10 -left-4 hidden rounded-2xl border border-border bg-surface px-4 py-3 text-sm shadow-soft sm:block">
+                <p className="font-semibold">Offer verified</p><p className="text-xs text-muted">Joining confirmed with evidence</p>
+              </div>
             </div>
-            <div className="lift absolute -bottom-6 -left-4 hidden rounded-2xl border border-border bg-surface px-4 py-3 text-sm shadow-soft sm:block">
-              <p className="font-semibold">Offer verified</p><p className="text-xs text-muted">Joining confirmed with evidence</p>
-            </div>
-            <p className="mt-8 text-center text-xs text-muted">Illustration of a drive screen</p>
+            <p className="mt-14 text-center text-xs text-muted">Illustration of a drive screen</p>
           </div>
         </div>
       </section>
