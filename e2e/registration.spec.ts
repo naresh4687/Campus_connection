@@ -30,7 +30,7 @@ test.describe.serial("eligibility and registration", () => {
     await officer.getByLabel("Minimum CGPA").fill("7");
     await officer.getByLabel("Openings").fill("5");
     await officer.getByLabel("Application deadline (IST)").fill(inDays(10));
-    await officer.getByLabel("REG").check();
+    await officer.getByLabel("REG", { exact: true }).check();
     await officer.getByLabel("2026", { exact: true }).check();
     await officer.getByRole("button", { name: "Create draft" }).click();
     await officer.waitForURL(/\/placement\/drives\/[0-9a-f-]{36}\?created=1$/);

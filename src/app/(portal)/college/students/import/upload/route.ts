@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { CSV_LIMITS, CsvError, parseCsv } from "@/lib/csv";
 import { appBaseUrl } from "@/server/auth/links";
 import { allow } from "@/server/auth/rate-limit";
+import { uploadSizeStatus } from "@/lib/upload-size";
 import { assertSameOrigin } from "@/server/auth/request";
 import { getSession, withSession } from "@/server/auth/session";
 
@@ -22,8 +23,8 @@ export async function POST(req: Request) {
   if (!s || s.role !== "COLLEGE_ADMIN") return new NextResponse("Forbidden", { status: 403 });
   if (!(await allow("csv-upload", s.userId, 20, 3600))) return fail("Too many uploads. Please wait a while and try again.");
 
-  const declared = Number(req.headers.get("content-length") ?? 0);
-  if (declared > CSV_LIMITS.bytes + 64 * 1024) return new NextResponse("Payload too large", { status: 413 });
+  const tooBig = uploadSizeStatus(req.headers.get("content-length"), CSV_LIMITS.bytes + 64 * 1024);
+  if (tooBig) return new NextResponse(tooBig === 411 ? "Length required" : "Payload too large", { status: tooBig });
 
   let file: FormDataEntryValue | null;
   try {

@@ -18,7 +18,7 @@ test.describe.serial("in-app notifications", () => {
     await officer.getByLabel("Employment type").selectOption("FULL_TIME");
     await officer.getByLabel("Openings").fill("2");
     await officer.getByLabel("Application deadline (IST)").fill(inDays(9));
-    await officer.getByLabel("REG").check();
+    await officer.getByLabel("REG", { exact: true }).check();
     await officer.getByLabel("2026", { exact: true }).check();
     await officer.getByRole("button", { name: "Create draft" }).click();
     await officer.waitForURL(/\/placement\/drives\/[0-9a-f-]{36}\?created=1$/);
@@ -82,8 +82,11 @@ test.describe.serial("in-app notifications", () => {
   test("mark all as read clears the bell; other people's notifications cannot be opened; anonymous visitors go to login", async () => {
     await student.goto("/notifications");
     const href = (await student.getByRole("list", { name: "Notifications" }).getByRole("link").first().getAttribute("href"))!;
-    expect(href).toMatch(/^\/notifications\/[0-9a-f-]{36}\/open$/);
-    expect((await officer.request.get(href, { maxRedirects: 0, failOnStatusCode: false })).status()).toBe(404);   // not the officer's notification
+    expect(href).toMatch(/^\/notifications\/[0-9a-f-]{36}\/open\?as=student$/);                              // the link stays with the student's account
+    const bare = href.split("?")[0];
+    expect((await officer.request.get(bare, { maxRedirects: 0, failOnStatusCode: false })).status()).toBe(404);   // not the officer's notification
+    const scoped = await officer.request.get(href, { maxRedirects: 0, failOnStatusCode: false });                 // the officer has no student session at all
+    expect(scoped.status()).toBe(303); expect(scoped.headers().location).toContain("/login");
     const anon = await (await student.context().browser()!.newContext()).request.get(href, { maxRedirects: 0, failOnStatusCode: false });
     expect(anon.status()).toBe(303); expect(anon.headers().location).toContain("/login");
     await student.getByRole("button", { name: "Mark all as read" }).click();

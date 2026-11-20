@@ -1,5 +1,7 @@
 import { sql, type RawBuilder } from "kysely";
 import { PAGE_SIZE } from "@/components/ui/pagination";
+import { COMPLETION_BANDS, isBand } from "@/lib/completion";
+import { isCareerCode, type CareerCategory } from "@/lib/career";
 import { likePattern, uuidSchema } from "@/lib/validation";
 import { withSession, type SessionUser } from "../auth/session";
 
@@ -8,7 +10,7 @@ import { withSession, type SessionUser } from "../auth/session";
 const n = (v: unknown) => Number(v ?? 0);
 const where = (c: RawBuilder<unknown>[]) => (c.length ? sql`WHERE ${sql.join(c, sql` AND `)}` : sql``);
 
-export type StudentRow = { id: string; register_number: string; full_name: string; college_email: string; dept_code: string; dept_name: string; degree: string; passing_year: number; has_account: boolean; account_status: string; academic_status: string; update_pending: boolean };
+export type StudentRow = { id: string; register_number: string; full_name: string; college_email: string; dept_code: string; dept_name: string; degree: string; passing_year: number; has_account: boolean; account_status: string; academic_status: string; update_pending: boolean; career_preference: string; completion: number };
 
 const BASE = sql`
   SELECT s.id, s.register_number::text AS register_number, s.full_name, s.college_email::text AS college_email, s.department_id, d.code::text AS dept_code, d.name::text AS dept_name,
@@ -16,11 +18,12 @@ const BASE = sql`
          CASE WHEN u.status = 'DISABLED' THEN 'DISABLED' WHEN s.user_id IS NOT NULL THEN 'ACTIVE'
               WHEN EXISTS (SELECT 1 FROM invitations i WHERE i.student_id = s.id AND i.accepted_at IS NULL AND i.revoked_at IS NULL AND i.expires_at > now()) THEN 'INVITED'
               ELSE 'NOT_INVITED' END AS account_status,
-         coalesce(sas.status, 'NOT_SUBMITTED') AS academic_status, coalesce(sas.update_pending, false) AS update_pending
+         coalesce(sas.status, 'NOT_SUBMITTED') AS academic_status, coalesce(sas.update_pending, false) AS update_pending, s.career_preference, coalesce(pc.score, 0)::int AS completion
   FROM students s JOIN departments d ON d.id = s.department_id LEFT JOIN users u ON u.id = s.user_id
-  LEFT JOIN student_academic_status sas ON sas.student_id = s.id`;
+  LEFT JOIN student_academic_status sas ON sas.student_id = s.id
+  LEFT JOIN student_profile_completion pc ON pc.student_id = s.id`;
 
-export type StudentFilters = { q?: string; dept?: string; year?: string; account?: string; academics?: string; page: number };
+export type StudentFilters = { q?: string; dept?: string; year?: string; account?: string; academics?: string; career?: string; completion?: string; page: number };
 
 function conditions(f: StudentFilters, admin: boolean) {
   const c: RawBuilder<unknown>[] = [];
@@ -29,6 +32,8 @@ function conditions(f: StudentFilters, admin: boolean) {
   if (f.year && /^\d{4}$/.test(f.year)) c.push(sql`b.passing_year = ${Number(f.year)}`);
   if (admin && ["NOT_INVITED", "INVITED", "ACTIVE", "DISABLED"].includes(f.account ?? "")) c.push(sql`b.account_status = ${f.account}`);
   if (['NOT_SUBMITTED', 'PENDING', 'VERIFIED', 'REJECTED'].includes(f.academics ?? '')) c.push(sql`b.academic_status = ${f.academics}`);
+  if (isCareerCode(f.career)) c.push(sql`b.career_preference = ${f.career}`);
+  if (isBand(f.completion)) c.push(sql`b.completion BETWEEN ${COMPLETION_BANDS[f.completion].min} AND ${COMPLETION_BANDS[f.completion].max}`);
   return c;
 }
 
@@ -59,7 +64,7 @@ export async function listInvitable(s: SessionUser, f: StudentFilters, limit: nu
 export type StudentDetail = {
   id: string; department_id: string; dept_code: string; dept_name: string; register_number: string; full_name: string; college_email: string; personal_email: string | null; phone: string | null;
   degree: string; specialization: string | null; admission_year: number; passing_year: number; has_account: boolean; created_at: Date; updated_at: Date; import_id: string | null;
-  user_id: string | null; user_status: string | null; last_login_at: Date | null; invite_expires: Date | null;
+  user_id: string | null; user_status: string | null; last_login_at: Date | null; invite_expires: Date | null; career_preference: string;
 };
 
 export async function getStudent(s: SessionUser, id: string) {
@@ -67,7 +72,7 @@ export async function getStudent(s: SessionUser, id: string) {
     (await sql<StudentDetail>`
       SELECT st.id, st.department_id, d.code::text AS dept_code, d.name::text AS dept_name, st.register_number::text AS register_number, st.full_name, st.college_email::text AS college_email,
              st.personal_email::text AS personal_email, st.phone, st.degree, st.specialization, st.admission_year, st.passing_year, st.user_id IS NOT NULL AS has_account,
-             st.created_at, st.updated_at, st.import_id, st.user_id, u.status AS user_status, u.last_login_at,
+             st.created_at, st.updated_at, st.import_id, st.user_id, u.status AS user_status, u.last_login_at, st.career_preference,
              (SELECT max(i.expires_at) FROM invitations i WHERE i.student_id = st.id AND i.accepted_at IS NULL AND i.revoked_at IS NULL AND i.expires_at > now()) AS invite_expires
       FROM students st JOIN departments d ON d.id = st.department_id LEFT JOIN users u ON u.id = st.user_id WHERE st.id = ${id}`.execute(t)).rows[0] ?? null,
   );
@@ -82,7 +87,7 @@ export async function myStudentRecord(s: SessionUser) {
     (await sql<StudentDetail>`
       SELECT st.id, st.department_id, d.code::text AS dept_code, d.name::text AS dept_name, st.register_number::text AS register_number, st.full_name, st.college_email::text AS college_email,
              st.personal_email::text AS personal_email, st.phone, st.degree, st.specialization, st.admission_year, st.passing_year, true AS has_account, st.created_at, st.updated_at, st.import_id,
-             NULL::uuid AS user_id, NULL::text AS user_status, NULL::timestamptz AS last_login_at, NULL::timestamptz AS invite_expires
+             NULL::uuid AS user_id, NULL::text AS user_status, NULL::timestamptz AS last_login_at, NULL::timestamptz AS invite_expires, st.career_preference
       FROM students st JOIN departments d ON d.id = st.department_id`.execute(t)).rows[0] ?? null,
   );
 }
@@ -131,3 +136,33 @@ export async function importValidationContext(s: SessionUser, id: string) {
     return { status: imp.status, headers: imp.headers, rows, depts, existingRegisters: new Set(existing.map((x) => x.r)), existingEmails: new Set(existing.map((x) => x.e)) };
   });
 }
+
+/** The six career categories as this college shows them (labels and visibility applied by the database). */
+export async function careerCategories(s: SessionUser): Promise<CareerCategory[]> {
+  return withSession(s, async (t) => (await sql<CareerCategory>`SELECT code, label, active FROM students.career_categories()`.execute(t)).rows);
+}
+
+export type CareerHistoryRow = { id: string; previous: string; new_preference: string; reason: string; changed_by_name: string | null; changed_by_role: string; changed_at: string };
+/** The full path of one student's career preference, newest first. Visible only to those who can see the student (row-level security). */
+export async function careerHistory(s: SessionUser, studentId: string): Promise<CareerHistoryRow[]> {
+  return withSession(s, async (t) => (await sql<CareerHistoryRow>`
+    SELECT h.id::text AS id, h.previous, h.new_preference, h.reason, u.full_name AS changed_by_name, h.changed_by_role, h.changed_at::text AS changed_at
+      FROM career_preference_history h LEFT JOIN users u ON u.id = h.changed_by WHERE h.student_id = ${studentId}::uuid ORDER BY h.id DESC`.execute(t)).rows);
+}
+
+export type Completion = { contact: boolean; academics: boolean; semesters: boolean; document: boolean; career: boolean; achievement: boolean; score: number };
+
+/** One student's completion flags and score (their own, or one the viewer may see). Null when the viewer cannot see the student. */
+export async function completionFor(s: SessionUser, studentId?: string): Promise<Completion | null> {
+  return withSession(s, async (t) => (await (studentId
+    ? sql<Completion>`SELECT contact, academics, semesters, document, career, achievement, score::int AS score FROM student_profile_completion WHERE student_id = ${studentId}`
+    : sql<Completion>`SELECT contact, academics, semesters, document, career, achievement, score::int AS score FROM student_profile_completion`).execute(t)).rows[0] ?? null);
+}
+
+export type DriveHistoryRow = {
+  drive_id: string; company_name: string; job_title: string; registration_status: string; registered_at: Date; selected: boolean;
+  offer_status: string | null; offered_ctc_lpa: string | null; placement_status: string | null; joined_on: string | null;
+};
+/** Drive history and placement status for one student (administrator, or the coordinator of the student's department; anyone else gets no rows). */
+export const driveHistory = (s: SessionUser, studentId: string) => withSession(s, async (t) =>
+  (await sql<DriveHistoryRow>`SELECT drive_id, company_name, job_title, registration_status, registered_at, selected, offer_status, offered_ctc_lpa::text AS offered_ctc_lpa, placement_status, joined_on::text AS joined_on FROM students.drive_history(${studentId}::uuid)`.execute(t)).rows);

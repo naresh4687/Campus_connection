@@ -6,7 +6,7 @@ const TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"];
 const num = async (p: Page, label: string) => Number(await p.getByTestId(`stat-${label}`).innerText());
 const funnelOf = async (p: Page) => {
   const out: Record<string, number> = {};
-  for (const k of ["Selected", "Offers issued", "Offers accepted", "Joining recorded", "Verified placements"]) out[k] = Number(await p.getByLabel("Placement funnel").locator("div", { hasText: new RegExp(`^${k}`) }).locator("dd").innerText());
+  for (const k of ["Selected", "Offers issued", "Offers accepted", "Joining recorded", "Verified placements"]) out[k] = Number(await p.getByLabel("Placement funnel").getByTestId(`stat-${k}`).innerText());
   return out;
 };
 const noSideScroll = async (page: Page, path: string) => {
@@ -52,7 +52,7 @@ test.describe.serial("role dashboards show real numbers that reconcile with the 
 
   test("coordinator: participation counts are scoped numbers, consistent with each other", async () => {
     await coord.goto("/coordinator");
-    await expect(coord.getByRole("heading", { name: "Drive participation in your departments" })).toBeVisible();
+    await expect(coord.getByLabel("Drive participation in your departments")).toBeVisible();
     const regs = await num(coord, "Active registrations"); const studs = await num(coord, "Students registered"); const drives = await num(coord, "Drives with your students");
     expect(studs).toBeLessThanOrEqual(regs); expect(drives).toBeLessThanOrEqual(regs);
     expect(Number.isInteger(regs) && regs >= 0).toBe(true);
@@ -60,11 +60,10 @@ test.describe.serial("role dashboards show real numbers that reconcile with the 
 
   test("student: the summary matches the offers list; nothing to respond to once the offer was withdrawn", async () => {
     await student.goto("/student");
-    const summary = await student.getByTestId("drive-summary").innerText();
-    const m = summary.match(/(\d+) open drives? · (\d+) registered · (\d+) offers?/);
-    expect(m, summary).not.toBeNull();
+    const offers = Number(await student.getByTestId("stat-Offers").innerText());
+    for (const k of ["Open drives", "Registered"]) expect(Number.isInteger(Number(await student.getByTestId(`stat-${k}`).innerText())), k).toBe(true);
     await student.goto("/student/offers");
-    expect(await student.getByRole("row").count() - 1).toBe(Number(m![3]));
+    expect(await student.getByRole("row").count() - 1).toBe(offers);
     await student.goto("/student");
     // the offer was withdrawn, so there is nothing to respond to (other items, such as open drives, may legitimately be listed)
     await expect(student.getByRole("list", { name: "Needs your attention" })).not.toContainText("Respond to your offer");
@@ -86,7 +85,7 @@ for (const width of [360, 768]) {
     test("student", async ({ page }) => { await loginAs(page, "offB"); for (const p of ["/student", "/student/drives", "/student/offers"]) await noSideScroll(page, p); });
     test("administrator and coordinator", async ({ page }) => {
       await loginAs(page, "regAdmin"); for (const p of ["/college", "/college/drives", "/college/placements"]) await noSideScroll(page, p);
-      await page.context().clearCookies(); await loginAs(page, "regCoord"); await noSideScroll(page, "/coordinator");
+      await page.context().clearCookies(); await loginAs(page, "secCoord"); await noSideScroll(page, "/coordinator");
     });
   });
 }

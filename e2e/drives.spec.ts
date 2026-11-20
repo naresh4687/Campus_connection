@@ -1,6 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Browser, type Page } from "@playwright/test";
-import { expectOn, formAlert, loginAs } from "./helpers";
+import { expectOnSignIn, formAlert, loginAs } from "./helpers";
 
 const TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"];
 const settle = async (p: Page) => { await p.waitForLoadState("networkidle"); await p.waitForTimeout(300); };
@@ -172,11 +172,11 @@ test.describe.serial("placement drives", () => {
     await admin.getByRole("link", { name: "Graduate Engineer Trainee (Revised)" }).click();
     await expect(admin.getByRole("heading", { name: "Drive details" })).toBeVisible();
     await expect(admin.getByRole("button", { name: /Publish|Close|Archive|Unpublish|Save/ })).toHaveCount(0);
-    for (const path of ["/placement/drives", driveUrl.replace("http://127.0.0.1:3100", "")]) { await admin.goto(path); await expectOn(admin, "/college"); }
-    await officer.goto("/college/drives"); await expectOn(officer, "/placement");
+    for (const path of ["/placement/drives", driveUrl.replace("http://127.0.0.1:3100", "")]) { await admin.goto(path); await expectOnSignIn(admin, "college"); }   // each role has its own session: another role's pages ask for that sign-in
+    await officer.goto("/college/drives"); await expectOnSignIn(officer, "college");
     for (const key of ["studentX", "coordA"]) {
       const p = await newPage(browser); await loginAs(p, key); const home = p.url();
-      for (const path of ["/placement/drives", "/college/drives", driveUrl.replace("http://127.0.0.1:3100", "")]) { await p.goto(path); await expect(p).toHaveURL(home); }
+      for (const path of ["/placement/drives", "/college/drives", driveUrl.replace("http://127.0.0.1:3100", "")]) { await p.goto(path); await expectOnSignIn(p, "college"); void home; }   // a student is asked to sign in as staff
     }
     const b = await newPage(browser); await loginAs(b, "officerB");
     await b.goto("/placement/drives"); await expect(b.getByText("No drives found")).toBeVisible();

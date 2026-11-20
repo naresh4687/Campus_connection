@@ -4,6 +4,7 @@ import { sql } from "kysely";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { normalizeStudentRegistrationNumber } from "@/lib/normalize";
 import { DEGREES } from "@/lib/students";
 import { uuidSchema } from "@/lib/validation";
 import { dbMessage, firstErrors, GENERIC_ERROR, str, type ActionState } from "../action-utils";
@@ -19,7 +20,7 @@ const year = (label: string) => z.string().trim().regex(/^\d{4}$/, `Choose ${lab
 
 const joinSchema = z.object({
   fullName: z.string().trim().min(2, "Enter your full name.").max(120),
-  registerNumber: z.string().trim().regex(/^[A-Za-z0-9][A-Za-z0-9/._-]{2,29}$/, "Enter your register number (letters, digits, / . _ - only)."),
+  registerNumber: z.string().transform((v) => normalizeStudentRegistrationNumber(v) ?? v.normalize("NFKC").trim().toUpperCase()).pipe(z.string().regex(/^[A-Za-z0-9][A-Za-z0-9/._-]{2,29}$/, "Enter your register number (letters, digits, / . _ - only).")),
   collegeEmail: z.string().trim().toLowerCase().max(254).pipe(z.email("Enter your college email address.")),
   personalEmail: z.string().trim().toLowerCase().max(254).refine((v) => v === "" || z.email().safeParse(v).success, "Enter a valid email address, or leave this empty."),
   phone: z.string().trim().regex(/^[0-9+() -]{7,20}$/, "Enter your mobile number (digits, spaces, + and - only)."),

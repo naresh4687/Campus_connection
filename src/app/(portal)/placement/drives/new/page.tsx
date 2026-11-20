@@ -14,7 +14,7 @@ export default async function NewDrive({ searchParams }: { searchParams: Promise
     <div className="space-y-6">
       <p className="text-sm"><Link href="/placement/drives" className="underline">← Drives</Link></p>
       <h1 className="text-2xl font-semibold tracking-tight">Create a drive</h1>
-      <NewDriveFlow aiEnabled={aiConfig().enabled} companies={companies} departments={departments} initial={{ companyName: companies.find((c) => c.id === company)?.name ?? "" }} />
+      <NewDriveFlow modelOn={aiConfig().enabled} companies={companies} departments={departments} initial={{ companyName: companies.find((c) => c.id === company)?.name ?? "" }} />
     </div>
   );
 }

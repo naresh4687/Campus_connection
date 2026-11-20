@@ -1,6 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Browser, type Page } from "@playwright/test";
-import { expectOn, formAlert, loginAs, seed } from "./helpers";
+import { expectOn, formAlert, loginAs, seed, expectOnSignIn } from "./helpers";
+import { inspect } from "../db/tests/world";
 
 const ORIGIN = "http://127.0.0.1:3100";
 const settle = async (page: Page) => { await page.waitForLoadState("networkidle"); await page.waitForTimeout(300); };
@@ -60,8 +61,7 @@ test.describe.serial("student management", () => {
     await expect(admin.getByRole("row", { name: /studenta@e2e.test/ })).toBeVisible();
     await admin.goto("/college/students");
     const total = (await admin.getByTestId("page-summary").innerText()).match(/of (\d+)/)![1];
-    await admin.goto("/college");
-    expect(await stat(admin, "stat-Students")).toBe(Number(total));
+    expect(await stat(admin, "stat-Students")).toBe(Number(total));                    // the total at the top of the page equals the list's own count
   });
 
   test("adding a student: validation, creation, duplicates", async () => {
@@ -134,7 +134,7 @@ test.describe.serial("student management", () => {
     await student.getByLabel("Choose a password").fill(studentPassword);
     await student.getByLabel("Confirm password").fill(studentPassword);
     await student.getByRole("button", { name: "Create account" }).click();
-    await expectOn(student, "/login\\?welcome=1");
+    await expectOn(student, "/login/student\\?welcome=1");
     await student.getByLabel("Email").fill("exist001@students.e2e.test");
     await student.getByLabel("Password").fill(studentPassword);
     await student.getByRole("button", { name: "Sign in" }).click();
@@ -172,7 +172,7 @@ test.describe.serial("student management", () => {
   test("a student cannot open college or coordinator pages", async () => {
     for (const path of ["/college", "/college/students", "/college/students/import", existingUrl.replace(ORIGIN, ""), "/coordinator/students", "/platform"]) {
       await student.goto(path);
-      await expectOn(student, "/student");
+      await expectOnSignIn(student, path === "/platform" ? "platform" : "college");   // another area asks for its own sign-in; the student is never switched
     }
   });
 
@@ -323,7 +323,7 @@ test.describe.serial("student management", () => {
     await admin.goto("/college/departments");
     expect(Number(await admin.getByTestId("dept-students-STU").innerText())).toBe(32);      // 31 imported + EXIST001
     await admin.goto("/college");
-    await expect(admin.getByText("Not yet invited")).toBeVisible();
+    await expect(admin.getByTestId("stat-Not yet invited")).toBeVisible();
   });
 
   test("bulk invitation: links are produced once, downloadable as a safe CSV, and each works", async ({ browser }) => {
@@ -351,7 +351,7 @@ test.describe.serial("student management", () => {
     await p.getByLabel("Choose a password").fill(studentPassword);
     await p.getByLabel("Confirm password").fill(studentPassword);
     await p.getByRole("button", { name: "Create account" }).click();
-    await expectOn(p, "/login\\?welcome=1");
+    await expectOn(p, "/login/student\\?welcome=1");
 
     await admin.reload();
     expect(await stat(admin, "invitable-count")).toBe(0);                                     // nobody left to invite
@@ -376,7 +376,7 @@ test.describe.serial("student management", () => {
     await coord.getByLabel("Choose a password").fill(coordPassword);
     await coord.getByLabel("Confirm password").fill(coordPassword);
     await coord.getByRole("button", { name: "Create account" }).click();
-    await expectOn(coord, "/login\\?welcome=1");
+    await expectOn(coord, "/login/college\\?welcome=1");
     await coord.getByLabel("Email").fill("roster.coord@e2e.test");
     await coord.getByLabel("Password").fill(coordPassword);
     await coord.getByRole("button", { name: "Sign in" }).click();
@@ -393,6 +393,8 @@ test.describe.serial("student management", () => {
     await coord.getByRole("link", { name: "Existing Original" }).click();
     await expect(coord.getByRole("heading", { name: "Existing Original" })).toBeVisible();
     await expect(coord.getByText("Read-only.")).toBeVisible();
+    await expect(coord.getByRole("heading", { name: "Drive history and placement" })).toBeVisible();
+    await expect(coord.getByText("has not registered for any drive")).toBeVisible();
     // a student of a department that is NOT assigned to this coordinator does not exist for them
     await admin.goto("/college/students?q=studentA");
     const genHref = await admin.getByRole("link", { name: "Test studentA" }).getAttribute("href");
@@ -400,7 +402,7 @@ test.describe.serial("student management", () => {
     await coord.goto("/coordinator/students?dept=00000000-0000-4000-8000-000000000000");
     await expect(coord.getByText("No students", { exact: true })).toBeVisible();                              // a foreign/unknown department filter yields nothing, not an error
 
-    for (const path of ["/college/students", "/college/students/new", "/college/students/import"]) { await coord.goto(path); await expectOn(coord, "/coordinator"); }
+    for (const path of ["/college/students", "/college/students/new", "/college/students/import"]) { await coord.goto(path); await expectOnSignIn(coord, "college"); }   // an administrator's pages ask for the administrator's sign-in
 
     await admin.goto("/college/staff?q=Roster");        // unassigning removes the roster immediately
     await admin.getByRole("link", { name: "Roster Coordinator" }).click();
@@ -419,7 +421,7 @@ test.describe.serial("student management", () => {
     expect((await b.goto(existingUrl.replace(ORIGIN, "")))?.status()).toBe(404);
     expect((await b.goto(importUrl.replace(ORIGIN, "")))?.status()).toBe(404);
     expect((await b.request.get(importUrl.replace(ORIGIN, "") + "/report"))?.status()).toBe(404);
-    await b.goto("/college");
+    await b.goto("/college/students");
     expect(await stat(b, "stat-Students")).toBe(0);
   });
 
@@ -427,7 +429,7 @@ test.describe.serial("student management", () => {
     const p = await newPage(browser);
     await loginAs(p, "officerX");
     const home = p.url();
-    for (const path of ["/college/students", "/college/students/new", "/college/students/import", "/coordinator/students"]) { await p.goto(path); await expect(p).toHaveURL(home); }
+    for (const path of ["/college/students", "/college/students/new", "/college/students/import", "/coordinator/students"]) { await p.goto(path); await expectOnSignIn(p, "college"); void home; }   // each role has its own session: another role's pages ask for that sign-in
   });
 
   test("student pages pass the automated accessibility scan and fit a phone screen", async () => {
@@ -452,5 +454,22 @@ test.describe.serial("student management", () => {
       await page.setViewportSize({ width: 1280, height: 720 });
     }
     void seed;
+  });
+
+  test("register numbers are shown and stored in capitals however they are typed; names keep their case", async () => {
+    await admin.goto("/college/students/new");
+    const reg = admin.getByLabel("Register number");
+    await reg.pressSequentially("23ai-c9z");
+    await expect(reg).toHaveValue("23AI-C9Z");                                    // shown in capitals while typing
+    await admin.getByLabel("Full name").fill("Asha de Souza");
+    await admin.getByLabel("College email").fill("Norm.CASE@Students.E2E.test");
+    await admin.getByLabel("Department").selectOption({ label: "STU — Students Test Dept" }); await admin.getByLabel("Degree / course").selectOption("B.E.");
+    await admin.getByLabel("Admission year").fill("2022"); await admin.getByLabel("Passing year").fill("2026");
+    await admin.getByRole("button", { name: "Add student" }).click(); await settle(admin);
+    await expect(admin.getByRole("heading", { name: "Asha de Souza" })).toBeVisible();      // the name is not upper-cased
+    const [row] = await inspect<{ r: string; e: string }>("SELECT register_number::text AS r, college_email::text AS e FROM students WHERE full_name = 'Asha de Souza'");
+    expect(row.r).toBe("23AI-C9Z"); expect(row.e).toBe("norm.case@students.e2e.test");
+    await admin.goto("/college/students?q=23ai-c9z");                                       // a lower-case search finds the same record
+    await expect(admin.getByRole("link", { name: "Asha de Souza" })).toBeVisible();
   });
 });

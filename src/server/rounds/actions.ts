@@ -58,7 +58,7 @@ export async function setResultsAction(_p: ActionState, fd: FormData): Promise<A
   if (regs.length === 0) return { error: "Tick at least one student." };
   if (!regs.every((r) => uuidSchema.safeParse(r).success)) return { error: GENERIC_ERROR };
   try {
-    await withSession(s, (t) => sql`SELECT rounds.set_results(${round.data}::uuid, ${sql.raw(`ARRAY[${regs.map((r) => `'${r}'`).join(",")}]::uuid[]`)}, ${result.data}, ${str(fd, "note", 600) || null})`.execute(t));
+    await withSession(s, (t) => sql`SELECT rounds.set_results(${round.data}::uuid, ARRAY[${sql.join(regs.map((r) => sql`${r}::uuid`))}]::uuid[], ${result.data}, ${str(fd, "note", 600) || null})`.execute(t));
   } catch (e) {
     return { error: dbMessage(e), values: { note: str(fd, "note", 600) } };
   }

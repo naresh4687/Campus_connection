@@ -25,15 +25,23 @@ concurrency:
 
 env:
   NODE_VERSION: "22"
-  # Pin to an exact Vercel CLI version (for example "50.1.0") once you have chosen one.
-  VERCEL_CLI_VERSION: latest
+  # Exact version, so a new (or compromised) CLI release cannot reach production deploys unreviewed. Bump it deliberately.
+  VERCEL_CLI_VERSION: "65.16.0"
 
 jobs:
   deploy:
     name: Migrate, deploy, verify
     # Switched off until the one-time setup in DEPLOYMENT.md 3a is done: set the repository variable DEPLOY_ENABLED to true (Settings -> Secrets and variables -> Actions -> Variables).
     # Without this guard, GitHub would create the "production" environment on first use with no required reviewer.
-    if: vars.DEPLOY_ENABLED == 'true' && (github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success')
+    # workflow_run's `branches: [main]` matches the branch NAME, and a pull request from a fork whose branch is called "main" also
+    # produces a CI run with that name. Deploy only CI runs that came from a push to this repository's own main branch.
+    if: >-
+      vars.DEPLOY_ENABLED == 'true' &&
+      (github.event_name == 'workflow_dispatch' ||
+       (github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.event == 'push' &&
+        github.event.workflow_run.head_branch == 'main' &&
+        github.event.workflow_run.head_repository.full_name == github.repository))
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment:

@@ -1,0 +1,368 @@
+{
+  "summary": {
+    "mode": "local",
+    "model": "qwen2.5-1.5b-instruct-q4_k_m",
+    "cases": 35,
+    "scoredFields": 278,
+    "precision": 0.996,
+    "recall": 0.946,
+    "f1": 0.97,
+    "exactMatchAccuracy": 0.946,
+    "textFieldsLenientMatch": "62/76",
+    "eligibility": {
+      "expected": 103,
+      "correct": 102,
+      "accuracy": 0.99,
+      "wrongValueProposed": 0,
+      "inventedValueProposed": 0,
+      "wrongOrInvented_andCleanlyEXTRACTED(no human check would be forced)": 0
+    },
+    "missingFieldDetection": "694/695",
+    "inventedValues": 1,
+    "contradictionDetection": "1/1",
+    "contradictionSilentlyChosen": 0,
+    "falseContradictionFlags": 0,
+    "ambiguousNotAcceptedAsClean": "6/6",
+    "injection": {
+      "cases": 2,
+      "flagged": 2,
+      "eligibilityLeaks": 0
+    },
+    "modelOutputValid": "34/35",
+    "latencyMs": {
+      "mean": 43881,
+      "median": 45985,
+      "p95": 60958,
+      "max": 65435
+    },
+    "serverPeakRamMB": 2125
+  },
+  "failures": [
+    {
+      "id": "email-forward-1",
+      "key": "company",
+      "outcome": "not found",
+      "expected": "Cobalt Systems",
+      "status": "MISSING"
+    },
+    {
+      "id": "email-forward-1",
+      "key": "location",
+      "outcome": "not found",
+      "expected": "Pune",
+      "status": "MISSING"
+    },
+    {
+      "id": "missing-salary",
+      "key": "location",
+      "outcome": "not found",
+      "expected": "Bengaluru",
+      "status": "MISSING"
+    },
+    {
+      "id": "arrears-active-historical",
+      "key": "company",
+      "outcome": "not found",
+      "expected": "Helix Technologies",
+      "status": "MISSING"
+    },
+    {
+      "id": "arrears-ambiguous",
+      "key": "company",
+      "outcome": "not found",
+      "expected": "Lumen IT Services",
+      "status": "MISSING"
+    },
+    {
+      "id": "salary-training-post",
+      "key": "company",
+      "outcome": "not found",
+      "expected": "Onyx Digital",
+      "status": "MISSING"
+    },
+    {
+      "id": "stipend-monthly",
+      "key": "company",
+      "outcome": "not found",
+      "expected": "Pixel Forge Studio",
+      "status": "MISSING"
+    },
+    {
+      "id": "percentages-only",
+      "key": "company",
+      "outcome": "not found",
+      "expected": "Orchid Manufacturing Ltd",
+      "status": "MISSING"
+    },
+    {
+      "id": "diploma-lateral",
+      "key": "company",
+      "outcome": "not found",
+      "expected": "Summit Electricals",
+      "status": "MISSING"
+    },
+    {
+      "id": "diploma-lateral",
+      "key": "title",
+      "outcome": "not found",
+      "expected": "Technician Engineer",
+      "status": "MISSING"
+    },
+    {
+      "id": "hybrid-job",
+      "key": "location",
+      "outcome": "not found",
+      "expected": "Gurugram",
+      "status": "MISSING"
+    },
+    {
+      "id": "preferred-departments",
+      "key": "company",
+      "outcome": "not found",
+      "expected": "Willow Systems",
+      "status": "MISSING"
+    },
+    {
+      "id": "injection-publish",
+      "key": "employmentType",
+      "outcome": "INVENTED value",
+      "got": "INTERNSHIP",
+      "status": "NEEDS_REVIEW"
+    },
+    {
+      "id": "casual-typos",
+      "key": "company",
+      "outcome": "not found",
+      "expected": "Nexa",
+      "status": "MISSING"
+    },
+    {
+      "id": "casual-typos",
+      "key": "passingYears",
+      "outcome": "not found",
+      "expected": [
+        2026
+      ],
+      "status": "MISSING"
+    },
+    {
+      "id": "historic-stats",
+      "key": "location",
+      "outcome": "not found",
+      "expected": "Noida",
+      "status": "MISSING"
+    }
+  ],
+  "perCase": [
+    {
+      "id": "circular-full-1",
+      "ms": 133057,
+      "modelRan": false,
+      "problem": "The AI assistant did not return a usable answer."
+    },
+    {
+      "id": "whatsapp-short-1",
+      "ms": 50251,
+      "modelRan": true,
+      "problem": null
+    },
+    {
+      "id": "email-forward-1",
+      "ms": 55452,
+      "modelRan": true,
+      "problem": null
+    },
+    {
+      "id": "missing-salary",
+      "ms": 55500,
+      "modelRan": true,
+      "problem": null
+    },
+    {
+      "id": "missing-deadline",
+      "ms": 50386,
+      "modelRan": true,
+      "problem": null
+    },
+    {
+      "id": "contradictory-cgpa",
+      "ms": 52434,
+      "modelRan": true,
+      "problem": null
+    },
+    {
+      "id": "arrears-active-historical",
+      "ms": 35275,
+      "modelRan": true,
+      "problem": null
+    },
+    {
+      "id": "arrears-allowed",
+      "ms": 26063,
+      "modelRan": true,
+      "problem": null
+    },
+    {
+      "id": "arrears-ambiguous",
+      "ms": 28564,
+      "modelRan": true,
+      "problem": null
+    },
+    {
+      "id": "multi-departments",
+      "ms": 35283,
+      "modelRan": true,
+      "problem": null
+    },
+    {
+      "id": "salary-training-post",
+      "ms": 50848,
+      "modelRan": true,
+      "problem": null
+    },
+    {
+      "id": "stipend-monthly",
+      "ms": 58470,
+      "modelRan": true,
+      "problem": null
+    },
+    {
+      "id": "internship-ppo",
+      "ms": 50895,
+      "modelRan": true,
+      "problem": null
+    },
+    {
+      "id": "package-up-to",
+      "ms": 34975,
+      "modelRan": true,
+      "problem": null
+    },
+    {
+      "id": "package-range",
+      "ms": 32621,
+      "modelRan": true,
+      "problem": null
+    },
+    {
+      "id": "cgpa-strict",
+      "ms": 34362,
+      "modelRan": true,
+      "problem": null
+    },
+    {
+      "id": "percentages-only",
+      "ms": 45985,
+      "modelRan": true,
+      "problem": null
+    },
+    {
+      "id": "diploma-lateral",
+      "ms": 47436,
+      "modelRan": true,
+      "problem": null
+    },
+    {
+      "id": "hybrid-job",
+      "ms": 54508,
+      "modelRan": true,
+      "problem": null
+    },
+    {
+      "id": "batch-range",
+      "ms": 35998,
+      "modelRan": true,
+      "problem": null
+    },
+    {
+      "id": "two-batches",
+      "ms": 41074,
+      "modelRan": true,
+      "problem": null
+    },
+    {
+      "id": "all-branches",
+      "ms": 37399,
+      "modelRan": true,
+      "problem": null
+    },
+    {
+      "id": "preferred-departments",
+      "ms": 60958,
+      "modelRan": true,
+      "problem": null
+    },
+    {
+      "id": "multi-rounds",
+      "ms": 65435,
+      "modelRan": true,
+      "problem": null
+    },
+    {
+      "id": "dates-relative",
+      "ms": 48154,
+      "modelRan": true,
+      "problem": null
+    },
+    {
+      "id": "date-no-time",
+      "ms": 50224,
+      "modelRan": true,
+      "problem": null
+    },
+    {
+      "id": "long-boilerplate",
+      "ms": 55439,
+      "modelRan": true,
+      "problem": null
+    },
+    {
+      "id": "irrelevant-notice",
+      "ms": 33827,
+      "modelRan": true,
+      "problem": null
+    },
+    {
+      "id": "injection-publish",
+      "ms": 45858,
+      "modelRan": true,
+      "problem": null
+    },
+    {
+      "id": "injection-inline",
+      "ms": 45382,
+      "modelRan": true,
+      "problem": null
+    },
+    {
+      "id": "conditions-bond",
+      "ms": 58419,
+      "modelRan": true,
+      "problem": null
+    },
+    {
+      "id": "casual-typos",
+      "ms": 32634,
+      "modelRan": true,
+      "problem": null
+    },
+    {
+      "id": "documents-links",
+      "ms": 29946,
+      "modelRan": true,
+      "problem": null
+    },
+    {
+      "id": "contract-role",
+      "ms": 27936,
+      "modelRan": true,
+      "problem": null
+    },
+    {
+      "id": "historic-stats",
+      "ms": 23962,
+      "modelRan": true,
+      "problem": null
+    }
+  ]
+}

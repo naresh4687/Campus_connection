@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import { sql } from "kysely";
 import { NextResponse } from "next/server";
+import { uploadSizeStatus } from "@/lib/upload-size";
 import { MAX_DOCUMENT_BYTES, MAX_DOCUMENT_MB, validateUpload } from "@/lib/documents";
 import { offerFileKey } from "@/lib/offers";
 import { uuidSchema } from "@/lib/validation";
@@ -20,7 +21,8 @@ export async function handleOfferUpload(req: Request, selectionId: string, kind:
   if (!s || s.role !== need || !s.collegeId) return new NextResponse("Forbidden", { status: 403 });
   if (!uuidSchema.safeParse(selectionId).success) return new NextResponse("Not found", { status: 404 });
   if (!(await allow("offer-upload", s.userId, 40, 3600))) return fail("Too many uploads. Please wait a while and try again.");
-  if (Number(req.headers.get("content-length") ?? 0) > MAX_DOCUMENT_BYTES + 64 * 1024) return new NextResponse("Payload too large", { status: 413 });
+  const tooBig = uploadSizeStatus(req.headers.get("content-length"), MAX_DOCUMENT_BYTES + 64 * 1024);
+  if (tooBig) return new NextResponse(tooBig === 411 ? "Length required" : "Payload too large", { status: tooBig });
   let form: FormData;
   try { form = await req.formData(); } catch { return fail("The upload could not be read."); }
   const file = form.get("file");

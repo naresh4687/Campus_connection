@@ -3,7 +3,8 @@
 import { useActionState } from "react";
 import { publishDriveAction, setDriveStatusAction } from "@/server/drives/actions";
 import { Alert } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { Button, buttonClass } from "@/components/ui/button";
 
 function One({ id, label, to, variant = "secondary" }: { id: string; label: string; to?: string; variant?: "primary" | "secondary" | "danger" }) {
   const [state, run, pending] = useActionState(to ? setDriveStatusAction : publishDriveAction, undefined);
@@ -17,10 +18,11 @@ function One({ id, label, to, variant = "secondary" }: { id: string; label: stri
   );
 }
 
-export function Lifecycle({ id, status }: { id: string; status: string }) {
+export function Lifecycle({ id, status, reviewHref }: { id: string; status: string; reviewHref?: string | null }) {
   return (
     <div className="flex flex-wrap items-start gap-4">
-      {status === "DRAFT" ? <><One id={id} label="Publish drive" variant="primary" /><One id={id} label="Discard (archive) draft" to="ARCHIVED" variant="danger" /></> : null}
+      {status === "DRAFT" && reviewHref ? <><Link href={reviewHref} className={buttonClass("primary")}>Review and publish</Link><One id={id} label="Discard (archive) draft" to="ARCHIVED" variant="danger" /></> : null}
+      {status === "DRAFT" && !reviewHref ? <><One id={id} label="Publish drive" variant="primary" /><One id={id} label="Discard (archive) draft" to="ARCHIVED" variant="danger" /></> : null}
       {status === "PUBLISHED" ? <><One id={id} label="Close drive" to="CLOSED" /><One id={id} label="Unpublish (back to draft)" to="DRAFT" /></> : null}
       {status === "CLOSED" ? <One id={id} label="Archive drive" to="ARCHIVED" /> : null}
       {status === "ARCHIVED" ? <p className="text-sm text-muted">This drive is archived and read-only.</p> : null}

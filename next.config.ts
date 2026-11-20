@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { PHASE_DEVELOPMENT_SERVER } from "next/constants";
 
 const nextConfig: NextConfig = {
   output: "standalone",
@@ -33,4 +34,6 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+// `next build` empties .next, which wrecked a dev server running from the same folder (stale modules: "x is not a function"). Dev gets its own folder.
+const withDistDir = (phase: string): NextConfig => ({ ...nextConfig, distDir: phase === PHASE_DEVELOPMENT_SERVER ? ".next-dev" : ".next" });
+export default withDistDir;

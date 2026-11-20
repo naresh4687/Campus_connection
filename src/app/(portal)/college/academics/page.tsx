@@ -24,7 +24,7 @@ export default async function CollegeAcademics() {
 
       <div className="grid gap-4 @xl:grid-cols-2 @3xl:grid-cols-5">
         {([["Students", sum("students"), "/college/students"], ["Verified", sum("verified"), "/college/students?academics=VERIFIED"], ["Awaiting review", sum("pending"), "/college/students?academics=PENDING"], ["Needs correction", sum("rejected"), "/college/students?academics=REJECTED"], ["Not submitted", sum("not_submitted"), "/college/students?academics=NOT_SUBMITTED"]] as const).map(([label, n, href]) => (
-          <Link key={label} href={href} className="block rounded-2xl border border-border bg-surface p-4 hover:opacity-90"><p className="text-sm text-muted">{label}</p><p className="mt-1 text-3xl font-semibold tabular-nums" data-testid={`acad-${label}`}>{n}</p></Link>
+          <Link key={label} href={href} className="block card p-4 hover:opacity-90"><p className="text-sm text-muted">{label}</p><p className="mt-1 text-3xl font-semibold tabular-nums" data-testid={`acad-${label}`}>{n}</p></Link>
         ))}
       </div>
 

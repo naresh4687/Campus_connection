@@ -145,3 +145,23 @@ describe("single-student form schema", () => {
     for (const over of [{ degree: "PhD" }, { passingYear: "2020" }, { registerNumber: "x" }, { collegeEmail: "no" }, { departmentId: "not-a-uuid" }, { phone: "abc" }]) expect(studentFormSchema.safeParse({ ...ok, ...over }).success, JSON.stringify(over)).toBe(false);
   });
 });
+
+describe("register numbers are canonical", () => {
+  const row = (reg: string, email = "asha@college.edu") => [reg, "Asha Rao", email, "", "9876543210", "cse", "BE", "AI", "2022", "2026"];
+  it("an imported 23ai000 is stored as 23AI000", () => {
+    const r = validateRows([row("23ai000")], mapping, ctx())[0];
+    expect(r.status).toBe("VALID"); expect(r.normalized!.register_number).toBe("23AI000");
+  });
+  it("another casing of an existing register number is a duplicate, in the database or in the same file", () => {
+    expect(validateRows([row("23ai000")], mapping, ctx({ existingRegisters: new Set(["23AI000"]) }))[0].status).toBe("DUPLICATE");
+    expect(validateRows([row("23ai000"), row("23Ai000", "other@college.edu")], mapping, ctx())[1].status).toBe("DUPLICATE");
+  });
+  it("identifiers that differ in a meaningful character are not the same student", () => {
+    const r = validateRows([row("23ai-000"), row("23ai000", "other@college.edu")], mapping, ctx());
+    expect(r.map((x) => x.status)).toEqual(["VALID", "VALID"]);
+  });
+  it("the single-student form canonicalizes too", () => {
+    const f = studentFormSchema.safeParse({ departmentId: "00000000-0000-4000-8000-000000000001", registerNumber: " 23ai000 ", fullName: "Asha Rao", collegeEmail: "Asha@College.edu", degree: "B.E.", admissionYear: 2022, passingYear: 2026 });
+    expect(f.success && f.data.registerNumber).toBe("23AI000");
+  });
+});

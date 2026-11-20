@@ -1,7 +1,7 @@
-import { redirect } from "next/navigation";
+import { SignInPage, type SignInSearch } from "../sign-in-page";
 
-/** Older links: sign-in is now one page. Keeps the welcome / reset notices. */
-export default async function Page({ searchParams }: { searchParams: Promise<{ welcome?: string; reset?: string }> }) {
-  const sp = await searchParams;
-  redirect(sp.welcome ? "/login?welcome=1" : sp.reset ? "/login?reset=1" : "/login");
+export const metadata = { title: "College staff sign in — CampusConnect" };
+
+export default function CollegeSignIn({ searchParams }: { searchParams: SignInSearch }) {
+  return <SignInPage portal="college" searchParams={searchParams} />;
 }

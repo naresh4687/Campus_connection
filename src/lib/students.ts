@@ -1,3 +1,4 @@
+import { normalizeStudentRegistrationNumber } from "./normalize";
 import { z } from "zod";
 import { emailField, phoneField } from "./validation";
 
@@ -75,6 +76,8 @@ export type RowResult = { n: number; status: "VALID" | "ERROR" | "DUPLICATE"; er
 
 const CONTROL = /[\u0000-\u001F\u007F]/;
 const REGISTER = /^[A-Za-z0-9][A-Za-z0-9/._-]{2,29}$/;
+/** What a typed or imported register number is stored as (the database applies the same rule): "23ai000" -> "23AI000". Unusable text is kept as typed so the validator can name the problem. */
+const canonRegister = (v: string) => normalizeStudentRegistrationNumber(v) ?? v.normalize("NFKC").trim().toUpperCase();
 
 export const deptKey = (s: string) => s.trim().toLowerCase();
 export function buildDeptLookup(depts: { id: string; code: string; name: string; status: string }[]): DeptLookup {
@@ -85,6 +88,7 @@ export function buildDeptLookup(depts: { id: string; code: string; name: string;
 
 export function validateRows(rows: string[][], mapping: Mapping, ctx: ImportContext): RowResult[] {
   const seenRegister = new Map<string, number>();
+  const existing = new Set([...ctx.existingRegisters].map((r) => r.toUpperCase()));
   const seenEmail = new Map<string, number>();
   return rows.map((cells, i): RowResult => {
     const n = i + 1;
@@ -92,7 +96,7 @@ export function validateRows(rows: string[][], mapping: Mapping, ctx: ImportCont
     const errors: string[] = [];
     if (cells.every((c) => c.trim() === "")) return { n, status: "ERROR", errors: ["The row is empty."], normalized: null };
 
-    const register = get("register_number");
+    const register = canonRegister(get("register_number"));
     if (!REGISTER.test(register)) errors.push("Register number must be 3–30 letters, digits or / . _ -");
     const name = get("full_name");
     if (name.length < 2 || name.length > 120 || CONTROL.test(name)) errors.push("Full name must be 2–120 characters.");
@@ -121,12 +125,12 @@ export function validateRows(rows: string[][], mapping: Mapping, ctx: ImportCont
     if (errors.length) return { n, status: "ERROR", errors, normalized: null };
 
     const emailV = (email as { data: string }).data;
-    const regKey = register.toLowerCase();
+    const regKey = register;
     const dupFile = seenRegister.get(regKey) ?? seenEmail.get(emailV);
     seenRegister.set(regKey, seenRegister.get(regKey) ?? n);
     seenEmail.set(emailV, seenEmail.get(emailV) ?? n);
     if (dupFile !== undefined) return { n, status: "DUPLICATE", errors: [`Duplicate of row ${dupFile + 1} in this file.`], normalized: null };
-    const exists = [ctx.existingRegisters.has(regKey) ? "register number" : "", ctx.existingEmails.has(emailV) ? "college email" : ""].filter(Boolean);
+    const exists = [existing.has(regKey) ? "register number" : "", ctx.existingEmails.has(emailV) ? "college email" : ""].filter(Boolean);
     if (exists.length) return { n, status: "DUPLICATE", errors: [`A student with this ${exists.join(" and ")} already exists. Existing records are never changed by an import.`], normalized: null };
 
     return {
@@ -142,7 +146,7 @@ export function validateRows(rows: string[][], mapping: Mapping, ctx: ImportCont
 // ───────────── single-student form ─────────────
 export const studentFormSchema = z.object({
   departmentId: z.uuid("Choose a department."),
-  registerNumber: z.string().trim().regex(REGISTER, "3–30 letters, digits or / . _ -"),
+  registerNumber: z.string().transform(canonRegister).pipe(z.string().regex(REGISTER, "3–30 letters, digits or / . _ -")),
   fullName: z.string().trim().min(2, "Enter the student's name.").max(120).refine((v) => !CONTROL.test(v), "Remove control characters."),
   collegeEmail: emailField,
   personalEmail: z.string().trim().max(254).optional().transform((v) => v || undefined).pipe(emailField.optional()),

@@ -30,6 +30,8 @@ export default defineConfig({
       S3_ACCESS_KEY: process.env.S3_ACCESS_KEY ?? "",
       S3_SECRET_KEY: process.env.S3_SECRET_KEY ?? "",
       TRUSTED_PROXY_HOPS: "0",
+      // Turns on the deliberate-crash pages used by e2e/error-pages.spec.ts. Never set this anywhere else.
+      E2E_FAULT_ROUTES: "e2e-test-server-only",
       // The AI assistant talks to a local stand-in server started by global-setup; the real provider is never contacted by tests.
       AI_EXTRACTION_ENABLED: "true",
       ANTHROPIC_API_KEY: "e2e-stand-in-key-not-real",

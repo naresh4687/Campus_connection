@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { startTransition, useActionState, useState, type FormEvent } from "react";
 import { EMPLOYMENT_TYPES, yearOptions } from "@/lib/drives";
 import { DEGREES } from "@/lib/students";
 import { saveDriveAction } from "@/server/drives/actions";
@@ -17,9 +17,12 @@ export function DriveForm({ id, initial, companies, departments }: { id?: string
   const [state, action, pending] = useActionState(saveDriveAction, undefined);
   const v = { ...initial, ...(state?.values ?? {}) };
   const e = state?.fieldErrors ?? {};
+  const [external, setExternal] = useState(v.externalEnabled === "yes");
+  // Submitted through a transition: React resets an action form after it runs, which would clear what was typed when a save is refused.
+  const submit = (ev: FormEvent<HTMLFormElement>) => { ev.preventDefault(); const fd = new FormData(ev.currentTarget); startTransition(() => action(fd)); };
   const deps = new Set(csv(v.departments)); const years = new Set(csv(v.years)); const degs = new Set(csv(v.degrees));
   return (
-    <form action={action} className="max-w-4xl space-y-6" noValidate>
+    <form onSubmit={submit} className="max-w-4xl space-y-6" noValidate>
       {state?.error ? <Alert kind="error">{state.error}</Alert> : null}
       {state?.ok ? <Alert kind="success">{state.ok}</Alert> : null}
       {id ? <input type="hidden" name="id" value={id} /> : null}
@@ -68,13 +71,28 @@ export function DriveForm({ id, initial, companies, departments }: { id?: string
         <div className="grid gap-4 @2xl:grid-cols-4">
           <Field id="minCgpa" label="Minimum CGPA" inputMode="decimal" defaultValue={v.minCgpa} error={e.minCgpa} />
           <Field id="minTenth" label="Minimum 10th %" inputMode="decimal" defaultValue={v.minTenth} error={e.minTenth} />
-          <Field id="minTwelfth" label="Minimum 12th %" inputMode="decimal" defaultValue={v.minTwelfth} error={e.minTwelfth} />
-          <Field id="minDiploma" label="Minimum diploma %" inputMode="decimal" defaultValue={v.minDiploma} error={e.minDiploma} />
+          <Field id="minTwelfth" label="Minimum 12th %" inputMode="decimal" defaultValue={v.minTwelfth} error={e.minTwelfth} hint="Checked only for students who did 12th." />
+          <Field id="minDiploma" label="Minimum diploma %" inputMode="decimal" defaultValue={v.minDiploma} error={e.minDiploma} hint="Checked only for students who did a diploma (lateral entry)." />
         </div>
         <div className="grid gap-4 @xl:grid-cols-2">
           <Field id="maxBacklogs" label="Maximum active backlogs" inputMode="numeric" defaultValue={v.maxBacklogs} error={e.maxBacklogs} hint="0 means no active backlogs allowed." />
           <Field id="maxArrears" label="Maximum historical arrears" inputMode="numeric" defaultValue={v.maxArrears} error={e.maxArrears} />
         </div>
+      </fieldset>
+      <fieldset className="space-y-4"><legend className="text-lg font-semibold">How students register</legend>
+        <label className="flex items-start gap-2 text-sm"><input type="checkbox" name="externalEnabled" value="yes" checked={external} onChange={(e) => setExternal(e.target.checked)} className="mt-0.5 h-4 w-4" />
+          <span><strong>This drive has an external registration link</strong> (the company’s website or a form such as Google Forms). Leave it off and students register in CampusConnect with one click.</span></label>
+        {external ? (
+          <div className="space-y-4 rounded-2xl bg-tint p-4" data-testid="external-fields">
+            <Field id="externalUrl" label="External registration link" type="url" placeholder="https://" maxLength={500} defaultValue={v.externalUrl} error={e.externalUrl}
+              hint="Only the form students must fill in. A company website or job-description page is not a registration link." />
+            <Textarea id="externalInstructions" label="Instructions for students (optional)" rows={3} maxLength={2000} defaultValue={v.externalInstructions} error={e.externalInstructions} />
+            <div className="space-y-1">
+              <label className="flex items-start gap-2 text-sm"><input type="checkbox" name="externalConfirmed" value="yes" defaultChecked={v.externalConfirmed === "yes"} className="mt-0.5 h-4 w-4" aria-describedby={e.externalConfirmed ? "externalConfirmed-error" : undefined} />
+                <span>I confirm this link is the company’s actual registration form. Students will open it, complete it, and then <strong>upload a screenshot of the final confirmation page</strong> here. Their registration is recorded in CampusConnect only after that screenshot is submitted, and staff then verify it.</span></label>
+              {e.externalConfirmed ? <p id="externalConfirmed-error" className="text-xs text-danger">{e.externalConfirmed}</p> : null}
+            </div>
+          </div>) : <p className="text-sm text-muted">Students will register in CampusConnect with one click once the drive is published.</p>}
       </fieldset>
       <Button type="submit" disabled={pending}>{pending ? "Saving…" : id ? "Save draft" : "Create draft"}</Button>
     </form>

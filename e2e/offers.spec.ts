@@ -23,7 +23,7 @@ test.describe.serial("selections, offers, joining and verified placements", () =
   let driveId = ""; let letterHref = "";
   const newPage = async (b: Browser, who: string) => { const p = await (await b.newContext()).newPage(); open.push(p); await loginAs(p, who); return p; };
   const card = (p: Page, name: string) => p.locator("section").filter({ has: p.getByRole("heading", { name, exact: true }) });
-  const funnelValue = (p: Page, label: string) => p.getByLabel("Placement funnel").locator("div", { hasText: new RegExp(`^${label}`) }).locator("dd");
+  const funnelValue = (p: Page, label: string) => p.getByLabel("Placement funnel").getByTestId(`stat-${label}`);
 
   test.beforeAll(async ({ browser }) => {
     // Earlier phases are covered by their own specs: build the state "drive closed, final round released, two students selected" directly in the database.

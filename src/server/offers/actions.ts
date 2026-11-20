@@ -11,7 +11,8 @@ import { requireRole, withSession } from "../auth/session";
 
 const refresh = () => { revalidatePath("/placement", "layout"); revalidatePath("/student", "layout"); revalidatePath("/college", "layout"); };
 const ids = (fd: FormData, ...keys: string[]) => { const out: string[] = []; for (const k of keys) { const v = uuidSchema.safeParse(str(fd, k)); if (!v.success) return null; out.push(v.data); } return out; };
-const arrayOf = (xs: string[]) => sql.raw(`ARRAY[${xs.map((x) => `'${x}'`).join(",")}]::uuid[]`);
+// Parameterised: every id is a bound value, never text pasted into the SQL.
+const arrayOf = (xs: string[]) => sql`ARRAY[${sql.join(xs.map((x) => sql`${x}::uuid`))}]::uuid[]`;
 
 export async function selectStudentsAction(_p: ActionState, fd: FormData): Promise<ActionState> {
   await assertSameOrigin(); const s = await requireRole("PLACEMENT_OFFICER");

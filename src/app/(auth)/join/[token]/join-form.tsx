@@ -7,6 +7,7 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Select } from "@/components/ui/select";
+import { upperInput } from "@/lib/normalize";
 
 export function JoinForm({ token, departments }: { token: string; departments: { id: string; code: string; name: string }[] }) {
   const [state, action, pending] = useActionState(submitJoinAction, undefined);
@@ -18,7 +19,7 @@ export function JoinForm({ token, departments }: { token: string; departments: {
       <input type="hidden" name="token" value={token} />
       {state?.error ? <Alert kind="error">{state.error}</Alert> : null}
       <Field id="fullName" label="Full name" autoComplete="name" required maxLength={120} defaultValue={v.fullName} error={e.fullName} />
-      <Field id="registerNumber" label="Register number" required maxLength={30} defaultValue={v.registerNumber} error={e.registerNumber} />
+      <Field id="registerNumber" label="Register number" required maxLength={30} autoCapitalize="characters" autoCorrect="off" spellCheck={false} onInput={upperInput} defaultValue={v.registerNumber} error={e.registerNumber} />
       <Select key={`dept-${v.departmentId}`} id="departmentId" label="Department" required defaultValue={v.departmentId ?? ""} error={e.departmentId}>
         <option value="">Choose your department…</option>
         {departments.map((d) => <option key={d.id} value={d.id}>{d.name} ({d.code})</option>)}

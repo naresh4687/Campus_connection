@@ -24,10 +24,10 @@ export default async function InquiriesPage({ searchParams }: { searchParams: Pr
       <h1 className="text-2xl font-semibold tracking-tight">Inquiries</h1>
       <p className="text-sm text-muted">Messages sent through the public contact form. Reply from your own mailbox, then mark the message handled.</p>
       <div className="flex gap-2">{chip(undefined, "All")}{chip("NEW", "New")}{chip("HANDLED", "Handled")}</div>
-      {rows.length === 0 ? <div className="rounded-2xl border border-border bg-surface"><EmptyState title="No inquiries">Messages from the contact page appear here.</EmptyState></div> : (
+      {rows.length === 0 ? <div className="card"><EmptyState title="No inquiries">Messages from the contact page appear here.</EmptyState></div> : (
         <ul className="space-y-3">
           {rows.map((r) => (
-            <li key={r.id} className="rounded-2xl border border-border bg-surface p-4">
+            <li key={r.id} className="card p-4">
               <div className="flex flex-wrap items-center gap-2 text-sm">
                 <span className="font-medium">{r.name}</span>
                 <a href={`mailto:${encodeURIComponent(r.email)}`} className="underline">{r.email}</a>

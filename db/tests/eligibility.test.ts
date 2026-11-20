@@ -60,9 +60,9 @@ describe("the engine decides from verified data only", () => {
     const s = await fresh(d1, c1, { cgpa: 8, tenth: 80, twelfth: 80, backlogs: 0, arrears: 1 });
     const { r } = await check(s, await publishedDrive({ minCgpa: 7, minTenth: 60, minTwelfth: 60, maxBacklogs: 0, maxArrears: 2 }));
     expect(r.result).toBe("ELIGIBLE");
-    expect(r.engine_version).toBe("1");
+    expect(r.engine_version).toBe("3");
     expect(r.checks.every((c) => c.status === "PASS")).toBe(true);
-    expect(r.checks.map((c) => c.criterion)).toEqual(expect.arrayContaining(["DEPARTMENT", "PASSING_YEAR", "ACADEMIC_RECORD", "CGPA", "TENTH", "TWELFTH", "ACTIVE_BACKLOGS", "HISTORICAL_ARREARS"]));
+    expect(r.checks.map((c) => c.criterion)).toEqual(expect.arrayContaining(["DEPARTMENT", "PASSING_YEAR", "ACADEMIC_RECORD", "CGPA", "TENTH", "TWELFTH_OR_DIPLOMA", "ACTIVE_BACKLOGS", "HISTORICAL_ARREARS"]));
   });
 });
 
@@ -72,19 +72,26 @@ describe("thresholds, missing values and precedence (table-driven)", () => {
     { name: "CGPA just below the minimum is not eligible", vals: { cgpa: 6.99 }, crit: { minCgpa: 7 }, want: "NOT_ELIGIBLE" },
     { name: "10th exactly at the minimum is eligible", vals: { tenth: 60 }, crit: { minTenth: 60 }, want: "ELIGIBLE" },
     { name: "10th below the minimum is not eligible", vals: { tenth: 59.99 }, crit: { minTenth: 60 }, want: "NOT_ELIGIBLE" },
-    { name: "12th exactly at the minimum is eligible", vals: { twelfth: 55 }, crit: { minTwelfth: 55 }, want: "ELIGIBLE" },
-    { name: "12th below the minimum is not eligible", vals: { twelfth: 54 }, crit: { minTwelfth: 55 }, want: "NOT_ELIGIBLE" },
-    { name: "a MISSING 12th is never zero: NEEDS_DATA when 12th is required", vals: { twelfth: null }, crit: { minTwelfth: 50 }, want: "NEEDS_DATA" },
-    { name: "a missing 12th does not matter when 12th is not required", vals: { twelfth: null }, crit: { minCgpa: 7 }, want: "ELIGIBLE" },
-    { name: "a MISSING diploma is never zero: NEEDS_DATA when diploma is required", vals: { diploma: null }, crit: { minDiploma: 50 }, want: "NEEDS_DATA" },
-    { name: "diploma at the minimum is eligible", vals: { diploma: 50 }, crit: { minDiploma: 50 }, want: "ELIGIBLE" },
-    { name: "diploma below the minimum is not eligible", vals: { diploma: 49 }, crit: { minDiploma: 50 }, want: "NOT_ELIGIBLE" },
+    // Qualification-based (migration 0020): each student is checked only against the minimum for the qualification they have.
+    { name: "1. 12th student, valid 12th, NULL diploma -> ELIGIBLE", vals: { twelfth: 75, diploma: null }, crit: { minTwelfth: 60, minDiploma: 60 }, want: "ELIGIBLE" },
+    { name: "2. 12th student, insufficient 12th, NULL diploma -> NOT ELIGIBLE", vals: { twelfth: 55, diploma: null }, crit: { minTwelfth: 60, minDiploma: 60 }, want: "NOT_ELIGIBLE" },
+    { name: "3. diploma student, valid diploma, NULL 12th -> ELIGIBLE", vals: { twelfth: null, diploma: 70 }, crit: { minTwelfth: 60, minDiploma: 65 }, want: "ELIGIBLE" },
+    { name: "4. diploma student, insufficient diploma, NULL 12th -> NOT ELIGIBLE", vals: { twelfth: null, diploma: 60 }, crit: { minTwelfth: 50, minDiploma: 65 }, want: "NOT_ELIGIBLE" },
+    { name: "5. 12th student, valid 12th but failing CGPA -> NOT ELIGIBLE", vals: { cgpa: 6, twelfth: 80, diploma: null }, crit: { minCgpa: 7, minTwelfth: 60, minDiploma: 60 }, want: "NOT_ELIGIBLE" },
+    { name: "6. diploma student, valid diploma but failing backlogs -> NOT ELIGIBLE", vals: { twelfth: null, diploma: 80, backlogs: 2 }, crit: { minTwelfth: 60, minDiploma: 60, maxBacklogs: 0 }, want: "NOT_ELIGIBLE" },
+    { name: "a 12th student is not checked against a diploma-only minimum", vals: { twelfth: 40, diploma: null }, crit: { minDiploma: 90 }, want: "ELIGIBLE" },
+    { name: "a diploma student is not checked against a 12th-only minimum", vals: { twelfth: null, diploma: 40 }, crit: { minTwelfth: 90 }, want: "ELIGIBLE" },
+    { name: "12th exactly at the minimum is eligible (inclusive)", vals: { twelfth: 55, diploma: null }, crit: { minTwelfth: 55 }, want: "ELIGIBLE" },
+    { name: "diploma exactly at the minimum is eligible (inclusive)", vals: { twelfth: null, diploma: 50 }, crit: { minDiploma: 50 }, want: "ELIGIBLE" },
+    { name: "a student with both passes when either meets its minimum", vals: { twelfth: 50, diploma: 70 }, crit: { minTwelfth: 60, minDiploma: 65 }, want: "ELIGIBLE" },
+    { name: "a student with both fails when neither meets its minimum", vals: { twelfth: 50, diploma: 60 }, crit: { minTwelfth: 60, minDiploma: 65 }, want: "NOT_ELIGIBLE" },
+    { name: "a missing 12th does not matter when no 12th or diploma minimum is set", vals: { twelfth: null }, crit: { minCgpa: 7 }, want: "ELIGIBLE" },
     { name: "active backlogs exactly at the maximum is eligible", vals: { backlogs: 1 }, crit: { maxBacklogs: 1 }, want: "ELIGIBLE" },
     { name: "one more active backlog than allowed is not eligible", vals: { backlogs: 2 }, crit: { maxBacklogs: 1 }, want: "NOT_ELIGIBLE" },
     { name: "zero allowed backlogs and zero held is eligible", vals: { backlogs: 0 }, crit: { maxBacklogs: 0 }, want: "ELIGIBLE" },
     { name: "historical arrears over the maximum is not eligible", vals: { arrears: 3 }, crit: { maxArrears: 2 }, want: "NOT_ELIGIBLE" },
     { name: "historical arrears at the maximum is eligible", vals: { arrears: 2 }, crit: { maxArrears: 2 }, want: "ELIGIBLE" },
-    { name: "NOT_ELIGIBLE wins over NEEDS_DATA (a failed CGPA beats a missing 12th)", vals: { cgpa: 5, twelfth: null }, crit: { minCgpa: 7, minTwelfth: 50 }, want: "NOT_ELIGIBLE" },
+    { name: "a failed CGPA is NOT_ELIGIBLE even when the 12th-or-diploma check passes", vals: { cgpa: 5, twelfth: null }, crit: { minCgpa: 7, minTwelfth: 50 }, want: "NOT_ELIGIBLE" },
     { name: "a drive with no academic thresholds is ELIGIBLE for a verified student", vals: {}, crit: {}, want: "ELIGIBLE" },
   ];
   for (const c of cases) {

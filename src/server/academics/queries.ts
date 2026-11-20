@@ -12,9 +12,11 @@ export type Submission = {
   id: string; student_id: string; version: number; status: string; cgpa: string; tenth_percentage: string; twelfth_percentage: string | null; diploma_percentage: string | null;
   active_backlogs: number; historical_arrears: number; student_note: string | null; degree: string; passing_year: number; submitted_at: Date;
   reviewed_by_name: string | null; reviewed_at: Date | null; review_note: string | null; rejection_reason: string | null;
+  semesters: { semester: number; sgpa: string; backlogs: number }[];
 };
 const COLS = sql`a.id, a.student_id, a.version, a.status, a.cgpa::text AS cgpa, a.tenth_percentage::text AS tenth_percentage, a.twelfth_percentage::text AS twelfth_percentage,
-  a.diploma_percentage::text AS diploma_percentage, a.active_backlogs, a.historical_arrears, a.student_note, a.degree, a.passing_year, a.submitted_at, a.reviewed_by_name, a.reviewed_at, a.review_note, a.rejection_reason`;
+  a.diploma_percentage::text AS diploma_percentage, a.active_backlogs, a.historical_arrears, a.student_note, a.degree, a.passing_year, a.submitted_at, a.reviewed_by_name, a.reviewed_at, a.review_note, a.rejection_reason,
+  (SELECT coalesce(json_agg(json_build_object('semester', r.semester, 'sgpa', r.sgpa::text, 'backlogs', r.backlogs) ORDER BY r.semester), '[]'::json) FROM semester_results r WHERE r.submission_id = a.id) AS semesters`;
 
 /** All submissions of one student, newest first (their own, or one the viewer is allowed to see). */
 export async function submissionsFor(s: SessionUser, studentId: string) {

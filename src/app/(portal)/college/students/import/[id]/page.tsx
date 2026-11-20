@@ -16,7 +16,7 @@ export const metadata = { title: "Import — CampusConnect" };
 const RESULT_LABEL: Record<string, string> = { VALID: "Ready", ERROR: "Problem", DUPLICATE: "Duplicate", IMPORTED: "Imported" };
 
 function Stat({ label, value, testid }: { label: string; value: number; testid: string }) {
-  return <div className="rounded-2xl border border-border bg-surface p-4"><p className="text-sm text-muted">{label}</p><p className="mt-1 text-3xl font-semibold tabular-nums" data-testid={testid}>{value}</p></div>;
+  return <div className="card p-4"><p className="text-sm text-muted">{label}</p><p className="mt-1 text-3xl font-semibold tabular-nums" data-testid={testid}>{value}</p></div>;
 }
 
 export default async function ImportDetailPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ status?: string; page?: string }> }) {

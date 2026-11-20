@@ -1,9 +1,10 @@
 import Link from "next/link";
+import { slotOfRole } from "@/lib/portals";
 import { sql } from "kysely";
 import { AuthShell } from "@/components/layout/auth-shell";
 import { Alert } from "@/components/ui/alert";
 import { db } from "@/server/db";
-import { getSession } from "@/server/auth/session";
+import { getSessionFor } from "@/server/auth/session";
 import { hashToken, isWellFormedToken } from "@/server/auth/tokens";
 import { AcceptForm } from "./accept-form";
 
@@ -18,10 +19,12 @@ const ROLE_LABEL: Record<string, string> = {
 
 export default async function AcceptInvitePage({ searchParams }: { searchParams: Promise<{ token?: string }> }) {
   const { token } = await searchParams;
-  const current = await getSession();
   const invite = isWellFormedToken(token)
     ? (await sql<{ email: string; role: string; college_name: string }>`SELECT * FROM auth.peek_invitation(${hashToken(token)})`.execute(db())).rows[0]
     : undefined;
+  // Only an account with the same role is signed out by accepting; other roles signed in in this browser stay signed in.
+  const slot = invite ? slotOfRole(invite.role) : null;
+  const current = slot ? await getSessionFor(slot) : null;
 
   const department = invite && isWellFormedToken(token) ? (await sql<{ d: string | null }>`SELECT auth.peek_invitation_department(${hashToken(token)}) AS d`.execute(db())).rows[0]?.d : null;
   return (

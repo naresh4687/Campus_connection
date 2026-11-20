@@ -1,6 +1,6 @@
 # CampusConnect — deployment and operations guide
 
-Status: written 2026-11-12 from the code and tests in this repository. Nothing here has been exercised on a real hosting provider (OD-01 is still open), so treat the provider-specific parts as a checklist to confirm, not as proven steps.
+Status: written 2026-11-12, updated 2026-11-17. The app now runs on Vercel with Neon Postgres and Neon Object Storage (section 3a), still behind Vercel Authentication. Parts not yet exercised on that environment are marked as such; treat them as a checklist to confirm, not as proven steps.
 
 ## 1. What runs where
 
@@ -24,7 +24,7 @@ Required in production (the app **refuses to start** with development values):
 | `TRUSTED_PROXY_HOPS` | `1` behind a single trusted load balancer/proxy that sets `X-Forwarded-For`/`-Host`. With `0` per-IP rate limits are skipped (per-account limits still apply). Never set it higher than the real number of proxies. |
 | `S3_ENDPOINT`, `S3_PUBLIC_ENDPOINT`, `S3_REGION`, `S3_BUCKET`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`, `S3_FORCE_PATH_STYLE` | `S3_PUBLIC_ENDPOINT` must be reachable from browsers (it is part of the signature). Use a key that can only read/write/list/delete in this one bucket. |
 
-Optional: `AI_EXTRACTION_ENABLED`, `ANTHROPIC_API_KEY`, `AI_MODEL`, `AI_API_BASE` (see TD-34). Secrets belong in the platform's secret store, not in the image or the repository.
+Optional (AI-assisted drive creation; see `docs/AI_DRIVE_CREATION.md`): `AI_EXTRACTION_ENABLED`, `AI_PROVIDER` (`local` or `anthropic`), `AI_LOCAL_URL`, `AI_MODEL`, `AI_TIMEOUT_MS`, `ANTHROPIC_API_KEY`, `AI_API_BASE`. Without them the pattern-based reader still works; only the language model is off. Secrets belong in the platform's secret store, not in the image or the repository.
 
 ## 3. Release procedure
 
@@ -59,7 +59,7 @@ If a newer commit reaches `main` while a deploy is waiting for approval, the old
    - `APP_DATABASE_URL` (Vercel, Production, mark it Sensitive): `cc_app`, the **pooled** connection string, without `channel_binding`. The Neon integration owns `DATABASE_URL` in Vercel and fills it with the admin login, and Vercel does not let you override it, so the app reads `APP_DATABASE_URL` first and ignores the integration's value. In the integration's settings (Vercel → Storage → the database → Settings → Allowed Environments) choose **Production environment only**, so Preview and Development deployments do not receive the admin login either. The app refuses to start in production unless its login is `cc_app`; the admin login would bypass the per-college isolation.
    - `MIGRATE_DATABASE_URL` (GitHub secret): `cc_owner`, the **direct (unpooled)** connection string. The migration runner takes an advisory lock and needs a normal session.
 3. **Run the migrations once by hand** to confirm they work on Neon: `MIGRATE_DATABASE_URL="..." npm run db:migrate`. Then create the platform administrator (`PLATFORM_ADMIN_PASSWORD=… npm run admin:create -- email "Name"`, with `MIGRATE_DATABASE_URL` set).
-4. **Object storage.** Vercel has no S3-compatible storage, so create a **private** bucket elsewhere (Cloudflare R2 or AWS S3) and set `S3_ENDPOINT`, `S3_PUBLIC_ENDPOINT`, `S3_REGION`, `S3_BUCKET`, `S3_ACCESS_KEY`, `S3_SECRET_KEY` (and `S3_FORCE_PATH_STYLE` as the provider needs) in Vercel. Without them, document and offer-letter uploads fail. Create the bucket with `npm run storage:init` or the provider console.
+4. **Object storage.** *Done 2026-11-14:* a private bucket `campusconnect-private` on **Neon Object Storage**, in the same Neon project and region (`aws-ap-southeast-1`), with the seven `S3_*` variables in Vercel Production (key and secret marked Sensitive). Checked directly against the bucket: upload, signed download, anonymous request refused with 403, delete. **Not yet checked:** an upload through the live app. **Caveat:** Neon's S3 key covers the whole branch, not only this bucket, which is wider than the single-bucket key recommended in section 2; acceptable while it is the only bucket. To use another provider instead (Cloudflare R2, AWS S3), create a **private** bucket there and set `S3_ENDPOINT`, `S3_PUBLIC_ENDPOINT`, `S3_REGION`, `S3_BUCKET`, `S3_ACCESS_KEY`, `S3_SECRET_KEY` (and `S3_FORCE_PATH_STYLE` as the provider needs) in Vercel. Without them, document and offer-letter uploads fail. Create the bucket with `npm run storage:init` or the provider console.
 5. **Other Vercel Production variables** (see section 2): `AUTH_PEPPER`, `AUTH_COOKIE_SECURE=true`, `APP_BASE_URL` (the public https origin), `TRUSTED_PROXY_HOPS=1`.
 6. **GitHub.** Settings → Environments → create `production`, turn on **Required reviewers**, and add yourself. Then add:
    - environment **secrets**: `MIGRATE_DATABASE_URL`, `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID` (the two IDs are in `.vercel/project.json` after `npx vercel link`);
@@ -81,6 +81,8 @@ If a newer commit reaches `main` while a deploy is waiting for approval, the old
 - Session cookie `HttpOnly`, `SameSite`, `__Host-` prefix when secure; cross-origin POSTs to upload routes are refused; sign-in is throttled per account (8 per 15 minutes) and per IP when proxies are trusted.
 - Sensitive paths (`.env`, `.git`, `package.json`, migrations, source) are not served; unknown identifiers give a plain 404, never a stack trace.
 - Authorization sweep: each role is refused every other role's pages; anonymous visitors are sent to sign in.
+- One session per ROLE (`src/lib/portals.ts`, `src/server/auth/session.ts`): cookies `cc_session_platform`, `cc_session_college` (college administrator), `cc_session_placement`, `cc_session_coordinator` and `cc_session_student` (with the `__Host-` prefix when secure), so any mix of roles can be signed in side by side in one browser, one tab each, without replacing each other. The proxy decides a request's role slot from its path (`/platform…`, `/college…`, `/placement…`, `/coordinator…`, `/student…`) or, on shared pages (account, notifications), from `?as=`, and always overwrites the `x-cc-slot` header it passes on (a client-sent one, or the older `x-cc-portal`, is dropped). A cookie only counts for its own role (a session whose role differs is ignored), and every page and action still checks the role on the server. A page of a role you are not signed in as asks for that role's sign-in; it never switches to another signed-in account. Sign-out ends only that role's session. Sign-in pages never redirect (they offer "Continue as …"). Shared downloads try each signed-in account and the database decides. Limitation: two accounts with the SAME role cannot be signed in in one browser at once (use another browser profile). Cookies from before this change are ignored, so everyone signs in once more after the deploy.
+- Separate sign-in pages (`src/lib/portals.ts`): students `/login/student`, college staff `/login/college`, the platform administrator `/admin/login` (not linked, `noindex`). A correct password on the wrong page is refused and logged as `LOGIN_FAILED` with reason `wrong_sign_in_page`; students and staff are pointed to their own page, while the platform page only ever says "Invalid email or password.". The platform page is a convenience, not a secret: its protection is the password and the sign-in limits.
 
 ## 5. Backups and restore
 
@@ -100,6 +102,8 @@ Uploads are validated by content (PDF/PNG/JPEG signature, size, extension and de
 ## 8. Monitoring and logs
 
 - `/api/health` (200 ok / 503 when the database is unreachable) for the load balancer and container health.
+- Error pages: unexpected errors show the app's own "Something went wrong" page (`src/app/error.tsx`, `src/app/(portal)/error.tsx`, `src/app/global-error.tsx`) with a short **reference** — Next's error digest. The error message itself never reaches the browser; search the Vercel logs for the reference to find it. Unknown URLs and records show `src/app/not-found.tsx` / `src/app/(portal)/not-found.tsx` (status 404). Next's built-in versions could not be used: their inline styles are blocked by the CSP.
+- `E2E_FAULT_ROUTES` turns on two deliberate-crash pages for the browser tests. **Never set it** outside the Playwright test server; without it those pages are a 404.
 - Application logs go to stdout. Server errors log a short message and a database error code; the code does not log request bodies, announcement text, tokens, passwords or marks. One caveat: for unexpected database errors the logged message is PostgreSQL's own, which can echo an offending input value (for example `invalid input syntax for type uuid: "…"`), so treat logs as potentially containing small fragments of user input. Review before enabling any log shipper that adds request metadata (URLs of one-time links contain tokens until used).
 - Suggested alerts: health failing; sign-in rate-limit hits spiking; 5xx rate; database disk/connection saturation; backup job failures; "MISSING" in the weekly reconciliation.
 - The audit log (College audit page; platform audit page) records who did what, including each report export and AI-helper use (counts only).
@@ -111,8 +115,8 @@ Suspected account compromise: disable the user (College → Staff / Students) �
 ## 10. Known limits and go-live blockers
 
 Blocking go-live (need your decisions or the real environment):
-1. **OD-01 hosting** vendor, region and budget; HTTPS termination; managed Postgres with PITR; secrets store.
-2. **OD-02 storage and malware scanning** provider and approach (section 7).
+1. **OD-01 hosting:** running on Vercel + Neon (`aws-ap-southeast-1`, Singapore). Still to confirm: Neon's point-in-time-restore window and plan, the budget, whether a Singapore region is acceptable to the colleges, and a custom domain. **Vercel Authentication is still on**, so the public cannot reach the site; turn it off for Production only when the items below are settled.
+2. **OD-02 malware scanning** approach (section 7). Storage itself is set up (section 3a, step 4).
 3. **OD-05 retention and legal review**; privacy notice and terms texts on the public site are drafts written by the developer and must be reviewed by counsel. See `DPDP_CHECKLIST.md`.
 4. The restore drill and `storage:reconcile` must be repeated on the real environment; load/soak testing has not been done (design target is ~3 colleges / ~3,000 users).
 5. The optional AI helper has never been run against a real provider (TD-34); leave it off until someone has tried it with real announcements.

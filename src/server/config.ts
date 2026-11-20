@@ -66,11 +66,18 @@ export function storageConfig() {
   };
 }
 
+export type AiConfig = { enabled: boolean; provider: "off" | "local" | "anthropic" | "mock"; model: string; base: string; apiKey: string; timeoutMs: number };
 /**
- * Optional AI announcement helper (Module 21). Off unless AI_EXTRACTION_ENABLED=true AND a key is set. AI_API_BASE exists so an operator can
- * route through a gateway; it is configuration, never user input.
+ * AI-assisted drive creation. The pattern-based reader needs no model and is always available; this only controls the optional language model.
+ * AI_PROVIDER = local (llama.cpp / Ollama / vLLM, OpenAI-compatible, AI_LOCAL_URL) | anthropic (ANTHROPIC_API_KEY) | mock | off.
+ * Off unless AI_EXTRACTION_ENABLED=true. Base URLs are operator configuration, never user input.
  */
-export function aiConfig() {
-  const enabled = process.env.AI_EXTRACTION_ENABLED === "true" && !!process.env.ANTHROPIC_API_KEY;
-  return { enabled, apiKey: process.env.ANTHROPIC_API_KEY ?? "", model: process.env.AI_MODEL || "claude-sonnet-5-5", base: (process.env.AI_API_BASE || "https://api.anthropic.com").replace(/\/+$/, "") };
+export function aiConfig(): AiConfig {
+  const on = process.env.AI_EXTRACTION_ENABLED === "true";
+  const requested = (process.env.AI_PROVIDER || (process.env.ANTHROPIC_API_KEY ? "anthropic" : "off")).toLowerCase();
+  const provider = (["local", "anthropic", "mock"].includes(requested) ? requested : "off") as AiConfig["provider"];
+  const timeoutMs = Math.min(Math.max(Number(process.env.AI_TIMEOUT_MS) || (provider === "local" ? 90_000 : 30_000), 1000), 300_000);
+  if (provider === "local") return { enabled: on && !!process.env.AI_LOCAL_URL, provider, model: process.env.AI_MODEL || "local", base: (process.env.AI_LOCAL_URL ?? "").replace(/\/+$/, ""), apiKey: process.env.AI_LOCAL_KEY ?? "", timeoutMs };
+  if (provider === "anthropic") return { enabled: on && !!process.env.ANTHROPIC_API_KEY, provider, model: process.env.AI_MODEL || "claude-sonnet-5-5", base: (process.env.AI_API_BASE || "https://api.anthropic.com").replace(/\/+$/, ""), apiKey: process.env.ANTHROPIC_API_KEY ?? "", timeoutMs };
+  return { enabled: on && provider === "mock", provider, model: provider, base: "", apiKey: "", timeoutMs };
 }

@@ -1,6 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Browser, type Page } from "@playwright/test";
-import { expectOn, formAlert, loginAs } from "./helpers";
+import { expectOn, expectOnSignIn, formAlert, loginAs } from "./helpers";
 
 const settle = async (page: Page) => { await page.waitForLoadState("networkidle"); await page.waitForTimeout(300); };
 const stat = async (page: Page, label: string) => Number(await page.getByTestId(`stat-${label}`).innerText());
@@ -31,10 +31,11 @@ test.describe.serial("college administrator console", () => {
     await expect(admin.getByRole("heading", { name: "College dashboard" })).toBeVisible();
     await expect(admin.getByText("Northfield Institute of Technology").first()).toBeVisible();
     for (const n of ["Dashboard", "Departments", "Staff", "College profile", "Audit log", "Account"]) await expect(admin.getByRole("navigation", { name: "Main" }).getByRole("link", { name: n })).toBeVisible();
-    expect(await stat(admin, "Active departments")).toBe(2); // seeded: GEN (the seeded students need a department) and REG (registration scenarios)
-    expect(await stat(admin, "Placement officers")).toBe(5); // seeded: officerA, officerX, roundOfficer, offerOfficer, rptOfficer
-    expect(await stat(admin, "Coordinators")).toBe(2);       // seeded: coordA, regCoord
-    expect(await stat(admin, "Students")).toBeGreaterThanOrEqual(6);
+    await expect(admin.getByRole("group", { name: "Verified academic records by department" })).toBeVisible();           // the home page is charts; the totals live in their own sections
+    await admin.goto("/college/departments"); expect(await stat(admin, "Active departments")).toBe(2); // seeded: GEN (the seeded students need a department) and REG (registration scenarios)
+    await admin.goto("/college/staff"); expect(await stat(admin, "Placement officers")).toBe(9);       // seeded: officerA, officerX, roundOfficer, offerOfficer, rptOfficer, annOfficer, extOfficer, partOfficer
+    expect(await stat(admin, "Coordinators")).toBe(6);                                                  // seeded: coordA, regCoord, annCoord, extCoord, secCoord, partCoord
+    await admin.goto("/college/students"); expect(await stat(admin, "Students")).toBeGreaterThanOrEqual(6);
   });
 
   test("departments: validation, creation, duplicates", async () => {
@@ -87,10 +88,12 @@ test.describe.serial("college administrator console", () => {
   });
 
   test("dashboard counts follow the data", async () => {
-    await admin.goto("/college");
+    await admin.goto("/college/departments");
     expect(await stat(admin, "Active departments")).toBe(5);
     expect(await stat(admin, "Departments without a coordinator")).toBe(4);
+    await admin.goto("/college/staff");
     expect(await stat(admin, "Coordinators without a department")).toBe(1);
+    await admin.goto("/college");
     await expect(admin.getByText("Create your first department.")).toHaveCount(0);
   });
 
@@ -132,7 +135,7 @@ test.describe.serial("college administrator console", () => {
     await coord.getByLabel("Choose a password").fill(coordPassword);
     await coord.getByLabel("Confirm password").fill(coordPassword);
     await coord.getByRole("button", { name: "Create account" }).click();
-    await expectOn(coord, "/login\\?welcome=1");
+    await expectOn(coord, "/login/college\\?welcome=1");
     await coord.getByLabel("Email").fill("new.coordinator@e2e.test");
     await coord.getByLabel("Password").fill(coordPassword);
     await coord.getByRole("button", { name: "Sign in" }).click();
@@ -187,7 +190,7 @@ test.describe.serial("college administrator console", () => {
 
     for (const path of ["/college", "/college/departments", "/college/staff", "/college/settings", "/college/audit", cseUrl]) {
       await coord.goto(path);
-      await expectOn(coord, "/coordinator");
+      await expectOnSignIn(coord, "college");                                  // the administrator's pages ask for the administrator's sign-in
     }
   });
 
@@ -208,7 +211,8 @@ test.describe.serial("college administrator console", () => {
     await admin.getByRole("button", { name: "Disable account" }).click();
     await expect(admin.getByText("Account disabled.")).toBeVisible();
     await coord.goto("/coordinator");
-    await expectOn(coord, "/login");
+    await expectOnSignIn(coord);
+    await coord.goto("/login/college");
     await coord.getByLabel("Email").fill("new.coordinator@e2e.test");
     await coord.getByLabel("Password").fill(coordPassword);
     await coord.getByRole("button", { name: "Sign in" }).click();
@@ -240,9 +244,9 @@ test.describe.serial("college administrator console", () => {
     await p.getByLabel("New password", { exact: true }).fill("Reset-By-Admin-Passw0rd!");
     await p.getByLabel("Confirm new password").fill("Reset-By-Admin-Passw0rd!");
     await p.getByRole("button", { name: "Set new password" }).click();
-    await expectOn(p, "/login\\?reset=1");
+    await expectOn(p, "/login/college\\?reset=1");
     await coord.goto("/coordinator");
-    await expectOn(coord, "/login"); // the coordinator's earlier session was revoked by the reset
+    await expectOnSignIn(coord); // the coordinator's earlier session was revoked by the reset
     await p.goto(link);
     await expect(p.getByText("invalid, already used, or has expired")).toBeVisible();
   });
@@ -307,8 +311,8 @@ test.describe.serial("college administrator console", () => {
     await loginAs(b, "adminB");
     await expectOn(b, "/college");
     await expect(b.getByText("Riverside College of Engineering").first()).toBeVisible();
-    expect(await stat(b, "Active departments")).toBe(0);
     await b.goto("/college/departments");
+    expect(await stat(b, "Active departments")).toBe(0);
     await expect(b.getByText("No departments yet")).toBeVisible();
     await expect(b.getByText("Computer Science")).toHaveCount(0);
     expect((await b.goto(`/college/departments/${deptId}`))?.status()).toBe(404);
@@ -329,7 +333,8 @@ test.describe.serial("college administrator console", () => {
       const home = p.url();
       for (const path of ["/college", "/college/departments", "/college/staff", "/college/settings", "/college/audit", cseUrl]) {
         await p.goto(path);
-        await expect(p).toHaveURL(home);
+        // An officer (same staff area) is sent to their own home; a student (another area) is asked to sign in as staff.
+        await expectOnSignIn(p, "college"); void home;   // each role has its own session: another role's pages ask for that sign-in
       }
     }
   });

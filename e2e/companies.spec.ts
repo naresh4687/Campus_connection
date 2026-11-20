@@ -3,7 +3,7 @@ import { expect, test, type Browser, type Page } from "@playwright/test";
 import { sql } from "kysely";
 import { withTenantTx } from "../src/server/db";
 import { appDb, inspect } from "../db/tests/world";
-import { expectOn, formAlert, loginAs } from "./helpers";
+import { expectOn, formAlert, loginAs, expectOnSignIn } from "./helpers";
 
 const TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"];
 const settle = async (p: Page) => { await p.waitForLoadState("networkidle"); await p.waitForTimeout(300); };
@@ -25,8 +25,10 @@ test.describe.serial("companies", () => {
   test("the officer's home starts empty and points to adding a company", async () => {
     await officer.goto("/placement");
     await expect(officer.getByRole("heading", { name: "Placement overview" })).toBeVisible();
+    await officer.goto("/placement/companies");                                              // the totals live at the top of the Companies page
     expect(await stat(officer, "Companies")).toBe(0);
     await expect(officer.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Companies" })).toBeVisible();
+    await officer.goto("/placement");
     await officer.getByRole("link", { name: "Add your first company" }).click();
     await expectOn(officer, "/placement/companies/new");
   });
@@ -97,7 +99,7 @@ test.describe.serial("companies", () => {
     await expect(officer.getByText("No companies found")).toBeVisible();
     await officer.goto("/placement/companies?status=INACTIVE");
     await expect(officer.getByText("No companies found")).toBeVisible();
-    await officer.goto("/placement");
+    await officer.goto("/placement/companies");
     expect(await stat(officer, "Companies")).toBe(18);
   });
 
@@ -111,12 +113,12 @@ test.describe.serial("companies", () => {
     await expect(admin.getByRole("link", { name: "https://acme.example.test" })).toHaveAttribute("rel", /noopener/);
     await expect(admin.getByRole("link", { name: "hiring@acme.example.test" })).toHaveAttribute("href", /^mailto:/);
     await expect(admin.getByText("Builds <b>things</b>")).toBeVisible();
-    for (const path of ["/placement", "/placement/companies", acmeUrl.replace("http://127.0.0.1:3100", "")]) { await admin.goto(path); await expectOn(admin, "/college"); }
-    await officer.goto("/college/companies"); await expectOn(officer, "/placement");
+    for (const path of ["/placement", "/placement/companies", acmeUrl.replace("http://127.0.0.1:3100", "")]) { await admin.goto(path); await expectOnSignIn(admin, "college"); }   // each role has its own session: another role's pages ask for that sign-in
+    await officer.goto("/college/companies"); await expectOnSignIn(officer, "college");
     for (const key of ["studentX", "coordA"]) {
       const p = await newPage(browser); await loginAs(p, key);
       const home = p.url();
-      for (const path of ["/placement/companies", "/college/companies"]) { await p.goto(path); await expect(p).toHaveURL(home); }
+      for (const path of ["/placement/companies", "/college/companies"]) { await p.goto(path); await expectOnSignIn(p, "college"); void home; }   // a student is asked to sign in as staff
     }
   });
 
@@ -125,7 +127,7 @@ test.describe.serial("companies", () => {
     await b.goto("/placement/companies");
     await expect(b.getByText("No companies found")).toBeVisible();
     expect((await b.goto(acmeUrl.replace("http://127.0.0.1:3100", "")))?.status()).toBe(404);
-    await b.goto("/placement");
+    await b.goto("/placement/companies");
     expect(await stat(b, "Companies")).toBe(0);
     const ab = await newPage(browser); await loginAs(ab, "adminB");
     await ab.goto("/college/companies");

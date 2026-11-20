@@ -7,6 +7,7 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Select } from "@/components/ui/select";
+import { upperInput } from "@/lib/normalize";
 
 export type StudentFormValues = {
   departmentId: string; registerNumber: string; fullName: string; collegeEmail: string; personalEmail: string; phone: string;
@@ -25,7 +26,7 @@ export function StudentForm({ id, initial, departments, emailLocked }: { id?: st
       {state?.ok ? <Alert kind="success">{state.ok}</Alert> : null}
       {id ? <input type="hidden" name="id" value={id} /> : null}
       <div className="grid gap-4 @xl:grid-cols-2">
-        <Field id="registerNumber" label="Register number" required maxLength={30} defaultValue={v.registerNumber} error={e.registerNumber} />
+        <Field id="registerNumber" label="Register number" required maxLength={30} autoCapitalize="characters" autoCorrect="off" spellCheck={false} onInput={upperInput} defaultValue={v.registerNumber} error={e.registerNumber} />
         <Field id="fullName" label="Full name" required maxLength={120} defaultValue={v.fullName} error={e.fullName} />
       </div>
       <div className="grid gap-4 @xl:grid-cols-2">

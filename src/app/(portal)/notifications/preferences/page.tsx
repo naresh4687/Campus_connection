@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { scopedHref } from "@/lib/portals";
 import { CATEGORIES_FOR, CATEGORY_HELP, CATEGORY_LABEL, ESSENTIAL } from "@/lib/notifications";
 import { requireSession } from "@/server/auth/session";
 import { preferenceMap } from "@/server/notifications/queries";
@@ -12,10 +13,10 @@ export default async function Preferences() {
   const prefs = await preferenceMap(s);
   return (
     <div className="space-y-6">
-      <p className="text-sm"><Link href="/notifications" className="underline">← Notifications</Link></p>
+      <p className="text-sm"><Link href={scopedHref("/notifications", s.slot)} className="underline">← Notifications</Link></p>
       <h1 className="text-2xl font-semibold tracking-tight">Notification preferences</h1>
       {cats.length === 0 ? <p className="text-sm text-muted">There are no notification categories for your role.</p> : (
-        <ul className="divide-y divide-border rounded-2xl border border-border bg-surface" aria-label="Notification categories">
+        <ul className="divide-y divide-border card" aria-label="Notification categories">
           {cats.map((c) => <PrefToggle key={c} category={c} label={CATEGORY_LABEL[c]} help={CATEGORY_HELP[c]} enabled={prefs[c] ?? true} essential={ESSENTIAL.has(c)} />)}
         </ul>
       )}

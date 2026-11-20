@@ -14,9 +14,11 @@ npm run dev                     # http://localhost:3000
 
 ## 2. The super admin (where it is, how to create it)
 Created for you in the dev database:
-- URL: http://localhost:3000/login
+- URL: http://localhost:3000/admin/login (the platform administrator's own sign-in page; it is not linked from the public site)
 - Email: `admin@campusconnect.local`
-- Password: `Campus-Admin-15355bd1!`  (local throwaway; change it under **Account** after signing in)
+- Password: the one chosen when the account was created. An earlier version of this file printed the local throwaway password, and this repository is public, so treat that value as known to everyone: change it under **Account**, and never use it (or anything like it) on a real deployment.
+
+Everyone else has their own sign-in page too: students at `/login/student`, college staff (administrators, placement officers, coordinators) at `/login/college`. `/login` lets a visitor choose between those two. A correct password on the wrong page does not sign anyone in.
 
 To create it yourself on another database (only one platform admin is allowed):
 ```bash

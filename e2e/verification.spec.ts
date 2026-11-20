@@ -1,6 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Browser, type Page } from "@playwright/test";
-import { expectOn, formAlert, loginAs } from "./helpers";
+import { expectOn, formAlert, loginAs, expectOnSignIn } from "./helpers";
 
 const settle = async (page: Page) => { await page.waitForLoadState("networkidle"); await page.waitForTimeout(300); };
 const TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"];
@@ -57,7 +57,7 @@ test.describe.serial("academic records and verification", () => {
     await secStu.getByLabel("Full name").fill("Sec Student");
     await secStu.getByLabel("Choose a password").fill(pw); await secStu.getByLabel("Confirm password").fill(pw);
     await secStu.getByRole("button", { name: "Create account" }).click();
-    await expectOn(secStu, "/login\\?welcome=1");
+    await expectOn(secStu, "/login/student\\?welcome=1");
     await secStu.getByLabel("Email").fill("sec.student@e2e.test"); await secStu.getByLabel("Password").fill(pw);
     await secStu.getByRole("button", { name: "Sign in" }).click();
     await expectOn(secStu, "/student");
@@ -73,7 +73,7 @@ test.describe.serial("academic records and verification", () => {
     await secCoord.getByLabel("Full name").fill("Sec Coordinator");
     await secCoord.getByLabel("Choose a password").fill(pw); await secCoord.getByLabel("Confirm password").fill(pw);
     await secCoord.getByRole("button", { name: "Create account" }).click();
-    await expectOn(secCoord, "/login\\?welcome=1");
+    await expectOn(secCoord, "/login/college\\?welcome=1");
     await secCoord.getByLabel("Email").fill("sec.coord@e2e.test"); await secCoord.getByLabel("Password").fill(pw);
     await secCoord.getByRole("button", { name: "Sign in" }).click();
     await expectOn(secCoord, "/coordinator");
@@ -233,6 +233,8 @@ test.describe.serial("academic records and verification", () => {
     await expect(coord.getByRole("row", { name: /Test acadA/ })).toContainText("Update to verified record");
     await coord.getByRole("link", { name: "Test acadA" }).click();
     await expect(coord.getByText("Currently verified record")).toBeVisible();
+    await expect(tid(coord, "academic-diff")).toContainText("Active backlogs");
+    await expect(tid(coord, "academic-diff")).toContainText("0");
     await coord.getByLabel("Reason (shown to the student)").fill("Please provide the backlog statement first.");
     await coord.getByRole("button", { name: "Reject with this reason" }).click();
     await expect(coord.getByText("Rejected.")).toBeVisible();
@@ -257,6 +259,143 @@ test.describe.serial("academic records and verification", () => {
     await expect(h(4)).toContainText("Rejected");
     await expect(h(5)).toContainText("Verified");
     await expect(h(5)).toContainText("Test coordA");
+  });
+
+  test("optional semester results: a CGPA far from the SGPA average needs a confirmation; the coordinator sees the semesters and verifies them together", async () => {
+    await stuA.goto("/student/academics");
+    await stuA.getByText("Semester-wise results (optional)").click();
+    await stuA.getByLabel("Semester 1 SGPA").fill("5");
+    await stuA.getByLabel("Semester 2 SGPA").fill("5.5");
+    await stuA.getByLabel("Backlogs", { exact: true }).nth(1).fill("1");
+    await stuA.getByRole("button", { name: "Submit update for review" }).click();
+    await settle(stuA);
+    await expect(formAlert(stuA)).toContainText("differs from the average of the semester SGPAs");
+    await stuA.getByLabel(/I have checked/).check();
+    await stuA.getByRole("button", { name: "Submit update for review" }).click();
+    await expect(stuA.getByText("Submitted for review.")).toBeVisible();
+
+    await coord.goto("/coordinator/verification?q=acadA");
+    await coord.getByRole("link", { name: "Test acadA" }).click();
+    await expect(tid(coord, "v-semesters").first()).toContainText("5.50");
+    await expect(tid(coord, "v-gap").first()).toBeVisible();
+    await coord.getByRole("button", { name: "Verify these values" }).click();
+    await expect(coord.getByText("Verified.")).toBeVisible();
+
+    await stuA.goto("/student/academics");
+    await expect(tid(stuA, "v-semesters").first()).toContainText("5.00");
+  });
+
+  test("achievements: a student adds entries, a coordinator of the department returns or verifies them, other departments never see them", async () => {
+    await stuA.goto("/student/achievements");
+    await stuA.getByRole("button", { name: "Add achievement" }).click();
+    await settle(stuA);
+    for (const f of ["kind", "title", "date"]) await expect(stuA.locator(`#${f}-error`)).toBeVisible();
+    await stuA.getByLabel("Type").selectOption("CERTIFICATION");
+    await stuA.getByLabel("Title").fill("Cloud practitioner certificate");
+    await stuA.getByLabel("Date").fill("2025-05-01");
+    await stuA.getByLabel("Link (optional)").fill("javascript:alert(1)");
+    await stuA.getByRole("button", { name: "Add achievement" }).click();
+    await settle(stuA);
+    await expect(stuA.locator("#link-error")).toBeVisible();
+    await expect(stuA.getByLabel("Title")).toHaveValue("Cloud practitioner certificate");   // kept
+    await stuA.getByLabel("Link (optional)").fill("https://example.org/cert/1");
+    await stuA.getByRole("button", { name: "Add achievement" }).click();
+    await expect(stuA.getByText("Added. A coordinator of your department will review it.")).toBeVisible();
+    await stuA.reload();
+    await expect(stuA.getByTestId("achievement-item").filter({ hasText: "Cloud practitioner certificate" })).toContainText("Awaiting review");
+    await stuA.getByLabel("Title").fill("Cloud practitioner certificate");
+    await stuA.getByLabel("Type").selectOption("CERTIFICATION");
+    await stuA.getByLabel("Date").fill("2025-05-01");
+    await stuA.getByRole("button", { name: "Add achievement" }).click();
+    await expect(formAlert(stuA)).toContainText("already added");
+
+    await secCoord.goto("/coordinator/achievements");
+    await expect(secCoord.getByText("Nothing to review")).toBeVisible();                      // another department sees nothing
+    await coord.goto("/coordinator/achievements?q=acadA");
+    await expect(coord.getByText("Cloud practitioner certificate")).toBeVisible();
+    await coord.getByLabel("Reason (shown to the student)").fill("Link does not show your name.");
+    await coord.getByRole("button", { name: "Return with this reason" }).click();
+    await expect(coord.getByText("Returned.")).toBeVisible();
+    await stuA.goto("/student/achievements");
+    await expect(stuA.getByTestId("achievement-item").filter({ hasText: "Cloud practitioner certificate" })).toContainText("Link does not show your name.");
+
+    await stuA.getByLabel("Type").selectOption("PROJECT");
+    await stuA.getByLabel("Title").fill("Placement portal project");
+    await stuA.getByLabel("Date").fill("2025-06-10");
+    await stuA.getByRole("button", { name: "Add achievement" }).click();
+    await expect(stuA.getByText("Added.")).toBeVisible();
+    await coord.goto("/coordinator/achievements?q=acadA");
+    await coord.getByRole("button", { name: "Verify", exact: true }).click();
+    await expect(coord.getByText("Verified.")).toBeVisible();
+    await stuA.goto("/student/achievements");
+    await expect(stuA.getByTestId("achievement-item").filter({ hasText: "Placement portal project" })).toContainText("Verified");
+    await expect(stuA.getByRole("button", { name: "Withdraw" })).toHaveCount(0);              // decided entries cannot be withdrawn
+
+    // editing a verified entry: the change is reviewed, the verified entry stays in force meanwhile
+    await stuA.goto("/student/achievements");
+    const proj = () => stuA.getByTestId("achievement-item").filter({ hasText: /Placement portal project(?! \(final year\))/ });      // the original, not its revision
+    await proj().getByText("Edit this entry").click();
+    await proj().getByRole("button", { name: "Send change for review" }).click();
+    await expect(proj().getByText("Nothing has changed from the verified entry.")).toBeVisible();
+    await proj().getByLabel("Title").fill("Placement portal project (final year)");
+    await proj().getByRole("button", { name: "Send change for review" }).click();
+    await expect(proj()).toContainText("Change awaiting review");                          // the page refreshes: the badge is the confirmation
+    await stuA.goto("/student/achievements");
+    await expect(proj()).toContainText("Verified");                                       // the verified entry is untouched
+    await expect(stuA.getByTestId("achievement-item").filter({ hasText: "Placement portal project (final year)" })).toContainText("Awaiting review");
+    await expect(stuA.getByRole("button", { name: "Send change for review" })).toHaveCount(0);   // one open change at a time
+    await coord.goto("/coordinator/achievements?q=acadA");
+    await expect(tid(coord, "achievement-diff")).toContainText("Placement portal project");
+    await expect(tid(coord, "achievement-diff")).toContainText("Placement portal project (final year)");
+    await coord.getByRole("button", { name: "Verify", exact: true }).click();
+    await expect(coord.getByText("Verified.")).toBeVisible();
+    await stuA.goto("/student/achievements");
+    await expect(stuA.getByTestId("achievement-item").filter({ hasText: "Placement portal project (final year)" })).toContainText("Verified");
+    await expect(stuA.getByTestId("achievement-item")).toHaveCount(2);                    // the original is superseded, not listed twice (plus the returned certificate)
+
+    await coord.goto("/coordinator/students?q=acadA");
+    await coord.getByRole("link", { name: "Test acadA" }).click();
+    await expect(coord.getByRole("heading", { name: "Achievements" })).toBeVisible();
+    await expect(coord.getByTestId("achievement-item").filter({ hasText: "Placement portal project (final year)" })).toContainText("Verified");
+    await coord.goto("/coordinator/achievements");
+    await expect(coord.getByText("Nothing to review")).toBeVisible();
+  });
+
+  test("profile completion: the student sees what is missing and where to fix it; coordinators see the score in the list, can filter by band, and see the same checklist", async () => {
+    const readScore = async (p: Page) => Number((await p.getByTestId("completion-score").first().innerText()).replace("%", ""));
+    await stuA.goto("/student");
+    await expect(stuA.getByRole("heading", { name: "Profile completion" })).toBeVisible();
+    await expect(tid(stuA, "completion-academics")).toContainText("done");                    // verified in the tests above
+    await expect(tid(stuA, "completion-semesters")).toContainText("done");
+    await expect(tid(stuA, "completion-achievement")).toContainText("done");
+    await expect(tid(stuA, "completion-contact")).toContainText("missing");
+    await expect(tid(stuA, "completion-contact").getByRole("link")).toHaveAttribute("href", "/student/profile");
+    const before = await readScore(stuA);
+
+    await stuA.goto("/student/profile");
+    await stuA.getByLabel("Phone").fill("+91 98765 43210");
+    await stuA.getByLabel("Personal email").fill("acada.personal@e2e.test");
+    await stuA.getByRole("button", { name: "Save contact details" }).click();
+    await settle(stuA);
+    await stuA.goto("/student/profile");
+    await expect(tid(stuA, "completion-contact")).toContainText("done");
+    const after = await readScore(stuA);
+    expect(after).toBe(before + 15);
+
+    const band = after === 100 ? "full" : after >= 80 ? "high" : after >= 50 ? "mid" : "low";
+    await coord.goto(`/coordinator/students?q=acadA&completion=${band}`);
+    await expect(coord.getByRole("row", { name: /Test acadA/ })).toContainText(`${after}%`);
+    const wrong = band === "low" ? "full" : "low";
+    await coord.goto(`/coordinator/students?q=acadA&completion=${wrong}`);
+    await expect(coord.getByRole("row", { name: /Test acadA/ })).toHaveCount(0);
+    await coord.goto("/coordinator/students?q=acadA");
+    await coord.getByRole("link", { name: "Test acadA" }).click();
+    await expect(tid(coord, "completion-score").first()).toHaveText(`${after}%`);
+    await expect(tid(coord, "completion-contact")).toContainText("done");
+    await expect(tid(coord, "completion-contact").getByRole("link")).toHaveCount(0);        // staff get no "fix it" links
+
+    await admin.goto("/college/students?q=acadA");
+    await expect(admin.getByRole("row", { name: /Test acadA/ })).toContainText(`${after}%`);   // the administrator sees the same score
   });
 
   test("a coordinator cannot see or decide submissions of another department", async () => {
@@ -333,7 +472,7 @@ test.describe.serial("academic records and verification", () => {
     }
     const officer = await newPage(browser); await loginAs(officer, "officerX");
     const home = officer.url();
-    for (const path of ["/coordinator/verification", "/student/academics", "/college/academics"]) { await officer.goto(path); await expect(officer).toHaveURL(home); }
+    for (const path of ["/coordinator/verification", "/student/academics", "/college/academics"]) { await officer.goto(path); await expectOnSignIn(officer, path.startsWith("/student") ? "student" : "college"); void home; }   // the student area needs its own sign-in
     const b = await newPage(browser); await loginAs(b, "adminB");
     await b.goto("/college/academics");
     expect(Number(await tid(b, "acad-Verified").innerText())).toBe(0);
@@ -342,8 +481,8 @@ test.describe.serial("academic records and verification", () => {
 
   test("academic pages pass the automated accessibility scan and fit a phone screen", async () => {
     const targets: [Page, string[]][] = [
-      [stuA, ["/student", "/student/academics"]],
-      [coord, ["/coordinator", "/coordinator/verification", "/coordinator/verification/history", aSubmissionUrl.replace("http://127.0.0.1:3100", "")]],
+      [stuA, ["/student", "/student/academics", "/student/achievements", "/student/profile"]],
+      [coord, ["/coordinator", "/coordinator/verification", "/coordinator/achievements", "/coordinator/verification/history", aSubmissionUrl.replace("http://127.0.0.1:3100", "")]],
       [admin, ["/college", "/college/academics"]],
     ];
     for (const [page, paths] of targets) for (const path of paths) {

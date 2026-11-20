@@ -3,11 +3,11 @@ import { TableLabels } from "./table-labels";
 
 export function Table({ head, children, empty }: { head: string[]; children: ReactNode; empty?: ReactNode }) {
   return (
-    <div tabIndex={0} className="rtable focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary overflow-x-auto rounded-2xl border border-border bg-surface shadow-soft">
+    <div tabIndex={0} className="rtable focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary overflow-x-auto card shadow-soft">
       <TableLabels />
       <table className="w-full min-w-[40rem] text-left text-sm">
-        <thead className="border-b border-border bg-tint text-xs uppercase tracking-wide text-muted">
-          <tr>{head.map((h) => <th key={h} scope="col" className="px-4 py-2.5 font-medium">{h}</th>)}</tr>
+        <thead className="bg-nav text-xs uppercase tracking-wider text-nav-foreground">
+          <tr>{head.map((h) => <th key={h} scope="col" className="px-4 py-3 font-semibold">{h}</th>)}</tr>
         </thead>
         <tbody className="divide-y divide-border">{children}</tbody>
       </table>

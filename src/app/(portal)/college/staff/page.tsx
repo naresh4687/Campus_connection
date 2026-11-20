@@ -6,9 +6,10 @@ import { Select } from "@/components/ui/select";
 import { StatusBadge, humanize } from "@/components/ui/status-badge";
 import { EmptyState, Table, Td } from "@/components/ui/table";
 import { fmtDateTime } from "@/lib/format";
+import { StatStrip } from "@/components/ui/stat-strip";
 import { requireRole } from "@/server/auth/session";
 import { revokeInvitationAction } from "@/server/college/actions";
-import { listDepartments, listStaff } from "@/server/college/queries";
+import { dashboard, listDepartments, listStaff } from "@/server/college/queries";
 import { InviteStaffForm } from "./invite-form";
 
 export const metadata = { title: "Staff — CampusConnect" };
@@ -23,10 +24,15 @@ export default async function StaffPage({ searchParams }: { searchParams: Promis
   const status = sp.status === "ACTIVE" || sp.status === "DISABLED" ? sp.status : undefined;
   const page = parsePage(sp.page);
   const { rows, total, pending } = await listStaff(s, { q, role, status, page });
+  const sd = await dashboard(s);
   const departments = (await listDepartments(s)).filter((d) => d.status === "ACTIVE").map((d) => ({ id: d.id, label: `${d.code} · ${d.name}` }));
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold tracking-tight">Staff</h1>
+      <StatStrip label="Staff totals" items={[
+        { label: "Placement officers", value: sd.staff.officers, href: "/college/staff?role=PLACEMENT_OFFICER", hint: sd.staff.officers_disabled ? `${sd.staff.officers_disabled} disabled` : undefined },
+        { label: "Coordinators", value: sd.staff.coordinators, href: "/college/staff?role=COORDINATOR", hint: sd.staff.coordinators_disabled ? `${sd.staff.coordinators_disabled} disabled` : undefined },
+        { label: "Coordinators without a department", value: sd.staff.unassigned, attention: true }, { label: "Pending invitations", value: sd.pending }]} />
 
       <form className="flex flex-wrap items-end gap-3" role="search">
         <div className="space-y-1">

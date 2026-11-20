@@ -1,7 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Browser, type Page } from "@playwright/test";
 import { inspect } from "../db/tests/world";
-import { expectOn, formAlert, loginAs } from "./helpers";
+import { formAlert, loginAs, expectOnSignIn } from "./helpers";
 import { signedDownloadUrl } from "../src/server/storage/s3";
 
 const ORIGIN = "http://127.0.0.1:3100";
@@ -183,7 +183,8 @@ test.describe.serial("private documents", () => {
     await admin.getByRole("link", { name: "Test docA" }).click();
     await expect(admin.getByRole("heading", { name: "Documents" })).toHaveCount(0);
     await expect(admin.getByText("semester-5.png")).toHaveCount(0);
-    for (const path of ["/coordinator/documents", "/student/documents"]) { await admin.goto(path); await expectOn(admin, "/college"); }
+    await admin.goto("/coordinator/documents"); await expectOnSignIn(admin, "college");                           // the coordinator role needs its own sign-in
+    await admin.goto("/student/documents"); await expectOnSignIn(admin, "student");                               // the student area needs its own sign-in
   });
 
   test("the coordinator reviews pending documents: a reason is needed to reject; the student sees the outcome", async () => {

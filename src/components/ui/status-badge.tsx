@@ -8,18 +8,20 @@ const TONE: Record<string, string> = {
   // neutral
   NOT_STARTED: "neutral", WITHDRAWN: "neutral", NO_INVITATION: "neutral",
 };
-const STYLE: Record<string, string> = {
-  success: "border-success/40 text-success",
-  warning: "border-warning/40 text-warning",
-  danger: "border-danger/40 text-danger",
-  neutral: "border-border text-muted",
+const STYLE: Record<string, { chip: string; dot: string }> = {
+  success: { chip: "bg-brand/55 text-foreground", dot: "bg-foreground" },
+  warning: { chip: "bg-warning/14 text-warning", dot: "bg-warning" },
+  danger: { chip: "bg-danger/12 text-danger", dot: "bg-danger" },
+  neutral: { chip: "bg-muted/12 text-muted", dot: "bg-muted" },
 };
 
 export const humanize = (v: string) => v.toLowerCase().replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase());
 
 export function StatusBadge({ value, label }: { value: string; label?: string }) {
+  const t = STYLE[TONE[value] ?? "neutral"];
   return (
-    <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${STYLE[TONE[value] ?? "neutral"]}`}>
+    <span className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold ${t.chip}`}>
+      <span aria-hidden="true" className={`h-1.5 w-1.5 rounded-full ${t.dot}`} />
       {label ?? humanize(value)}
     </span>
   );

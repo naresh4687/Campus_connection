@@ -3,15 +3,21 @@ import { notFound } from "next/navigation";
 import { ActionButton } from "@/components/ui/action-button";
 import { Alert } from "@/components/ui/alert";
 import { Card } from "@/components/ui/card";
+import { CareerPanel } from "@/components/students/career-panel";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { HistoryItem, SubmissionValuesView } from "@/components/ui/submission-view";
 import { submissionsFor } from "@/server/academics/queries";
+import { CompletionChecklist } from "@/components/students/completion-card";
+import { completionFor } from "@/server/students/queries";
+import { achievementsFor } from "@/server/achievements/queries";
+import { AchievementList } from "@/components/students/achievement-list";
 import { fmtDateTime } from "@/lib/format";
 import { uuidSchema } from "@/lib/validation";
 import { requireRole } from "@/server/auth/session";
 import { issueResetLinkAction, setStaffStatusAction } from "@/server/college/actions";
 import { inviteStudentAction } from "@/server/students/actions";
-import { activeDepartments, getStudent } from "@/server/students/queries";
+import { activeDepartments, getStudent, careerCategories, careerHistory, driveHistory } from "@/server/students/queries";
+import { DriveHistory } from "@/components/students/drive-history";
 import { StudentForm } from "../student-form";
 
 export const metadata = { title: "Student — CampusConnect" };
@@ -22,9 +28,13 @@ export default async function StudentPage({ params, searchParams }: { params: Pr
   const { created } = await searchParams;
   if (!uuidSchema.safeParse(id).success) notFound();
   const st = await getStudent(s, id);
+  const [categories, history] = st ? await Promise.all([careerCategories(s), careerHistory(s, id)]) : [[], []];
   if (!st) notFound();
   const depts = await activeDepartments(s);
   const subs = await submissionsFor(s, id);
+  const achievements = await achievementsFor(s, id);
+  const completion = await completionFor(s, id);
+  const drives = await driveHistory(s, id);
   const verified = subs.find((x) => x.status === "VERIFIED");
   const open = subs.find((x) => x.status === "SUBMITTED");
   const status = st.user_status === "DISABLED" ? "DISABLED" : st.has_account ? "ACTIVE" : st.invite_expires ? "INVITED" : "NOT_INVITED";
@@ -67,6 +77,16 @@ export default async function StudentPage({ params, searchParams }: { params: Pr
         </div>
       </Card>
 
+
+      <Card title="Career interest"><CareerPanel current={st.career_preference} categories={categories} history={history} /></Card>
+      {completion ? <Card title="Profile completion"><CompletionChecklist flags={completion} score={completion.score} forStudent={false} /></Card> : null}
+
+      <Card title="Achievements">
+        <AchievementList items={achievements} />
+        <p className="mt-2 text-xs text-muted">Only entries marked verified have been confirmed by a coordinator.</p>
+      </Card>
+
+      <Card title="Drive history and placement"><DriveHistory rows={drives} /></Card>
 
       <Card title="Academic record">
         {verified ? (<><SubmissionValuesView s={verified} /><p className="mt-3 text-xs text-muted">Verified by {verified.reviewed_by_name} on {fmtDateTime(verified.reviewed_at)}.</p></>) : <p className="text-sm text-muted">No verified academic record yet.</p>}

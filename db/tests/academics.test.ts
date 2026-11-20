@@ -355,3 +355,52 @@ describe("suspended college", () => {
     expect(await code(verify(co, sub.id))).toBe("OK");
   });
 });
+
+describe("semester results (migration 0023)", () => {
+  type Sem = { semester: number; sgpa: number; backlogs: number };
+  const sems = (n: number, sgpa = 8): Sem[] => Array.from({ length: n }, (_, i) => ({ semester: i + 1, sgpa, backlogs: 0 }));
+  const submitSem = (a: Actor | null, s: unknown, o: Partial<V> = {}) => {
+    const v = vals(o);
+    return call(a, sql`SELECT academics.submit(${v.cgpa}::numeric, ${v.tenth}::numeric, ${v.twelfth}::numeric, ${v.diploma}::numeric, ${v.backlogs}::int, ${v.arrears}::int, ${v.note}, '{}'::uuid[], ${JSON.stringify(s)}::jsonb) AS id`);
+  };
+  const rows = (id: string) => inspect<{ semester: number; sgpa: string; backlogs: number }>("SELECT semester, sgpa::text AS sgpa, backlogs FROM semester_results WHERE submission_id = $1 ORDER BY semester", [id]);
+
+  it("stores semesters with the submission; they are optional", async () => {
+    const st = await studentIn(w.A.admin, d1, "sem1");
+    const a = (await submitSem(st, sems(3, 8.5))).rows[0] as { id: string };
+    expect((await rows(a.id)).map((r) => [r.semester, r.sgpa, r.backlogs])).toEqual([[1, "8.50", 0], [2, "8.50", 0], [3, "8.50", 0]]);
+    const st2 = await studentIn(w.A.admin, d1, "sem2");
+    const b = await submitId(st2);
+    expect(await rows(b.id)).toEqual([]);
+  });
+
+  it("rejects bad semesters and writes nothing", async () => {
+    const st = await studentIn(w.A.admin, d1, "sem3");
+    for (const bad of [[{ semester: 0, sgpa: 8, backlogs: 0 }], [{ semester: 13, sgpa: 8, backlogs: 0 }], [{ semester: 1, sgpa: 10.5, backlogs: 0 }], [{ semester: 1, sgpa: 8.123, backlogs: 0 }],
+                       [{ semester: 1, sgpa: 8, backlogs: 21 }], [{ semester: 1, sgpa: 8, backlogs: 0 }, { semester: 1, sgpa: 7, backlogs: 0 }], [{ semester: 1, sgpa: null, backlogs: 0 }], sems(13), { semester: 1 }]) {
+      expect(await code(submitSem(st, bad)), JSON.stringify(bad)).not.toBe("OK");
+    }
+    expect(await inspect("SELECT 1 FROM academic_submissions WHERE student_id = $1", [st.studentId])).toEqual([]);
+  });
+
+  it("adding semesters to otherwise identical verified values is a real update; identical values and semesters are refused", async () => {
+    const st = await studentIn(w.A.admin, d1, "sem4");
+    const a = await submitId(st); await verify(c1, a.id);
+    expect(await code(submit(st))).toBe("22023");                                  // same values, no semesters: nothing to update
+    const b = (await submitSem(st, sems(2))).rows[0] as { id: string };            // same values + semesters: allowed
+    await verify(c1, b.id);
+    expect(await code(submitSem(st, sems(2)))).toBe("22023");                      // now identical including semesters
+    expect(await code(submitSem(st, sems(3)))).toBe("OK");
+  });
+
+  it("is append-only and visible only to the student, their coordinator and the college admin", async () => {
+    const st = await studentIn(w.A.admin, d1, "sem5");
+    const a = (await submitSem(st, sems(2))).rows[0] as { id: string };
+    expect(await code(adminWrite("UPDATE semester_results SET sgpa = 1 WHERE submission_id = $1", [a.id]))).toBe(DENIED);
+    expect(await code(adminWrite("DELETE FROM semester_results WHERE submission_id = $1", [a.id]))).toBe(DENIED);
+    const visible = async (who: Actor) => (await as(who, (t) => sql`SELECT id FROM semester_results WHERE submission_id = ${a.id}::uuid`.execute(t))).rows.length;
+    expect(await visible(st)).toBe(2); expect(await visible(c1)).toBe(2); expect(await visible(w.A.admin)).toBe(2);
+    for (const who of [c2, w.A.officer, w.B.admin, w.pa, s2]) expect(await visible(who), who.role).toBe(0);
+    for (const who of [st, c1, w.A.admin]) expect(await code(call(who, sql`INSERT INTO semester_results (college_id, student_id, submission_id, semester, sgpa, backlogs) VALUES (${w.A.admin.collegeId}::uuid, ${st.studentId}::uuid, ${a.id}::uuid, 9, 8, 0)`))).toBe(DENIED);
+  });
+});

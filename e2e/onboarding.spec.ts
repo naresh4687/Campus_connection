@@ -1,5 +1,5 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
-import { expectOn, formAlert, loginAs, seed } from "./helpers";
+import { expectOn, expectOnSignIn, formAlert, loginAs, seed } from "./helpers";
 
 const unique = () => Math.random().toString(36).slice(2, 8);
 
@@ -28,7 +28,7 @@ const submit = async (page: Page) => { await page.getByRole("button", { name: "S
 
 test.describe("public website", () => {
   const PAGES: [string, string][] = [
-    ["/", "One place for the whole campus placement process"], ["/features", "Features"], ["/how-it-works", "How it works"],
+    ["/", "Every placement, on record."], ["/features", "Features"], ["/how-it-works", "How it works"],
     ["/apply", "Apply as a college"], ["/contact", "Contact"], ["/privacy", "Privacy policy"], ["/terms", "Terms of service"], ["/login", "Sign in"],
   ];
   for (const [path, heading] of PAGES) {
@@ -52,7 +52,7 @@ test.describe("public website", () => {
     await page.getByRole("contentinfo").getByRole("link", { name: "Terms of service" }).click();
     await expectOn(page, "/terms");
     await page.getByRole("banner").getByRole("link", { name: "Sign in" }).click();
-    await expectOn(page, "/login");
+    await expectOnSignIn(page);
   });
 
   test("features page is honest: lists what is available and, separately, what is not included yet", async ({ page }) => {
@@ -156,17 +156,16 @@ test.describe("route protection of the console", () => {
   for (const key of ["studentX", "officerX"]) {
     test(`${key} cannot open platform pages`, async ({ page }) => {
       await loginAs(page, key);
-      const home = page.url();
       for (const path of ["/platform", "/platform/applications", "/platform/colleges", "/platform/inquiries", "/platform/audit"]) {
         await page.goto(path);
-        await expect(page).toHaveURL(home);
+        await expectOnSignIn(page, "platform");                                // the platform area needs its own sign-in
       }
     });
   }
   test("anonymous visitors are sent to sign in", async ({ page }) => {
     for (const path of ["/platform/applications", "/platform/colleges", "/platform/audit", "/platform/inquiries"]) {
       await page.goto(path);
-      await expectOn(page, "/login");
+      await expectOnSignIn(page);
     }
   });
 });
@@ -255,15 +254,15 @@ test.describe.serial("platform administrator console", () => {
     await p.getByLabel("Choose a password").fill(newAdminPassword);
     await p.getByLabel("Confirm password").fill(newAdminPassword);
     await p.getByRole("button", { name: "Create account" }).click();
-    await expectOn(p, "/login\\?welcome=1");
+    await expectOn(p, "/login/college\\?welcome=1");
     await p.getByLabel("Email").fill("zephyr.admin@e2e.test");
     await p.getByLabel("Password").fill(newAdminPassword);
     await p.getByRole("button", { name: "Sign in" }).click();
     await expectOn(p, "/college");
     await expect(p.getByRole("heading", { name: "College dashboard" })).toBeVisible();
     await expect(p.getByText("Zephyr Institute of Technology").first()).toBeVisible();
-    await p.goto("/platform/colleges"); // not a platform user
-    await expectOn(p, "/college");
+    await p.goto("/platform/colleges"); // not a platform user: the platform area asks for its own sign-in
+    await expectOnSignIn(p, "platform");
 
     const reuse = await (await browser.newContext()).newPage();
     others.push(reuse);
@@ -334,7 +333,8 @@ test.describe.serial("platform administrator console", () => {
     await expect(admin.getByText("Agreement not signed within the pilot window")).toBeVisible();
 
     await p.goto("/college");
-    await expectOn(p, "/login"); // existing session is dead
+    await expectOnSignIn(p); // existing session is dead
+    await p.goto("/login/college");
     await p.getByLabel("Email").fill("zephyr.admin@e2e.test");
     await p.getByLabel("Password").fill(newAdminPassword);
     await p.getByRole("button", { name: "Sign in" }).click();
@@ -375,7 +375,9 @@ test.describe.serial("platform administrator console", () => {
     const item = admin.getByRole("listitem").filter({ hasText: "Visitor Vee" });
     await expect(item).toContainText("diploma wing");
     await item.getByRole("button", { name: "Mark handled" }).click();
-    await expect(item.getByRole("button", { name: "Mark handled" })).toHaveCount(0);   // wait for the action to finish before navigating away
+    // Wait for the save to finish before navigating away: the page refreshes and the item leaves the "New" list.
+    // (Waiting for the button alone raced: it turns into "Saving…" at once, before the save is stored.)
+    await expect(item).toHaveCount(0);
     await admin.goto("/platform/inquiries?status=HANDLED");
     await expect(admin.getByRole("listitem").filter({ hasText: "Visitor Vee" })).toContainText("Handled");
     await admin.goto("/platform/inquiries?status=NEW");

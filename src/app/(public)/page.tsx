@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { HOME_PATH, getSession } from "@/server/auth/session";
+import { buttonClass } from "@/components/ui/button";
 
 const BENEFITS = [
   { title: "One record for every placement", text: "Students, verified academics, companies, drives, rounds and offers live together, so nobody has to rebuild the picture from spreadsheets and chat groups." },
@@ -34,143 +33,177 @@ const FAQ = [
   { q: "Will students and staff get emails?", a: "Not yet. Notifications appear inside CampusConnect, and your administrator shares invitation and reset links directly." },
 ];
 
-export default async function Home() {
-  const session = await getSession();
-  if (session) redirect(HOME_PATH[session.role]);
-  const cta = "inline-flex h-12 items-center rounded-xl px-6 font-semibold transition hover:-translate-y-px";
+// The hero illustration: an example drive, not real data.
+const EXAMPLE = [
+  { roll: "21CS014", name: "Priya R.", cgpa: "8.4", verdict: "Eligible", tone: "ok" },
+  { roll: "21CS022", name: "Arjun K.", cgpa: "6.7", verdict: "Not eligible", tone: "no" },
+  { roll: "21EC031", name: "Meena S.", cgpa: "—", verdict: "Needs data", tone: "wait" },
+  { roll: "21ME008", name: "Rahul V.", cgpa: "7.9", verdict: "Eligible", tone: "ok" },
+] as const;
+const VERDICT = { ok: "bg-brand text-brand-foreground", no: "bg-[#ff7a5c] text-[#101210]", wait: "border border-[#f2b54a] text-[#f2b54a]" } as const;
+const STAGGER = ["[--i:0]", "[--i:1]", "[--i:2]", "[--i:3]"];
+
+const PIPELINE = "Drive\u2003Rounds\u2003Offer\u2003Joining\u2003";
+
+function Chevrons() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 12" className="chevrons h-3 w-6">
+      {[0, 7, 14].map((x, i) => <path key={x} d={`M${x + 2} 1.5 L${x + 6.5} 6 L${x + 2} 10.5`} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" strokeOpacity={0.4 + i * 0.3} />)}
+    </svg>
+  );
+}
+
+export default function Home() {
   return (
     <main>
       {/* Hero */}
-      <section className="relative overflow-hidden">
-        <div aria-hidden="true" className="drift pointer-events-none absolute -right-28 -top-24 h-96 w-96 rounded-full bg-accent/25 blur-3xl" />
-        <div aria-hidden="true" className="drift pointer-events-none absolute -bottom-32 -left-24 h-96 w-96 rounded-full bg-primary/15 blur-3xl [animation-delay:-8s]" />
-        <div className="relative mx-auto grid w-full max-w-6xl items-center gap-12 px-4 py-16 sm:py-24 lg:grid-cols-[1.1fr_0.9fr]">
+      <section className="overflow-hidden">
+        <div className="mx-auto grid w-full max-w-6xl items-center gap-12 px-4 pb-16 pt-12 sm:pt-20 lg:grid-cols-[minmax(0,1fr)_29rem] lg:pb-24">
           <div>
-            <p className="rise inline-block rounded-full bg-tint px-3 py-1 text-sm font-semibold text-primary">Placement management for engineering colleges</p>
-            <h1 className="rise mt-4 text-4xl font-bold leading-[1.08] tracking-tight sm:text-6xl [--i:1]">
-              One place for the whole <span className="text-primary">campus placement process</span>
-            </h1>
-            <p className="rise mt-5 max-w-xl text-lg text-muted [--i:2]">
-              From student records to verified placements, CampusConnect replaces the spreadsheets, forms and group chats with one organised system for your college.
+            <h1 className="display rise text-[clamp(2.5rem,8.4vw,4.5rem)] lg:text-[clamp(3rem,5.3vw,4.25rem)]">Every placement, on record.</h1>
+            <p className="rise mt-6 max-w-[34rem] text-lg leading-relaxed text-muted [--i:1]">
+              CampusConnect runs your college&apos;s placement drives from eligibility to verified joining, in one system instead of spreadsheets, forms and group chats.
             </p>
-            <div className="rise mt-8 flex flex-wrap gap-3 [--i:3]">
-              <Link href="/apply" className={`${cta} bg-primary text-primary-foreground shadow-[0_8px_20px_-10px_var(--primary)]`}>Apply as a college</Link>
-              <Link href="/how-it-works" className={`${cta} border border-border bg-surface hover:bg-tint`}>See how it works</Link>
+            <div className="rise mt-9 flex flex-wrap items-center gap-3 [--i:2]">
+              <Link href="/apply" className={buttonClass("primary", "h-13 pl-6 pr-5 text-base")}>Apply as a college <Chevrons /></Link>
+              <Link href="/how-it-works" className={buttonClass("secondary", "h-13 px-6 text-base")}>See how it works</Link>
             </div>
-            <p className="rise mt-4 text-sm text-muted [--i:4]">Early access: colleges are onboarded by application. <Link href="/features" className="underline">See what is available today</Link>.</p>
+            <p className="rise mt-5 text-sm text-muted [--i:3]">Early access: colleges join by application. <Link href="/features" className="font-medium text-foreground underline underline-offset-4">See what works today</Link>.</p>
           </div>
 
-          {/* Illustration only: shows the kind of screen, not real data. */}
-          <div className="rise relative mx-auto w-full max-w-md [--i:3]" aria-hidden="true">
-            <div className="relative rounded-3xl border border-border bg-surface p-5 shadow-soft">
-              <div className="flex items-center justify-between">
-                <p className="font-display text-lg font-bold">Software Engineer</p>
-                <span className="rounded-full border border-success/40 px-2.5 py-0.5 text-xs font-medium text-success">Open</span>
+          {/* Illustration only: an example drive, not real data. */}
+          <div className="rise relative mx-auto w-full max-w-[29rem] [--i:2]" aria-hidden="true">
+            <div className="rounded-[2rem] bg-brand p-5 pb-16 text-brand-foreground sm:p-6 sm:pb-16">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-sm font-medium">Example drive</p>
+                  <p className="display mt-1 text-2xl">Software engineer</p>
+                  <p className="mt-1 text-sm">Minimum CGPA 7.0, no active backlogs</p>
+                </div>
+                <span className="rounded-full bg-brand-foreground px-3 py-1 text-xs font-semibold text-brand">Open</span>
               </div>
-              <p className="mt-1 text-sm text-muted">Example drive · Registration open</p>
-              <div className="mt-4 grid grid-cols-3 gap-2 text-center text-xs">
-                {["Eligible", "Needs data", "Registered"].map((k) => (
-                  <div key={k} className="rounded-xl bg-tint px-2 py-3"><div className="mx-auto h-2 w-8 rounded-full bg-primary/40" /><p className="mt-2 text-muted">{k}</p></div>
+              <div className="mt-5 overflow-hidden rounded-2xl bg-[#101210] text-[#eef3e8]">
+                <div className="grid grid-cols-[minmax(0,1fr)_2.25rem_6rem] sm:grid-cols-[4.25rem_minmax(0,1fr)_2.25rem_6rem] gap-2 border-b border-white/10 px-4 py-2.5 text-xs text-[#a0a996]">
+                  <span className="hidden sm:block">Roll no.</span><span>Student</span><span className="text-right">CGPA</span><span className="text-right">Verdict</span>
+                </div>
+                {EXAMPLE.map((r, i) => (
+                  <div key={r.roll} className="grid grid-cols-[minmax(0,1fr)_2.25rem_6rem] sm:grid-cols-[4.25rem_minmax(0,1fr)_2.25rem_6rem] items-center gap-2 border-b border-white/10 px-4 py-3 text-sm tabular-nums last:border-b-0">
+                    <span className="hidden text-[#a0a996] sm:block">{r.roll}</span>
+                    <span className="truncate font-medium">{r.name}</span>
+                    <span className="text-right">{r.cgpa}</span>
+                    <span className="text-right"><span className={`stamp inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${VERDICT[r.tone]} ${STAGGER[i]}`}>{r.verdict}</span></span>
+                  </div>
                 ))}
               </div>
-              <div className="mt-4 space-y-2">
-                {["Round 1 · Aptitude", "Round 2 · Technical", "Round 3 · HR"].map((r, i) => (
-                  <div key={r} className="flex items-center gap-3 rounded-xl border border-border px-3 py-2 text-sm"><span className={`h-2.5 w-2.5 rounded-full ${i === 0 ? "bg-success" : "bg-border"}`} />{r}</div>
-                ))}
-              </div>
-              <div className="lift absolute -bottom-10 -left-4 hidden rounded-2xl border border-border bg-surface px-4 py-3 text-sm shadow-soft sm:block">
-                <p className="font-semibold">Offer verified</p><p className="text-xs text-muted">Joining confirmed with evidence</p>
+              <div className="mt-5 flex items-end justify-between">
+                <div>
+                  <p className="text-sm font-medium">Eligible so far</p>
+                  <p className="display text-5xl">2<span className="text-2xl">/4</span></p>
+                </div>
+                <p className="max-w-[10rem] text-right text-xs">Checked against verified marks, with the reason for every result.</p>
               </div>
             </div>
-            <p className="mt-14 text-center text-xs text-muted">Illustration of a drive screen</p>
+            <div className="display absolute bottom-3 -left-6 -right-6 -rotate-[4deg] overflow-hidden whitespace-nowrap bg-nav py-2 text-sm text-brand">
+              Offer verified &nbsp;&nbsp; Joining confirmed &nbsp;&nbsp; Offer verified &nbsp;&nbsp; Joining confirmed &nbsp;&nbsp; Offer verified
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Benefits */}
+      {/* The pipeline in outlined capitals (decorative; the steps below say the same in plain text). */}
+      <div aria-hidden="true" className="overflow-hidden bg-nav py-6 text-[clamp(2rem,6vw,4.5rem)]">
+        {[0, 1, 2].map((row) => (
+          <p key={row} className={`display whitespace-nowrap leading-[1.05] ${row === 1 ? "text-brand" : "type-outline [-webkit-text-stroke-color:#66735a]"} ${row === 1 ? "-ml-24" : row === 2 ? "-ml-48" : ""}`}>
+            {PIPELINE.repeat(4)}
+          </p>
+        ))}
+      </div>
+
+      {/* How a drive runs: a real sequence, so it is numbered. */}
+      <section className="mx-auto w-full max-w-6xl px-4 py-20">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <h2 className="display max-w-2xl text-[clamp(1.9rem,4vw,3rem)]">From first login to verified placement</h2>
+          <Link href="/how-it-works" className="text-sm font-semibold underline underline-offset-4">The full flow</Link>
+        </div>
+        <ol className="mt-12 grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
+          {STEPS.map((s, i) => (
+            <li key={s.title} className="border-t-2 border-foreground pt-5">
+              <span className="display text-4xl tabular-nums">{String(i + 1).padStart(2, "0")}</span>
+              <h3 className="mt-4 text-lg">{s.title}</h3>
+              <p className="mt-2 text-muted">{s.text}</p>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      {/* What it handles */}
       <section className="border-y border-border bg-surface">
-        <div className="mx-auto w-full max-w-6xl px-4 py-16">
-          <h2 className="max-w-2xl text-3xl font-bold tracking-tight">Everything your placement cell does, kept in order</h2>
-          <ul className="mt-10 grid gap-5 md:grid-cols-3">
+        <div className="mx-auto grid w-full max-w-6xl gap-10 px-4 py-20 lg:grid-cols-[0.8fr_1.2fr]">
+          <h2 className="display text-[clamp(1.9rem,3.1vw,2.6rem)]">Everything your placement cell does, kept in order</h2>
+          <ul className="divide-y divide-border border-y border-border">
             {BENEFITS.map((b) => (
-              <li key={b.title} className="lift rounded-2xl border border-border bg-background p-6">
-                <span aria-hidden="true" className="mb-4 block h-1.5 w-10 rounded-full bg-linear-to-r from-primary to-accent" />
-                <p className="font-display text-lg font-bold">{b.title}</p>
-                <p className="mt-2 text-sm text-muted">{b.text}</p>
+              <li key={b.title} className="grid gap-2 py-6 sm:grid-cols-[14rem_1fr] sm:gap-8">
+                <h3 className="text-lg">{b.title}</h3>
+                <p className="text-muted">{b.text}</p>
               </li>
             ))}
           </ul>
         </div>
       </section>
 
-      {/* How it works */}
-      <section className="mx-auto w-full max-w-6xl px-4 py-16">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <h2 className="text-3xl font-bold tracking-tight">From first login to verified placement</h2>
-          <Link href="/how-it-works" className="text-sm font-semibold text-primary underline">The full flow</Link>
-        </div>
-        <ol className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {STEPS.map((s, i) => (
-            <li key={s.title} className="rounded-2xl border border-border bg-surface p-6 shadow-soft">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-sm font-bold text-primary-foreground">{i + 1}</span>
-              <p className="mt-4 font-display text-lg font-bold">{s.title}</p>
-              <p className="mt-1 text-sm text-muted">{s.text}</p>
-            </li>
-          ))}
-        </ol>
-      </section>
-
       {/* Roles */}
-      <section className="border-y border-border bg-surface">
-        <div className="mx-auto w-full max-w-6xl px-4 py-16">
-          <h2 className="text-3xl font-bold tracking-tight">A clear place for everyone</h2>
-          <p className="mt-3 max-w-2xl text-muted">Each person signs in and sees only what their role needs.</p>
-          <dl className="mt-10 grid gap-5 sm:grid-cols-2">
-            {ROLES.map((r) => (
-              <div key={r.who} className="rounded-2xl bg-tint p-6"><dt className="font-display text-lg font-bold">{r.who}</dt><dd className="mt-1 text-sm text-muted">{r.what}</dd></div>
-            ))}
-          </dl>
-        </div>
+      <section className="mx-auto w-full max-w-6xl px-4 py-20">
+        <h2 className="display text-[clamp(1.9rem,4vw,3rem)]">A clear place for everyone</h2>
+        <p className="mt-4 max-w-xl text-lg text-muted">Each person signs in and sees only what their role needs.</p>
+        <dl className="mt-10 grid border-t border-border sm:grid-cols-2">
+          {ROLES.map((r, i) => (
+            <div key={r.who} className={`border-b border-border py-6 sm:pr-10 ${i % 2 === 1 ? "sm:border-l sm:pl-10" : ""}`}>
+              <dt className="text-lg font-semibold">{r.who}</dt>
+              <dd className="mt-1 text-muted">{r.what}</dd>
+            </div>
+          ))}
+        </dl>
       </section>
 
       {/* Trust */}
-      <section className="mx-auto w-full max-w-6xl px-4 py-16">
-        <h2 className="text-3xl font-bold tracking-tight">Built around trust</h2>
-        <ul className="mt-10 grid gap-5 md:grid-cols-3">
-          {TRUST.map((t) => (
-            <li key={t.title} className="lift rounded-2xl border border-border bg-surface p-6"><p className="font-display text-lg font-bold">{t.title}</p><p className="mt-2 text-sm text-muted">{t.text}</p></li>
-          ))}
-        </ul>
+      <section className="border-y border-white/8 bg-nav text-nav-foreground">
+        <div className="mx-auto w-full max-w-6xl px-4 py-20">
+          <h2 className="display text-[clamp(1.9rem,4vw,3rem)] text-white">Built around trust</h2>
+          <ul className="mt-12 grid gap-10 md:grid-cols-3">
+            {TRUST.map((t) => (
+              <li key={t.title} className="border-t border-white/15 pt-5">
+                <h3 className="text-lg text-brand">{t.title}</h3>
+                <p className="mt-2">{t.text}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
       </section>
 
       {/* FAQ */}
-      <section className="border-t border-border bg-surface">
-        <div className="mx-auto w-full max-w-3xl px-4 py-16">
-          <h2 className="text-3xl font-bold tracking-tight">Questions colleges ask</h2>
-          <div className="mt-8 divide-y divide-border rounded-2xl border border-border">
-            {FAQ.map((f) => (
-              <details key={f.q} className="group px-5 py-4">
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
-                  {f.q}<span aria-hidden="true" className="text-primary transition-transform group-open:rotate-45">+</span>
-                </summary>
-                <p className="mt-3 text-sm text-muted">{f.a}</p>
-              </details>
-            ))}
-          </div>
+      <section className="mx-auto grid w-full max-w-6xl gap-10 px-4 py-20 lg:grid-cols-[0.8fr_1.2fr]">
+        <h2 className="display text-[clamp(1.9rem,3.1vw,2.6rem)]">Questions colleges ask</h2>
+        <div className="divide-y divide-border border-y border-border">
+          {FAQ.map((f) => (
+            <details key={f.q} className="group py-5">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-lg font-semibold focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary [&::-webkit-details-marker]:hidden">
+                {f.q}
+                <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border transition-transform duration-200 group-open:rotate-45 group-open:bg-brand group-open:text-brand-foreground group-open:border-brand">+</span>
+              </summary>
+              <p className="mt-3 max-w-2xl text-muted">{f.a}</p>
+            </details>
+          ))}
         </div>
       </section>
 
       {/* Closing call to action */}
-      <section className="px-4 pb-16 pt-4">
-        <div className="relative mx-auto max-w-6xl overflow-hidden rounded-3xl bg-nav px-6 py-14 text-center text-nav-foreground sm:px-12">
-          <div aria-hidden="true" className="drift pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-accent/40 blur-3xl" />
-          <div className="relative">
-            <h2 className="mx-auto max-w-2xl text-3xl font-bold tracking-tight text-white sm:text-4xl">Bring your college onto CampusConnect</h2>
-            <p className="mx-auto mt-3 max-w-xl">Tell us about your college. We review each application and set up a private workspace if it is approved.</p>
-            <div className="mt-8 flex flex-wrap justify-center gap-3">
-              <Link href="/apply" className={`${cta} bg-white text-black`}>Apply as a college</Link>
-              <Link href="/login" className={`${cta} border border-white/40 text-white hover:bg-white/10`}>Sign in</Link>
-            </div>
+      <section className="px-4 pb-20">
+        <div className="mx-auto max-w-6xl rounded-[2rem] bg-brand px-6 py-14 text-brand-foreground sm:px-12 sm:py-16">
+          <h2 className="display max-w-3xl text-[clamp(2rem,5vw,3.75rem)]">Bring your college on board</h2>
+          <p className="mt-4 max-w-xl text-lg">Tell us about your college. We review each application and set up a private workspace if it is approved.</p>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Link href="/apply" className="inline-flex h-13 items-center gap-2 rounded-full bg-brand-foreground pl-6 pr-5 text-base font-semibold text-brand transition-transform duration-150 active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-foreground">Apply as a college <Chevrons /></Link>
+            <Link href="/login" className="inline-flex h-13 items-center rounded-full border-2 border-brand-foreground px-6 text-base font-semibold transition-colors duration-150 hover:bg-brand-foreground/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-foreground">Sign in</Link>
           </div>
         </div>
       </section>

@@ -4,6 +4,7 @@ import { sql } from "kysely";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { CATEGORIES_FOR } from "@/lib/notifications";
+import { scopedHref } from "@/lib/portals";
 import { dbMessage, GENERIC_ERROR, str, type ActionState } from "../action-utils";
 import { assertSameOrigin } from "../auth/request";
 import { requireSession, withSession } from "../auth/session";
@@ -13,7 +14,7 @@ export async function markAllReadAction(): Promise<void> {
   const s = await requireSession();
   await withSession(s, (t) => sql`SELECT notifications.mark_all_read()`.execute(t));
   revalidatePath("/", "layout");
-  redirect("/notifications?notice=all-read");
+  redirect(scopedHref("/notifications?notice=all-read", s.slot));
 }
 
 export async function setPreferenceAction(_p: ActionState, fd: FormData): Promise<ActionState> {

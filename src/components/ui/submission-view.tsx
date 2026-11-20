@@ -1,5 +1,5 @@
 import { StatusBadge } from "@/components/ui/status-badge";
-import { SUBMISSION_LABEL, fmtCgpa, fmtPct, type SubmissionValues } from "@/lib/academics";
+import { SUBMISSION_LABEL, cgpaGapNote, fmtCgpa, fmtPct, type SubmissionValues } from "@/lib/academics";
 import { fmtDateTime } from "@/lib/format";
 
 type S = SubmissionValues & { status?: string; version?: number; student_note?: string | null; submitted_at?: Date; reviewed_by_name?: string | null; reviewed_at?: Date | null; review_note?: string | null; rejection_reason?: string | null };
@@ -17,6 +17,18 @@ export function SubmissionValuesView({ s }: { s: S }) {
       <dt className="text-muted">Active backlogs</dt><dd data-testid="v-backlogs">{s.active_backlogs}</dd>
       <dt className="text-muted">Historical arrears</dt><dd data-testid="v-arrears">{s.historical_arrears}</dd>
       {s.student_note ? (<><dt className="text-muted">Student&apos;s note</dt><dd className="whitespace-pre-wrap">{s.student_note}</dd></>) : null}
+      {s.semesters?.length ? (
+        <>
+          <dt className="text-muted">Semesters</dt>
+          <dd data-testid="v-semesters">
+            <table className="text-sm">
+              <thead><tr className="text-left text-muted"><th className="pr-4 font-normal">Sem</th><th className="pr-4 font-normal">SGPA</th><th className="font-normal">Backlogs</th></tr></thead>
+              <tbody>{s.semesters.map((r) => <tr key={r.semester}><td className="pr-4">{r.semester}</td><td className="pr-4">{Number(r.sgpa).toFixed(2)}</td><td>{r.backlogs}</td></tr>)}</tbody>
+            </table>
+            {cgpaGapNote(s.cgpa, s.semesters) ? <p className="mt-2 text-xs text-muted" data-testid="v-gap">{cgpaGapNote(s.cgpa, s.semesters)}</p> : null}
+          </dd>
+        </>
+      ) : null}
     </dl>
   );
 }

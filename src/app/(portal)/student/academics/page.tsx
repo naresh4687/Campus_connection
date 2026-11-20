@@ -29,6 +29,7 @@ export default async function StudentAcademics({ searchParams }: { searchParams:
     ? { cgpa: Number(base.cgpa).toFixed(2), tenth: Number(base.tenth_percentage).toFixed(2), twelfth: base.twelfth_percentage === null ? "" : Number(base.twelfth_percentage).toFixed(2),
         diploma: base.diploma_percentage === null ? "" : Number(base.diploma_percentage).toFixed(2), backlogs: String(base.active_backlogs), arrears: String(base.historical_arrears), note: "" }
     : { cgpa: "", tenth: "", twelfth: "", diploma: "", backlogs: "", arrears: "", note: "" };
+  for (const r of base?.semesters ?? []) { initial[`sem${r.semester}_sgpa`] = Number(r.sgpa).toFixed(2); initial[`sem${r.semester}_backlogs`] = String(r.backlogs); }
   const tone = { VERIFIED: "APPROVED", PENDING: "PENDING", REJECTED: "REJECTED", NOT_SUBMITTED: "NOT_STARTED" }[status.status];
   return (
     <div className="space-y-6">

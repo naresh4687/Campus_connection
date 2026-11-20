@@ -1,68 +1,93 @@
 @import "tailwindcss";
 
 /*
- * Design tokens: "Crimson & Flame". Components use these through the Tailwind names below, so a palette change happens here.
+ * Design tokens: "Lime & Ink". Components use these through the Tailwind names below, so a palette change happens here.
  * Every text/background pair is checked by the axe accessibility tests (WCAG 2.1 AA).
+ *
+ * primary  — the interactive colour (buttons, links, focus). Ink black in light mode, lime in dark mode,
+ *            because lime is too light to be read as text on a light page.
+ * brand    — lime as a fill (hero panel, active navigation, highlights). Text on it is always ink.
+ * signal   — orange-red, only for things that need action or went wrong.
  */
 :root {
-  --background: #faf6f5;
+  --background: #eef5e8;
   --surface: #ffffff;
-  --foreground: #241817;
-  --muted: #6b5b58;
-  --border: #eadfdc;
-  --tint: #fbe9e7;
-  --nav: #3a0a0d;
-  --nav-foreground: #f3d6d3;
-  --primary: #b4161b;
-  --primary-foreground: #ffffff;
-  --accent: #ff6b4a;
-  --success: #15803d;
-  --warning: #92400e;
-  --danger: #9f1239;
-  --shadow-soft: 0 1px 2px rgb(58 10 13 / 0.05), 0 8px 24px -12px rgb(58 10 13 / 0.18);
+  --foreground: #101210;
+  --muted: #545a4e;
+  --border: #d3dcca;
+  --tint: #e2f0d1;
+  --nav: #101210;
+  --nav-foreground: #c8d0be;
+  --primary: #101210;
+  --primary-foreground: #a3e14e;
+  --brand: #a3e14e;
+  --brand-foreground: #101210;
+  --accent: #e5533d;
+  --success: #1f6a24;
+  --warning: #774c00;
+  --danger: #a32c17;
+  --danger-foreground: #ffffff;
+  --shadow-soft: 0 1px 0 rgb(16 18 16 / 0.04), 0 14px 32px -22px rgb(16 18 16 / 0.35);
   color-scheme: light;
 }
 
 /* Theme: "system" follows the device; the toggle sets data-theme="light" or "dark" on <html> (from a cookie, applied on the server). */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --background: #160e0e;
-    --surface: #201414;
-    --foreground: #f3e8e6;
-    --muted: #af9c98;
-    --border: #3a2623;
-    --tint: #3a1a18;
-    --nav: #0f0808;
-    --nav-foreground: #e8c9c5;
-    --primary: #f87171;
-    --primary-foreground: #200808;
-    --accent: #fb923c;
-    --success: #4ade80;
-    --warning: #fbbf24;
-    --danger: #fb7185;
-    --shadow-soft: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px -12px rgb(0 0 0 / 0.6);
+    --background: #121410;
+    --surface: #1b1e18;
+    --foreground: #eef3e8;
+    --muted: #a0a996;
+    --border: #2d3327;
+    --tint: #232d1b;
+    --nav: #0c0e0b;
+    --nav-foreground: #b9c2ae;
+    --primary: #a3e14e;
+    --primary-foreground: #101210;
+    --brand: #a3e14e;
+    --brand-foreground: #101210;
+    --accent: #ff7a5c;
+    --success: #8bd46a;
+    --warning: #f2b54a;
+    --danger: #ff8a70;
+    --danger-foreground: #101210;
+    --shadow-soft: 0 1px 0 rgb(0 0 0 / 0.3), 0 14px 32px -20px rgb(0 0 0 / 0.7);
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --background: #160e0e;
-  --surface: #201414;
-  --foreground: #f3e8e6;
-  --muted: #af9c98;
-  --border: #3a2623;
-  --tint: #3a1a18;
-  --nav: #0f0808;
-  --nav-foreground: #e8c9c5;
-  --primary: #f87171;
-  --primary-foreground: #200808;
-  --accent: #fb923c;
-  --success: #4ade80;
-  --warning: #fbbf24;
-  --danger: #fb7185;
-  --shadow-soft: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px -12px rgb(0 0 0 / 0.6);
+  --background: #121410;
+  --surface: #1b1e18;
+  --foreground: #eef3e8;
+  --muted: #a0a996;
+  --border: #2d3327;
+  --tint: #232d1b;
+  --nav: #0c0e0b;
+  --nav-foreground: #b9c2ae;
+  --primary: #a3e14e;
+  --primary-foreground: #101210;
+  --brand: #a3e14e;
+  --brand-foreground: #101210;
+  --accent: #ff7a5c;
+  --success: #8bd46a;
+  --warning: #f2b54a;
+  --danger: #ff8a70;
+  --danger-foreground: #101210;
+  --shadow-soft: 0 1px 0 rgb(0 0 0 / 0.3), 0 14px 32px -20px rgb(0 0 0 / 0.7);
   color-scheme: dark;
 }
 :root[data-theme="light"] { color-scheme: light; }
+
+/*
+ * `dark:` utilities follow the theme switch: an explicit choice (data-theme on <html>), otherwise the device setting.
+ * (Tailwind's default `dark:` only knows the device setting.)
+ */
+@custom-variant dark {
+  &:where([data-theme="dark"], [data-theme="dark"] *) { @slot; }
+  @media (prefers-color-scheme: dark) {
+    &:where(:root:not([data-theme="light"]), :root:not([data-theme="light"]) *) { @slot; }
+  }
+}
 
 @theme inline {
   --color-background: var(--background);
@@ -75,14 +100,17 @@
   --color-nav-foreground: var(--nav-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
   --color-accent: var(--accent);
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-danger: var(--danger);
+  --color-danger-foreground: var(--danger-foreground);
   --shadow-soft: var(--shadow-soft);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-archivo);
   --font-mono: var(--font-geist-mono);
-  --font-display: var(--font-display);
+  --font-display: var(--font-archivo);
 }
 
 /* Fluid scale: every rem-based size grows a little on big screens so content does not look tiny on 1440p/4K monitors. Nothing changes below 1536px. */
@@ -96,12 +124,38 @@ body {
   padding-inline: env(safe-area-inset-left) env(safe-area-inset-right);
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-family: var(--font-archivo), system-ui, sans-serif;
 }
 
+/* Working headings stay calm (portal, forms, cards). The loud style is opt-in through the `display` utility. */
 h1, h2, h3 {
-  font-family: var(--font-display), var(--font-geist-sans), system-ui, sans-serif;
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-weight: 650;
+  letter-spacing: -0.01em;
   text-wrap: balance;
+}
+
+::selection { background: var(--brand); color: var(--brand-foreground); }
+
+/* Numbers in tables and counters line up. */
+table, .tabular-nums { font-variant-numeric: tabular-nums; }
+
+/*
+ * The expanded, extra-bold capitals of the public site. Archivo is loaded with its width axis, so this is the same font file
+ * stretched to 125% — no second download.
+ */
+@utility display {
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-stretch: 125%;
+  font-weight: 800;
+  text-transform: uppercase;
+  line-height: 0.98;
+  letter-spacing: -0.005em;
+}
+/* Outlined capitals (the repeated pipeline band). Decorative only: always aria-hidden or doubled by real text. */
+@utility type-outline {
+  color: transparent;
+  -webkit-text-stroke: 1.5px var(--foreground);
 }
 
 /* Long unbroken values (emails, URLs, tokens) must wrap instead of widening the page on narrow screens. */
@@ -117,26 +171,146 @@ dd, dt { min-width: 0; overflow-wrap: anywhere; }
   .rtable thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .rtable tbody, .rtable tr { display: block; }
   .rtable tr { padding: 0.75rem 1rem; }
+  .rtable tr + tr { border-top: 1px solid var(--border); }
   .rtable td { display: flex; justify-content: space-between; gap: 1rem; padding: 0.25rem 0; text-align: right; min-width: 0; overflow-wrap: anywhere; }
-  .rtable td[data-label]::before { content: attr(data-label); flex: 0 0 38%; text-align: left; color: var(--muted); font-size: 0.75rem; letter-spacing: 0.04em; text-transform: uppercase; }
+  .rtable td[data-label]::before { content: attr(data-label); flex: 0 0 38%; text-align: left; color: var(--muted); font-size: 0.8125rem; }
 }
 
-/* Motion: transform only (no opacity), so text is always fully visible and contrast stays constant. */
+/*
+ * Motion. Transform only (no opacity), so text is always fully visible and contrast stays constant.
+ * One orchestrated moment on the landing page (the verdicts); elsewhere motion only answers what the user did.
+ */
 @keyframes rise {
-  from { transform: translateY(14px); }
+  from { transform: translateY(12px); }
   to { transform: none; }
 }
-@keyframes drift {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  50% { transform: translate(30px, -24px) scale(1.12); }
+@keyframes stamp {
+  0% { transform: scale(1.35) rotate(-4deg); }
+  60% { transform: scale(0.96) rotate(0deg); }
+  100% { transform: none; }
 }
-.rise { animation: rise 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both; animation-delay: calc(var(--i, 0) * 80ms); }
-.drift { animation: drift 16s ease-in-out infinite; }
-.lift { transition: transform 0.2s ease, box-shadow 0.2s ease; }
-.lift:hover { transform: translateY(-3px); box-shadow: var(--shadow-soft); }
+@keyframes chevrons {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(3px); }
+}
+@keyframes shimmer {
+  from { background-position: 150% 0; }
+  to { background-position: -50% 0; }
+}
+.rise { animation: rise 0.55s cubic-bezier(0.2, 0.7, 0.2, 1) both; animation-delay: calc(var(--i, 0) * 70ms); }
+/* Verdict chips in the landing table: stamped in one after another, like a list being checked. Scale only, never opacity. */
+.stamp { animation: stamp 0.45s cubic-bezier(0.3, 1.4, 0.5, 1) both; animation-delay: calc(400ms + var(--i, 0) * 260ms); }
+.chevrons { animation: chevrons 1.6s ease-in-out infinite; }
+/* Loading placeholders. */
+.skeleton {
+  border-radius: 0.5rem;
+  background: linear-gradient(90deg, var(--tint) 0%, var(--border) 50%, var(--tint) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
 
 @media (prefers-reduced-motion: reduce) {
-  .rise, .drift { animation: none; }
-  .lift { transition: none; }
-  .lift:hover { transform: none; }
+  .rise, .stamp, .chevrons, .skeleton { animation: none; }
+  *, *::before, *::after { transition-duration: 0.01ms !important; }
+}
+
+
+/*
+ * The signed-in portals add a soft-surface ("neumorphic") depth to the SAME theme as the public site (lime, ink and the pale green page): the page and every
+ * surface share one base colour, raised parts are lit from the top left (a light shadow up-left, a tinted dark shadow down-right), and pressed parts
+ * (inputs, metric wells, the active menu item) are sunk in with inset shadows. Text colours are unchanged, so contrast is unchanged: depth comes from
+ * shadow only. Everything is scoped to .portal-scope; the landing page, sign-in screens and public pages are not touched.
+ */
+.portal-scope {
+  --neu-light: #ffffff; --neu-dark: #bfcab2; --border: #c2cfb6; --chart-1: #a3e14e;
+  --surface: var(--background);
+  --radius-sm: 0.375rem; --radius-md: 0.5rem; --radius-lg: 0.625rem; --radius-xl: 0.75rem; --radius-2xl: 0.875rem; --radius-3xl: 1rem;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .portal-scope { --neu-light: #22271d; --neu-dark: #0a0c08; --border: #343b2c; --chart-1: #a3e14e; } }
+:root[data-theme="dark"] .portal-scope { --neu-light: #22271d; --neu-dark: #0a0c08; --border: #343b2c; --chart-1: #a3e14e; }
+@utility neu-raise { box-shadow: 7px 7px 16px var(--neu-dark), -7px -7px 16px var(--neu-light); }
+@utility neu-raise-sm { box-shadow: 3px 3px 8px var(--neu-dark), -3px -3px 8px var(--neu-light); }
+@utility neu-inset { box-shadow: inset 3px 3px 7px var(--neu-dark), inset -3px -3px 7px var(--neu-light); }
+@utility card {
+  border-radius: 1.25rem;
+  background: var(--surface);
+  box-shadow: 7px 7px 16px var(--neu-dark), -7px -7px 16px var(--neu-light);
+}
+.card.card-accent { padding-top: var(--card-pt, 1.25rem); }
+.portal-bg { background: none; }
+
+/* Headings: the same Archivo as the site, at working weight (the loud wide capitals stay on the landing page). */
+.portal-main h1 { font-weight: 750; line-height: 1.15; letter-spacing: -0.015em; font-size: clamp(1.5rem, 1.15rem + 1vw, 2rem); overflow-wrap: anywhere; }
+.portal-main h1::after { content: ""; display: block; width: 2.75rem; height: 0.3rem; margin-top: 0.65rem; border-radius: 9999px; background: var(--brand); box-shadow: 2px 2px 4px var(--neu-dark); }
+.portal-main h2:not(.sr-only) { font-weight: 700; font-size: 0.95rem; letter-spacing: 0; line-height: 1.3; }
+.portal-main h3 { font-weight: 650; }
+
+/* Controls: pressed-in fields, raised buttons that sink when pressed. */
+.portal-scope :is(input, select, textarea):not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]) {
+  background: var(--surface); border-color: transparent; border-radius: 0.75rem; box-shadow: inset 3px 3px 7px var(--neu-dark), inset -3px -3px 7px var(--neu-light);
+}
+.portal-scope :is(input, select, textarea):focus-visible { outline: 2px solid var(--foreground); outline-offset: 2px; }
+.portal-scope .rounded-full { border-radius: 0.75rem; }
+.portal-scope :is(button, a).bg-primary, .portal-scope :is(button, a).bg-danger { box-shadow: 4px 4px 9px var(--neu-dark), -4px -4px 9px var(--neu-light); }
+.portal-scope :is(button, a).border-border.bg-surface:not(.card) { border-color: transparent; box-shadow: 4px 4px 9px var(--neu-dark), -4px -4px 9px var(--neu-light); }
+.portal-scope :is(button, a):is(.bg-primary, .bg-danger, .border-border.bg-surface):active { box-shadow: inset 3px 3px 7px rgb(0 0 0 / 0.35), inset -2px -2px 5px rgb(255 255 255 / 0.12); }
+.portal-scope .bg-tint { background: var(--tint); box-shadow: inset 2px 2px 5px var(--neu-dark), inset -2px -2px 5px var(--neu-light); }
+
+/* Sidebar: stays ink (the theme); items get a soft raised hover and the active item keeps its lime fill with a gentle edge. */
+.portal-scope header a[aria-current="page"] { box-shadow: 3px 3px 8px rgb(0 0 0 / 0.45), -2px -2px 6px rgb(255 255 255 / 0.06); }
+
+/* One green only: the light neon lime of the landing page. Charts use it for their main series. */
+/* Flat surfaces everywhere, no drop shadows (they blurred together, especially on phones). Depth is a thin line instead. */
+@media screen {
+  .portal-scope .card, .portal-scope .neu-raise, .portal-scope .neu-raise-sm { box-shadow: none; border: 1px solid var(--border); }
+  .portal-scope .neu-inset, .portal-scope .bg-tint { box-shadow: none; border: 1px solid var(--border); }
+  .portal-scope :is(input, select, textarea):not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]) { box-shadow: none; border: 1px solid var(--border); }
+  .portal-scope :is(button, a).bg-primary, .portal-scope :is(button, a).bg-danger { box-shadow: none; }
+  .portal-scope :is(button, a).border-border.bg-surface:not(.card) { box-shadow: none; border: 1px solid var(--border); }
+  .portal-scope :is(button, a):is(.bg-primary, .bg-danger, .border-border.bg-surface):active { box-shadow: none; }
+  .portal-scope header a[aria-current="page"], .portal-scope header a:hover:not([aria-current="page"]) { box-shadow: none; }
+  .portal-main h1::after { box-shadow: none; }
+  .portal-scope [class*="shadow-"] { box-shadow: none; }
+}
+
+/* Dropdowns: a flat, modern control with its own arrow (drawn with gradients, so no image is needed under the CSP). */
+.portal-scope select:not([multiple]) {
+  appearance: none; -webkit-appearance: none; cursor: pointer; padding-right: 2.5rem; font-weight: 500;
+  background-color: var(--surface);
+  background-image: linear-gradient(45deg, transparent 50%, var(--foreground) 50%), linear-gradient(135deg, var(--foreground) 50%, transparent 50%), linear-gradient(to right, var(--border), var(--border));
+  background-position: calc(100% - 1.2rem) 52%, calc(100% - 0.85rem) 52%, calc(100% - 2.2rem) 50%;
+  background-size: 0.4rem 0.4rem, 0.4rem 0.4rem, 1px 55%;
+  background-repeat: no-repeat;
+  border: 1px solid var(--border); border-radius: 0.625rem; box-shadow: none;
+  transition: border-color 0.15s, background-color 0.15s;
+}
+.portal-scope select:not([multiple]):hover { border-color: var(--foreground); background-color: var(--tint); }
+.portal-scope select:not([multiple]):focus-visible { outline: 2px solid var(--foreground); outline-offset: 2px; }
+.portal-scope select option { background: var(--surface); color: var(--foreground); padding: 0.5rem; }
+
+/* Chromium's customizable select: the popup list itself is restyled (flat panel, roomy options, lime selected option). Other browsers keep the control above and their own list. */
+@supports (appearance: base-select) {
+  .portal-scope select:not([multiple]) { appearance: base-select; }
+  .portal-scope select::picker(select) { appearance: base-select; }
+  .portal-scope select:not([multiple]) {
+    display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+    background-image: none; padding-right: 0.9rem;
+  }
+  .portal-scope select:not([multiple])::picker-icon {
+    content: ""; width: 0.5rem; height: 0.5rem; border-right: 2px solid var(--foreground); border-bottom: 2px solid var(--foreground);
+    transform: rotate(45deg) translateY(-2px); transition: transform 0.15s; flex: none;
+  }
+  .portal-scope select:not([multiple]):open::picker-icon { transform: rotate(225deg) translateY(-2px); }
+  .portal-scope select::picker(select) {
+    border: 1px solid var(--foreground); border-radius: 0.75rem; background: var(--surface); padding: 0.375rem; margin-top: 0.3rem;
+    box-shadow: none; max-height: 20rem; overflow-y: auto;
+  }
+  .portal-scope select:not([multiple]) option {
+    display: flex; align-items: center; gap: 0.6rem; padding: 0.6rem 0.8rem; border-radius: 0.5rem; font-weight: 500; cursor: pointer;
+  }
+  .portal-scope select:not([multiple]) option::checkmark { content: ""; width: 0.45rem; height: 0.45rem; border-radius: 9999px; background: var(--foreground); order: 2; margin-left: auto; }
+  .portal-scope select:not([multiple]) option:not(:checked)::checkmark { display: none; }
+  .portal-scope select:not([multiple]) option:hover, .portal-scope select:not([multiple]) option:focus-visible { background: var(--tint); outline: none; }
+  .portal-scope select:not([multiple]) option:checked { background: var(--brand); color: var(--brand-foreground); font-weight: 700; }
+  .portal-scope select:not([multiple]) option:disabled { color: var(--muted); }
 }

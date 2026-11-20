@@ -26,13 +26,15 @@ export type DriveDetail = {
   id: string; company_id: string; company_name: string; job_title: string; job_description: string | null; location: string | null; employment_type: string; ctc_lpa: string | null; ctc_note: string | null;
   bond_details: string | null; qualification: string | null; openings: number | null; application_deadline: Date | null; interview_details: string | null; instructions: string | null; status: string;
   created_at: Date; published_at: Date | null; closed_at: Date | null;
+  registration_method: string; external_url: string | null; external_instructions: string | null; external_url_confirmed: boolean; evidence_review_required: boolean;
 };
 export type Criteria = { min_cgpa: string | null; min_tenth: string | null; min_twelfth: string | null; min_diploma: string | null; max_active_backlogs: number | null; max_historical_arrears: number | null; passing_years: number[]; degrees: string[] };
 
 export async function getDrive(s: SessionUser, id: string) {
   return withSession(s, async (t) => {
     const drive = (await sql<DriveDetail>`SELECT id, company_id, company_name, job_title, job_description, location, employment_type, ctc_lpa::text AS ctc_lpa, ctc_note, bond_details, qualification, openings, application_deadline,
-      interview_details, instructions, status, created_at, published_at, closed_at FROM drives WHERE id = ${id}`.execute(t)).rows[0];
+      interview_details, instructions, status, created_at, published_at, closed_at,
+      registration_method, external_url, external_instructions, external_url_confirmed, evidence_review_required FROM drives WHERE id = ${id}`.execute(t)).rows[0];
     if (!drive) return null;
     const criteria = (await sql<Criteria>`SELECT min_cgpa::text AS min_cgpa, min_tenth::text AS min_tenth, min_twelfth::text AS min_twelfth, min_diploma::text AS min_diploma, max_active_backlogs, max_historical_arrears, passing_years, degrees FROM drive_criteria WHERE drive_id = ${id}`.execute(t)).rows[0];
     const departments = (await sql<{ id: string; code: string; name: string }>`SELECT dp.id, dp.code::text AS code, dp.name::text AS name FROM drive_departments dd JOIN departments dp ON dp.id = dd.department_id WHERE dd.drive_id = ${id} ORDER BY dp.code`.execute(t)).rows;
@@ -64,4 +66,11 @@ export async function driveStats(s: SessionUser) {
 export async function closingSoon(s: SessionUser) {
   return withSession(s, async (t) => (await sql<{ id: string; job_title: string; company_name: string; application_deadline: Date }>`
     SELECT id, job_title, company_name, application_deadline FROM drives WHERE status = 'PUBLISHED' AND application_deadline > now() AND application_deadline < now() + interval '7 days' ORDER BY application_deadline LIMIT 5`.execute(t)).rows);
+}
+
+/** Registrations per published drive (for the officer dashboard chart). Counted once per student; a screenshot upload is not a registration. */
+export async function openDriveRegistrations(s: SessionUser) {
+  return withSession(s, async (t) => (await sql<{ id: string; company_name: string; job_title: string; openings: number | null; registered: number; started: number }>`
+    SELECT d.id, d.company_name, d.job_title, d.openings, count(r.id) FILTER (WHERE r.status = 'REGISTERED')::int AS registered, count(r.id) FILTER (WHERE r.status = 'PENDING_EXTERNAL')::int AS started
+      FROM drives d LEFT JOIN registrations r ON r.drive_id = d.id WHERE d.status = 'PUBLISHED' GROUP BY d.id ORDER BY d.application_deadline NULLS LAST, d.id LIMIT 8`.execute(t)).rows);
 }

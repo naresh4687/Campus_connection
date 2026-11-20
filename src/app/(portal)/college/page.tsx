@@ -1,31 +1,21 @@
-import Link from "next/link";
-import { Card } from "@/components/ui/card";
+import { Donut } from "@/components/charts/charts";
+import { AttentionTiles, DashCard, Gauge, LineChart, MiniStat, Pill, Pipeline, ProgressRows } from "@/components/dashboard/kit";
+import { PageHeader, PanelLink } from "@/components/ui/metrics";
 import { NextSteps } from "@/components/ui/next-steps";
 import { humanize } from "@/components/ui/status-badge";
 import { fmtDateTime } from "@/lib/format";
 import { requireRole } from "@/server/auth/session";
-import { dashboard } from "@/server/college/queries";
+import { dashboard, studentsByDepartment } from "@/server/college/queries";
 import { pendingJoinCount } from "@/server/join/queries";
 import { driveStats } from "@/server/drives/queries";
 import { funnel } from "@/server/offers/queries";
-import { FunnelView } from "@/components/offers/funnel";
+import { registrationsPerDay } from "@/server/registrations/queries";
 
 export const metadata = { title: "College dashboard — CampusConnect" };
 
-function Stat({ label, value, href, hint }: { label: string; value: number; href?: string; hint?: string }) {
-  const body = (
-    <div className="h-full rounded-2xl border border-border bg-surface p-4">
-      <p className="text-sm text-muted">{label}</p>
-      <p className="mt-1 text-3xl font-semibold tabular-nums" data-testid={`stat-${label}`}>{value}</p>
-      {hint ? <p className="mt-1 text-xs text-muted">{hint}</p> : null}
-    </div>
-  );
-  return href ? <Link href={href} className="block hover:opacity-90">{body}</Link> : body;
-}
-
 export default async function CollegeDashboard() {
   const s = await requireRole("COLLEGE_ADMIN");
-  const [d, ds, f, joinPending] = await Promise.all([dashboard(s), driveStats(s), funnel(s), pendingJoinCount(s)]);
+  const [d, ds, f, joinPending, byDept, perDay] = await Promise.all([dashboard(s), driveStats(s), funnel(s), pendingJoinCount(s), studentsByDepartment(s), registrationsPerDay(s)]);
   const todo: { text: string; href: string }[] = [];
   if (joinPending > 0) todo.push({ text: `${joinPending} student sign-up request(s) are waiting for approval.`, href: "/college/students/requests" });
   if (d.dep.active === 0) todo.push({ text: "Create your first department.", href: "/college/departments" });
@@ -33,72 +23,70 @@ export default async function CollegeDashboard() {
   if (d.staff.unassigned > 0) todo.push({ text: `${d.staff.unassigned} coordinator(s) are not assigned to any department.`, href: "/college/staff?role=COORDINATOR" });
   if (d.stu.total === 0 && d.dep.active > 0) todo.push({ text: "Add students or import them from a CSV file.", href: "/college/students" });
   if (d.staff.officers + d.staff.officers_disabled === 0 && d.pending === 0) todo.push({ text: "Invite a placement officer.", href: "/college/staff" });
+  const today = new Date().toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Kolkata" });
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">College dashboard</h1>
-        <p className="text-sm text-muted">{d.college?.name}</p>
-      </div>
-
+    <div className="space-y-6">
+      <PageHeader title="College dashboard" description={d.college?.name} actions={<><Pill>{today}</Pill><Pill href="/college/reports">Reports</Pill></>} />
       <NextSteps items={todo} />
 
-      <section aria-labelledby="dep" className="space-y-3">
-        <h2 id="dep" className="text-lg font-semibold">Departments</h2>
-        <div className="grid gap-4 @xl:grid-cols-3">
-          <Stat label="Active departments" value={d.dep.active} href="/college/departments" />
-          <Stat label="Inactive departments" value={d.dep.inactive} href="/college/departments" />
-          <Stat label="Departments without a coordinator" value={d.dep.without_coordinator} />
+      <div className="grid grid-cols-1 gap-6 @5xl:grid-cols-[minmax(0,1fr)_21rem]">
+        <div className="min-w-0 space-y-6">
+          <DashCard title="Placement pipeline" icon="briefcase" id="pipe" action={<PanelLink href="/college/placements">Open placements</PanelLink>}>
+            <Pipeline ids label="Placement funnel" footnote="Only verified placements count as placements." stages={[
+              { label: "Selected", value: f.selected, icon: "users" }, { label: "Offers issued", value: f.offers_issued, icon: "file" }, { label: "Offers accepted", value: f.offers_accepted, icon: "check" },
+              { label: "Joining recorded", value: f.joining_recorded, icon: "building" }, { label: "Verified placements", value: f.placements_verified, icon: "shield" }]} />
+          </DashCard>
+          <DashCard title="Students by department" icon="grad" id="bydept" action={<PanelLink href="/college/students">All students</PanelLink>}>
+            <ProgressRows title="Verified academic records by department" rows={byDept.map((r) => ({ label: r.code, value: r.verified, of: r.total, note: "verified" }))} empty="No departments with students yet." />
+            <p className="mt-3 text-xs text-muted">Each bar is the share of that department’s students whose academic record is verified.</p>
+          </DashCard>
         </div>
-      </section>
-
-      <section aria-labelledby="stu" className="space-y-3">
-        <h2 id="stu" className="text-lg font-semibold">Students</h2>
-        <div className="grid gap-4 @xl:grid-cols-2 @3xl:grid-cols-4">
-          <Stat label="Students" value={d.stu.total} href="/college/students" />
-          <Stat label="Not yet invited" value={d.stu.not_invited} href="/college/students?account=NOT_INVITED" />
-          <Stat label="Invited" value={d.stu.invited} href="/college/students?account=INVITED" />
-          <Stat label="Active accounts" value={d.stu.active} href="/college/students?account=ACTIVE" hint={d.stu.disabled ? `${d.stu.disabled} disabled` : undefined} />
+        <div className="min-w-0 space-y-6">
+          <DashCard title="College overview" icon="chart" id="over">
+            <Gauge title="Verified academic records" value={d.ac.verified} of={d.stu.total} caption="of all students" link={<PanelLink href="/college/academics">Academics</PanelLink>} />
+            <div className="mt-4 grid grid-cols-3 gap-2.5">
+              <MiniStat icon="users" label="Students" value={d.stu.total} href="/college/students" />
+              <MiniStat icon="building" label="Departments" value={d.dep.active} href="/college/departments" />
+              <MiniStat icon="briefcase" label="Staff" value={d.staff.officers + d.staff.coordinators} href="/college/staff" />
+            </div>
+          </DashCard>
+          <DashCard title="Registrations" icon="calendar" id="trend"><LineChart title="Completed registrations, last 14 days" unit="registrations" points={perDay.map((p) => ({ label: p.day, value: p.n }))} empty="No registrations in the last 14 days." /></DashCard>
         </div>
-      </section>
+      </div>
 
-      <section aria-labelledby="acad" className="space-y-3">
-        <h2 id="acad" className="text-lg font-semibold">Academic verification</h2>
-        <div className="grid gap-4 @xl:grid-cols-2 @3xl:grid-cols-4">
-          <Stat label="Verified records" value={d.ac.verified} href="/college/students?academics=VERIFIED" />
-          <Stat label="Awaiting review" value={d.ac.pending} href="/college/students?academics=PENDING" />
-          <Stat label="Needs correction" value={d.ac.rejected} href="/college/students?academics=REJECTED" />
-          <Stat label="Not yet submitted" value={d.ac.not_submitted} href="/college/students?academics=NOT_SUBMITTED" />
-        </div>
-      </section>
+      <div className="grid grid-cols-1 gap-6 @3xl:grid-cols-2 @6xl:grid-cols-4">
+        <DashCard title="Academic verification" icon="shield" id="acad">
+          <Donut ids title="Verification status" unit="students" slices={[
+            { label: "Verified records", value: d.ac.verified, tone: "ink" }, { label: "Awaiting review", value: d.ac.pending, tone: "amber" },
+            { label: "Needs correction", value: d.ac.rejected, tone: "red" }, { label: "Not yet submitted", value: d.ac.not_submitted, tone: "grey" }]} />
+        </DashCard>
+        <DashCard title="Student accounts" icon="users" id="acct">
+          <Donut ids title="Sign-in status" unit="students" slices={[
+            { label: "Active accounts", value: d.stu.active, tone: "ink" }, { label: "Invited", value: d.stu.invited, tone: "amber" },
+            { label: "Not yet invited", value: d.stu.not_invited, tone: "grey" }, { label: "Disabled", value: d.stu.disabled, tone: "red" }]} />
+        </DashCard>
+        <DashCard title="Placement drives" icon="briefcase" id="plc" action={<PanelLink href="/college/drives">All</PanelLink>}>
+          <Donut ids title="Drives by status" unit="drives" slices={[
+            { label: "Published drives", value: ds.published, tone: "ink" }, { label: "Closed drives", value: ds.closed, tone: "grey" }, { label: "Draft drives", value: ds.draft, tone: "amber" }]} />
+        </DashCard>
+        <DashCard title="Needs attention" icon="alert" id="attn" tone="attention">
+          <AttentionTiles items={[
+            { label: "Sign-up requests", value: joinPending, href: "/college/students/requests", icon: "users" },
+            { label: "Departments without a coordinator", value: d.dep.without_coordinator, href: "/college/departments", icon: "building" },
+            { label: "Coordinators without a department", value: d.staff.unassigned, href: "/college/staff?role=COORDINATOR", icon: "alert" }]} />
+        </DashCard>
+      </div>
 
-      <section aria-labelledby="plc" className="space-y-3">
-        <h2 id="plc" className="text-lg font-semibold">Placement</h2>
-        <div className="grid gap-4 @xl:grid-cols-3">
-          <Stat label="Published drives" value={ds.published} href="/college/drives?status=PUBLISHED" />
-          <Stat label="Closed drives" value={ds.closed} href="/college/drives?status=CLOSED" />
-          <Stat label="Draft drives" value={ds.draft} href="/college/drives?status=DRAFT" />
-        </div>
-        <FunnelView f={f} />
-        <p className="text-xs text-muted">Only verified placements count as placements. <Link href="/college/placements" className="underline">Open placements</Link>.</p>
-      </section>
-
-      <section aria-labelledby="staff" className="space-y-3">
-        <h2 id="staff" className="text-lg font-semibold">Staff</h2>
-        <div className="grid gap-4 @xl:grid-cols-2 @3xl:grid-cols-4">
-          <Stat label="Placement officers" value={d.staff.officers} href="/college/staff?role=PLACEMENT_OFFICER" hint={d.staff.officers_disabled ? `${d.staff.officers_disabled} disabled` : undefined} />
-          <Stat label="Coordinators" value={d.staff.coordinators} href="/college/staff?role=COORDINATOR" hint={d.staff.coordinators_disabled ? `${d.staff.coordinators_disabled} disabled` : undefined} />
-          <Stat label="Coordinators without a department" value={d.staff.unassigned} />
-          <Stat label="Pending invitations" value={d.pending} href="/college/staff" />
-        </div>
-      </section>
-
-      <Card title="Recent activity">
+      <DashCard title="Recent activity" icon="list" id="recent" action={<PanelLink href="/college/audit">Full audit log</PanelLink>}>
         {d.recent.length === 0 ? <p className="text-sm text-muted">No activity yet.</p> : (
-          <ul className="space-y-1 text-sm">{d.recent.map((r) => <li key={r.id}><span className="font-medium">{humanize(r.action)}</span> <span className="text-muted">· {r.actor_email ?? "system"} · {fmtDateTime(r.occurred_at)}</span></li>)}</ul>
-        )}
-        <p className="mt-3 text-sm"><Link href="/college/audit" className="underline">Full audit log</Link></p>
-      </Card>
-      <p className="text-xs text-muted">Live counts from the database.</p>
+          <ul className="divide-y divide-border text-sm">
+            {d.recent.map((r) => (
+              <li key={r.id} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5 py-2.5 first:pt-0 last:pb-0">
+                <span className="font-medium">{humanize(r.action)}</span>
+                <span className="text-muted">{r.actor_email ?? "System"} · {fmtDateTime(r.occurred_at)}</span>
+              </li>))}
+          </ul>)}
+      </DashCard>
     </div>
   );
 }

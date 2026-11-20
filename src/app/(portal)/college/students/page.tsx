@@ -5,6 +5,8 @@ import { Select } from "@/components/ui/select";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { EmptyState, Table, Td } from "@/components/ui/table";
 import { ACADEMIC_LABEL } from "@/lib/academics";
+import { StatStrip } from "@/components/ui/stat-strip";
+import { dashboard } from "@/server/college/queries";
 import { requireRole } from "@/server/auth/session";
 import { listInvitable, listStudents } from "@/server/students/queries";
 import { BulkInvite } from "./bulk-invite";
@@ -12,22 +14,27 @@ import { ShareCard } from "@/components/join/share-card";
 import { joinLinkState, pendingJoinCount } from "@/server/join/queries";
 import { joinLink } from "@/server/join/link";
 
+import { COMPLETION_BANDS, isBand } from "@/lib/completion";
+import { CompletionBar } from "@/components/students/completion-card";
+
 export const metadata = { title: "Students — CampusConnect" };
 
-export default async function StudentsPage({ searchParams }: { searchParams: Promise<{ q?: string; dept?: string; year?: string; account?: string; academics?: string; page?: string }> }) {
+export default async function StudentsPage({ searchParams }: { searchParams: Promise<{ q?: string; dept?: string; year?: string; account?: string; academics?: string; completion?: string; page?: string }> }) {
   const s = await requireRole("COLLEGE_ADMIN");
   const sp = await searchParams;
   const q = (sp.q ?? "").trim().slice(0, 100) || undefined;
-  const filters = { q, dept: sp.dept || undefined, year: sp.year || undefined, account: sp.account || undefined, academics: sp.academics || undefined, page: parsePage(sp.page) };
+  const filters = { q, dept: sp.dept || undefined, year: sp.year || undefined, account: sp.account || undefined, academics: sp.academics || undefined, completion: sp.completion || undefined, page: parsePage(sp.page) };
   const { rows, total, depts, years } = await listStudents(s, filters, { admin: true });
   const invitable = await listInvitable(s, filters, 1);
+  const totals = (await dashboard(s)).stu;
   const [jl, pending] = await Promise.all([joinLinkState(s), pendingJoinCount(s)]);
   const link = await joinLink(s.collegeId!, jl.version);
   const dept = depts.some((d) => d.id === sp.dept) ? sp.dept : undefined;
   const year = years.some((y) => String(y) === sp.year) ? sp.year : undefined;
   const account = ["NOT_INVITED", "INVITED", "ACTIVE", "DISABLED"].includes(sp.account ?? "") ? sp.account : undefined;
   const academics = ["NOT_SUBMITTED", "PENDING", "VERIFIED", "REJECTED"].includes(sp.academics ?? "") ? sp.academics : undefined;
-  const anyFilter = q || dept || year || account || academics;
+  const completion = isBand(sp.completion) ? sp.completion : undefined;
+  const anyFilter = q || dept || year || account || academics || completion;
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -37,6 +44,9 @@ export default async function StudentsPage({ searchParams }: { searchParams: Pro
           <Link href="/college/students/new" className="inline-flex h-10 items-center rounded-xl bg-primary px-4 text-sm font-medium text-primary-foreground">Add student</Link>
         </div>
       </div>
+      <StatStrip label="Student totals" items={[
+        { label: "Students", value: totals.total }, { label: "Not yet invited", value: totals.not_invited, href: "/college/students?account=NOT_INVITED", attention: true },
+        { label: "Invited", value: totals.invited, href: "/college/students?account=INVITED" }, { label: "Active accounts", value: totals.active, href: "/college/students?account=ACTIVE", hint: totals.disabled ? `${totals.disabled} disabled` : undefined }]} />
 
       <Card title="Let students sign themselves up">
         <ShareCard link={link} enabled={jl.enabled} />
@@ -56,11 +66,12 @@ export default async function StudentsPage({ searchParams }: { searchParams: Pro
         <Select id="academics" label="Academics" defaultValue={academics ?? ""}>
           <option value="">Any</option>{Object.entries(ACADEMIC_LABEL).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
         </Select>
+        <Select id="completion" label="Profile completion" defaultValue={completion ?? ""}><option value="">Any</option>{Object.entries(COMPLETION_BANDS).map(([v, b]) => <option key={v} value={v}>{b.label}</option>)}</Select>
         <button className="h-10 rounded-xl border border-border bg-surface px-4 text-sm hover:bg-background">Apply filters</button>
         {anyFilter ? <Link href="/college/students" className="inline-flex h-10 items-center text-sm underline">Clear</Link> : null}
       </form>
 
-      <Table head={["Student", "Register no.", "Department", "Degree", "Passing year", "Account", "Academics"]} empty={rows.length === 0 ? <EmptyState title="No students found">{anyFilter ? "Try different filters." : "Add a student or import a CSV to get started."}</EmptyState> : undefined}>
+      <Table head={["Student", "Register no.", "Department", "Degree", "Passing year", "Account", "Academics", "Profile"]} empty={rows.length === 0 ? <EmptyState title="No students found">{anyFilter ? "Try different filters." : "Add a student or import a CSV to get started."}</EmptyState> : undefined}>
         {rows.map((r) => (
           <tr key={r.id}>
             <Td><Link href={`/college/students/${r.id}`} className="font-medium underline">{r.full_name}</Link><span className="block text-xs text-muted">{r.college_email}</span></Td>
@@ -70,10 +81,11 @@ export default async function StudentsPage({ searchParams }: { searchParams: Pro
             <Td>{r.passing_year}</Td>
             <Td><StatusBadge value={r.account_status} label={r.account_status === "NOT_INVITED" ? "Not invited" : undefined} /></Td>
             <Td><StatusBadge value={({ VERIFIED: "APPROVED", PENDING: "PENDING", REJECTED: "REJECTED", NOT_SUBMITTED: "NOT_STARTED" } as Record<string, string>)[r.academic_status]} label={ACADEMIC_LABEL[r.academic_status] + (r.update_pending ? " · update pending" : "")} /></Td>
+            <Td><CompletionBar score={r.completion} /></Td>
           </tr>
         ))}
       </Table>
-      <Pagination page={filters.page} total={total} basePath="/college/students" params={{ q, dept, year, account, academics }} />
+      <Pagination page={filters.page} total={total} basePath="/college/students" params={{ q, dept, year, account, academics, completion }} />
 
       <Card title="Invite students">
         <BulkInvite q={q} dept={dept} year={year} eligible={invitable.total} />

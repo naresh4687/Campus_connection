@@ -142,3 +142,10 @@ export async function myDepartments(s: SessionUser) {
       FROM departments d ORDER BY d.code`.execute(t)).rows,
   );
 }
+
+/** Students per department split by academic verification (for the dashboard chart). RLS keeps it to the caller's college (and, for a coordinator, their departments). */
+export async function studentsByDepartment(s: SessionUser) {
+  return withSession(s, async (t) => (await sql<{ code: string; total: number; verified: number; pending: number }>`
+    SELECT d.code::text AS code, count(a.student_id)::int AS total, count(*) FILTER (WHERE a.status = 'VERIFIED')::int AS verified, count(*) FILTER (WHERE a.status = 'PENDING')::int AS pending
+      FROM departments d LEFT JOIN student_academic_status a ON a.department_id = d.id WHERE d.status = 'ACTIVE' GROUP BY d.code ORDER BY d.code`.execute(t)).rows);
+}

@@ -53,7 +53,7 @@ test.describe.serial("the strict CSP breaks nothing: a tour of every role's page
     expect(widths.length).toBeGreaterThan(0); expect(Math.max(...widths), "chart bars are drawn (no inline styles needed)").toBeGreaterThan(2);
   });
   test("college administrator", async ({ browser }) => { await tour(browser, "rptAdmin", ["/college", "/college/reports", "/college/placements", "/college/audit", "/college/students"]); expect(violations).toEqual([]); });
-  test("coordinator", async ({ browser }) => { await tour(browser, "regCoord", ["/coordinator", "/coordinator/verification", "/coordinator/documents"]); expect(violations).toEqual([]); });
+  test("coordinator", async ({ browser }) => { await tour(browser, "secCoord", ["/coordinator", "/coordinator/verification", "/coordinator/documents"]); expect(violations).toEqual([]); });
 });
 
 test.describe("sessions, origins and probing", () => {
@@ -99,10 +99,10 @@ test.describe.serial("authorization sweep: every role against every other role's
     platform: ["/platform", "/platform/applications", "/platform/colleges", "/platform/audit"],
     college: ["/college", "/college/students", "/college/staff", "/college/reports", "/college/placements", "/college/audit"],
     placement: ["/placement", "/placement/companies", "/placement/drives", "/placement/placements", "/placement/reports"],
-    coordinator: ["/coordinator", "/coordinator/verification", "/coordinator/documents"],
-    student: ["/student", "/student/drives", "/student/offers", "/student/academics", "/student/documents"],
+    coordinator: ["/coordinator", "/coordinator/verification", "/coordinator/achievements", "/coordinator/documents"],
+    student: ["/student", "/student/drives", "/student/offers", "/student/academics", "/student/achievements", "/student/documents"],
   };
-  const ACTORS: [string, string][] = [["ntfA", "student"], ["rptOfficer", "placement"], ["rptAdmin", "college"], ["regCoord", "coordinator"]];
+  const ACTORS: [string, string][] = [["ntfA", "student"], ["rptOfficer", "placement"], ["rptAdmin", "college"], ["secCoord", "coordinator"]];
   for (const [who, own] of ACTORS) {
     test(`${who} (${own}) cannot open any other role's pages`, async ({ browser }) => {
       const page: Page = await (await browser.newContext()).newPage(); await loginAs(page, who);
@@ -122,7 +122,7 @@ test.describe.serial("authorization sweep: every role against every other role's
     const page = await (await browser.newContext()).newPage();
     for (const paths of Object.values(AREAS)) for (const p of paths) {
       await page.goto(p, { waitUntil: "domcontentloaded" });
-      expect(new URL(page.url()).pathname, p).toBe("/login");
+      expect(new URL(page.url()).pathname, p).toMatch(/^(\/login\/(student|college)|\/admin\/login)$/);   // that area's own sign-in page
     }
     for (const p of ["/notifications", "/account"]) { await page.goto(p, { waitUntil: "domcontentloaded" }); expect(new URL(page.url()).pathname, p).toBe("/login"); }
     const api = await page.request.get("/reports/export/placed", { failOnStatusCode: false }); expect(api.status()).toBe(401);

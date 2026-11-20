@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { HistoryItem, SubmissionValuesView } from "@/components/ui/submission-view";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { SUBMISSION_LABEL } from "@/lib/academics";
+import { SUBMISSION_LABEL, academicChanges } from "@/lib/academics";
 import { fmtDateTime } from "@/lib/format";
 import { uuidSchema } from "@/lib/validation";
 import { requireRole } from "@/server/auth/session";
@@ -49,6 +49,17 @@ export default async function ReviewPage({ params }: { params: Promise<{ id: str
         <SubmissionValuesView s={a} />
         <p className="mt-3 text-xs text-muted">Submitted {fmtDateTime(a.submitted_at)}.</p>
       </Card>
+
+      {verified && a.status === "SUBMITTED" ? (
+        <Card title="What this update changes">
+          {(() => {
+            const changes = academicChanges(verified, a);
+            return changes.length === 0 ? <p className="text-sm text-muted">No values differ from the verified record (only the note or the evidence is new).</p> : (
+              <ul className="space-y-1 text-sm" data-testid="academic-diff">{changes.map((c) => <li key={c.label}><span className="text-muted">{c.label}:</span> <del>{c.before}</del> → <ins className="font-medium no-underline">{c.after}</ins></li>)}</ul>
+            );
+          })()}
+        </Card>
+      ) : null}
 
       {verified && a.status === "SUBMITTED" ? (
         <Card title="Currently verified record (will be replaced if you verify this update)"><SubmissionValuesView s={verified} /></Card>

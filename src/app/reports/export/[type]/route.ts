@@ -1,16 +1,18 @@
 import { NextResponse } from "next/server";
 import { REPORT_TYPES, reportCsv, type ReportType } from "@/lib/reports";
 import { allow } from "@/server/auth/rate-limit";
-import { getSession } from "@/server/auth/session";
+import { candidateSessions } from "@/server/auth/session";
 import { exportData, parseYear } from "@/server/reports/queries";
 
 export const dynamic = "force-dynamic";
 
 /** CSV export for placement officers and college administrators. The database authorises (and refuses everyone else); each export is audited. */
 export async function GET(req: Request, ctx: { params: Promise<{ type: string }> }) {
-  const s = await getSession();
-  if (!s) return new NextResponse("Unauthorised", { status: 401 });
-  if (s.role !== "PLACEMENT_OFFICER" && s.role !== "COLLEGE_ADMIN") return new NextResponse("Forbidden", { status: 403 });
+  // Exports belong to college staff; use the staff account if this browser has one signed in.
+  const sessions = await candidateSessions();
+  if (sessions.length === 0) return new NextResponse("Unauthorised", { status: 401 });
+  const s = sessions.find((x) => x.role === "PLACEMENT_OFFICER" || x.role === "COLLEGE_ADMIN");
+  if (!s) return new NextResponse("Forbidden", { status: 403 });
   const { type } = await ctx.params;
   if (!(REPORT_TYPES as readonly string[]).includes(type)) return new NextResponse("Not found", { status: 404 });
   if (!(await allow("report-export", s.userId, 30, 3600))) return new NextResponse("Too many requests", { status: 429 });

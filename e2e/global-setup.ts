@@ -1,4 +1,5 @@
 import { writeFileSync } from "node:fs";
+import { portalOfRole } from "../src/lib/portals";
 import { sql } from "kysely";
 import { withTenantTx } from "../src/server/db";
 import { hashPassword } from "../src/server/auth/password";
@@ -33,6 +34,15 @@ export default async function globalSetup() {
   const adminB = await mk(pa, "COLLEGE_ADMIN", collegeB, "adminB");
   users.adminB = adminB.email;
   users.officerB = (await mk(adminB, "PLACEMENT_OFFICER", collegeB, "officerB")).email;
+  // Accounts for the separate-sign-in-pages spec, in a college of their own so the counts the other specs check stay as they expect.
+  const collegeC = await createCollege("Sign-in Pages College");
+  const adminC = await mk(pa, "COLLEGE_ADMIN", collegeC, "adminC");
+  users.pageStudent = (await mk(adminC, "STUDENT", collegeC, "pageStudent")).email;
+  users.pageStaff = (await mk(adminC, "PLACEMENT_OFFICER", collegeC, "pageStaff")).email;
+  // The multi-tab scenarios (one browser, several roles at once) have their own accounts, so their sign-ins do not use up others' limits.
+  users.tabAdmin = (await mk(pa, "COLLEGE_ADMIN", collegeC, "tabAdmin")).email;
+  users.tabOfficer = (await mk(adminC, "PLACEMENT_OFFICER", collegeC, "tabOfficer")).email;
+  users.tabStudent = (await mk(adminC, "STUDENT", collegeC, "tabStudent")).email;
 
   // Registration scenarios live in their own department (REG) with their own coordinator, so earlier specs' fixtures are untouched.
   // regA: verified & strong, regB: verified & weak, regC: nothing verified.
@@ -41,11 +51,28 @@ export default async function globalSetup() {
   const regCoord = await mk(adminA, "COORDINATOR", collegeA, "regCoord");
   users.regCoord = regCoord.email;
   await withTenantTx(adminA, (t) => sql`SELECT college.assign_coordinator(${regDept}::uuid, ${regCoord.userId}::uuid)`.execute(t), appDb());
+  const annCoord = await mk(adminA, "COORDINATOR", collegeA, "annCoord");               // the announcements spec has its own accounts (sign-ins are throttled per account)
+  users.annCoord = annCoord.email;
+  await withTenantTx(adminA, (t) => sql`SELECT college.assign_coordinator(${regDept}::uuid, ${annCoord.userId}::uuid)`.execute(t), appDb());
+  const extCoord = await mk(adminA, "COORDINATOR", collegeA, "extCoord");                 // the external-registration spec has its own accounts too
+  users.extCoord = extCoord.email;
+  await withTenantTx(adminA, (t) => sql`SELECT college.assign_coordinator(${regDept}::uuid, ${extCoord.userId}::uuid)`.execute(t), appDb());
+  const secCoord = await mk(adminA, "COORDINATOR", collegeA, "secCoord");                 // the security and layout sweeps log in often: their own sign-in budget
+  users.secCoord = secCoord.email;
+  await withTenantTx(adminA, (t) => sql`SELECT college.assign_coordinator(${regDept}::uuid, ${secCoord.userId}::uuid)`.execute(t), appDb());
+  const partCoord = await mk(adminA, "COORDINATOR", collegeA, "partCoord");               // the participation spec's own accounts
+  users.partCoord = partCoord.email;
+  await withTenantTx(adminA, (t) => sql`SELECT college.assign_coordinator(${regDept}::uuid, ${partCoord.userId}::uuid)`.execute(t), appDb());
+  users.partOfficer = (await mk(adminA, "PLACEMENT_OFFICER", collegeA, "partOfficer")).email;
+  users.pwOfficer = (await mk(adminA, "PLACEMENT_OFFICER", collegeA, "pwOfficer")).email;           // approves the password-change test
+  users.extOfficer = (await mk(adminA, "PLACEMENT_OFFICER", collegeA, "extOfficer")).email;
+  users.extOfficerB = (await mk(adminB, "PLACEMENT_OFFICER", collegeB, "extOfficerB")).email;
+  users.annOfficer = (await mk(adminA, "PLACEMENT_OFFICER", collegeA, "annOfficer")).email;
   users.roundOfficer = (await mk(adminA, "PLACEMENT_OFFICER", collegeA, "roundOfficer")).email;
   users.offerOfficer = (await mk(adminA, "PLACEMENT_OFFICER", collegeA, "offerOfficer")).email;
   users.rptOfficer = (await mk(adminA, "PLACEMENT_OFFICER", collegeA, "rptOfficer")).email;
   users.rptAdmin = (await mk(pa, "COLLEGE_ADMIN", collegeA, "rptAdmin")).email;   // own login budget for the rounds spec
-  for (const [key, cgpa] of [["regA", 8.5], ["regB", 5.5], ["regC", 0], ["regD", 8], ["offA", 8], ["offB", 8], ["rptA", 8], ["rptB", 8], ["ntfA", 8]] as const) {
+  for (const [key, cgpa] of [["regA", 8.5], ["regB", 5.5], ["regC", 0], ["regD", 8], ["offA", 8], ["offB", 8], ["rptA", 8], ["rptB", 8], ["ntfA", 8], ["annA", 8], ["extA", 8], ["extB", 8], ["partA", 8], ["partB", 8], ["profA", 8]] as const) {
     const st = await mk(adminA, "STUDENT", collegeA, key);
     users[key] = st.email;
     const [r] = await inspect<{ register_number: string; full_name: string; college_email: string; degree: string; admission_year: number; passing_year: number }>(
@@ -74,7 +101,15 @@ export default async function globalSetup() {
   const quartz = await submitApplication({ name: "Quartz College of Engineering", email: "principal@quartz.e2e.test" });
   for (let i = 1; i <= 17; i++) await submitApplication({ name: `Paginated College ${String(i).padStart(2, "0")}`, email: `principal${i}@paginated.e2e.test` });
 
+  // Which sign-in page each account uses (each kind of user has their own; see src/lib/portals.ts).
+  const roles = new Map((await inspect<{ email: string; role: string }>("SELECT lower(email::text) AS email, role FROM users")).map((r) => [r.email, r.role]));
+  const portal = Object.fromEntries(Object.entries(users).map(([k, email]) => {
+    const p = portalOfRole(roles.get(email.toLowerCase()) ?? "");
+    if (!p) throw new Error(`global-setup: no role found for test account ${k} (${email})`);
+    return [k, p];
+  }));
+
   await closeAppDb();
-  writeFileSync("e2e/.seed.json", JSON.stringify({ users, password: Object.fromEntries([...hashes.keys()].map((k) => [k, pw(k)])), inviteToken, resetToken, expiredToken, zephyrRef: zephyr.token, quartzRef: quartz.token }, null, 2));
+  writeFileSync("e2e/.seed.json", JSON.stringify({ users, portal, password: Object.fromEntries([...hashes.keys()].map((k) => [k, pw(k)])), inviteToken, resetToken, expiredToken, zephyrRef: zephyr.token, quartzRef: quartz.token }, null, 2));
   return async () => { await new Promise<void>((r) => aiStub.close(() => r())); };
 }

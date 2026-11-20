@@ -3,7 +3,7 @@
 import { sql } from "kysely";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { academicFormSchema } from "@/lib/academics";
+import { academicFormSchema, cgpaGapNote, parseSemesters } from "@/lib/academics";
 import { reasonSchema, uuidSchema } from "@/lib/validation";
 import { dbMessage, firstErrors, GENERIC_ERROR, str, type ActionState } from "../action-utils";
 import { assertSameOrigin } from "../auth/request";
@@ -19,10 +19,15 @@ export async function submitAcademicsAction(_p: ActionState, fd: FormData): Prom
   const r = academicFormSchema.safeParse(values);
   if (!r.success) return { error: "Please correct the highlighted fields.", fieldErrors: firstErrors(r.error), values };
   const v = r.data;
+  const sem = parseSemesters((k) => str(fd, k, 10));
+  const semValues = Object.fromEntries(Array.from({ length: 12 }, (_, i) => [`sem${i + 1}_sgpa`, `sem${i + 1}_backlogs`]).flat().map((k) => [k, str(fd, k, 10)]));
+  if (Object.keys(sem.errors).length) return { error: "Please correct the semester results.", fieldErrors: sem.errors, values: { ...values, ...semValues } };
+  const gap = cgpaGapNote(v.cgpa, sem.rows.map((x) => ({ sgpa: x.sgpa })));
+  if (gap && str(fd, "confirm_gap") !== "yes") return { error: gap + " Tick the box to submit anyway.", fieldErrors: { confirm_gap: "Confirm to submit anyway." }, values: { ...values, ...semValues } };
   const evidence = fd.getAll("evidence").filter((x): x is string => typeof x === "string" && uuidSchema.safeParse(x).success);
   const docs = evidence.length ? sql`ARRAY[${sql.join(evidence.map((i) => sql`${i}::uuid`))}]::uuid[]` : sql`'{}'::uuid[]`;
   try {
-    await withSession(s, (t) => sql`SELECT academics.submit(${v.cgpa}::numeric, ${v.tenth}::numeric, ${v.twelfth ?? null}::numeric, ${v.diploma ?? null}::numeric, ${v.backlogs}::int, ${v.arrears}::int, ${v.note ?? null}, ${docs})`.execute(t));
+    await withSession(s, (t) => sql`SELECT academics.submit(${v.cgpa}::numeric, ${v.tenth}::numeric, ${v.twelfth ?? null}::numeric, ${v.diploma ?? null}::numeric, ${v.backlogs}::int, ${v.arrears}::int, ${v.note ?? null}, ${docs}, ${sem.rows.length ? JSON.stringify(sem.rows) : null}::jsonb)`.execute(t));
   } catch (e) {
     return { error: dbMessage(e), values };
   }

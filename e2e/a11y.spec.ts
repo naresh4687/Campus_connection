@@ -14,8 +14,18 @@ async function scan(page: Page, path: string) {
   expect(bad, `${path}\n${bad.join("\n")}`).toEqual([]);
 }
 
+const PUBLIC_PAGES = ["/", "/features", "/how-it-works", "/apply", "/contact", "/privacy", "/terms", "/login", "/forgot-password", "/no-such-page"];
+
+// The dark theme has its own palette, so its contrast is checked separately (the device setting decides the theme when no choice is saved).
+test.describe("accessibility in the dark theme (axe, WCAG 2.1 A/AA)", () => {
+  test.use({ colorScheme: "dark" });
+  for (const path of PUBLIC_PAGES) {
+    test(`public ${path} (dark)`, async ({ page }) => { await scan(page, path); });
+  }
+});
+
 test.describe("accessibility (axe, WCAG 2.1 A/AA)", () => {
-  for (const path of ["/", "/features", "/how-it-works", "/apply", "/contact", "/privacy", "/terms", "/login", "/forgot-password"]) {
+  for (const path of PUBLIC_PAGES) {
     test(`public ${path}`, async ({ page }) => { await scan(page, path); });
   }
   test("application form with validation errors showing", async ({ page }) => {

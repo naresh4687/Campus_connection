@@ -49,3 +49,39 @@ describe("formatting", () => {
     expect(fmtCgpa("8.2")).toBe("8.20");
   });
 });
+
+import { cgpaGapNote, parseSemesters } from "./academics";
+describe("semester results", () => {
+  const get = (m: Record<string, string>) => (k: string) => m[k] ?? "";
+  it("keeps typed semesters only; blank backlogs means 0 but a blank SGPA is never zero", () => {
+    const r = parseSemesters(get({ sem1_sgpa: "8.5", sem2_sgpa: "7", sem2_backlogs: "1" }));
+    expect(r.errors).toEqual({});
+    expect(r.rows).toEqual([{ semester: 1, sgpa: 8.5, backlogs: 0 }, { semester: 2, sgpa: 7, backlogs: 1 }]);
+    expect(parseSemesters(get({})).rows).toEqual([]);
+  });
+  it("refuses backlogs without an SGPA, rounding, and out-of-range values", () => {
+    expect(Object.keys(parseSemesters(get({ sem3_backlogs: "1" })).errors)).toEqual(["sem3_sgpa"]);
+    for (const bad of ["8.255", "10.5", "-1", "1e1", "abc"]) expect(Object.keys(parseSemesters(get({ sem1_sgpa: bad })).errors), bad).toEqual(["sem1_sgpa"]);
+    expect(Object.keys(parseSemesters(get({ sem1_sgpa: "8", sem1_backlogs: "21" })).errors)).toEqual(["sem1_backlogs"]);
+  });
+  it("warns only when the CGPA is far from the SGPA average", () => {
+    expect(cgpaGapNote("8.00", [{ sgpa: "8.3" }, { sgpa: "7.9" }])).toBeNull();
+    expect(cgpaGapNote("9.50", [{ sgpa: "7" }, { sgpa: "7.5" }])).toMatch(/differs/);
+    expect(cgpaGapNote("9.50", [])).toBeNull();
+  });
+});
+
+import { academicChanges } from "./academics";
+describe("academicChanges", () => {
+  const v = { cgpa: "8.25", tenth_percentage: "90.50", twelfth_percentage: "88.00", diploma_percentage: null, active_backlogs: 0, historical_arrears: 1, semesters: [] as { semester: number; sgpa: string; backlogs: number }[] };
+  it("lists only the changed values, formatted the way the review page shows them", () => {
+    expect(academicChanges(v, { ...v })).toEqual([]);
+    expect(academicChanges(v, { ...v, cgpa: "8.30", active_backlogs: 2 })).toEqual([
+      { label: "CGPA", before: "8.25", after: "8.30" }, { label: "Active backlogs", before: "0", after: "2" },
+    ]);
+  });
+  it("treats a missing value as 'Not provided', never 0, and reports semester changes", () => {
+    expect(academicChanges(v, { ...v, twelfth_percentage: null })).toEqual([{ label: "12th percentage", before: "88.00%", after: "Not provided" }]);
+    expect(academicChanges(v, { ...v, semesters: [{ semester: 1, sgpa: "8", backlogs: 1 }] })).toEqual([{ label: "Semester results", before: "None", after: "S1: 8.00 (1 backlog)" }]);
+  });
+});

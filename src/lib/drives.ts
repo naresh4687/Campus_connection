@@ -53,8 +53,9 @@ export function criteriaLines(c: { min_cgpa: string | null; min_tenth: string | 
   const out: string[] = [];
   if (c.min_cgpa !== null) out.push(`CGPA of at least ${Number(c.min_cgpa).toFixed(2)}`);
   if (c.min_tenth !== null) out.push(`10th percentage of at least ${Number(c.min_tenth).toFixed(2)}%`);
-  if (c.min_twelfth !== null) out.push(`12th percentage of at least ${Number(c.min_twelfth).toFixed(2)}%`);
-  if (c.min_diploma !== null) out.push(`Diploma percentage of at least ${Number(c.min_diploma).toFixed(2)}%`);
+  // One requirement, by qualification: each student is checked only against the minimum for the qualification they have.
+  if (c.min_twelfth !== null) out.push(`12th students: 12th percentage of at least ${Number(c.min_twelfth).toFixed(2)}%`);
+  if (c.min_diploma !== null) out.push(`Diploma students: diploma percentage of at least ${Number(c.min_diploma).toFixed(2)}%`);
   if (c.max_active_backlogs !== null) out.push(`At most ${c.max_active_backlogs} active backlog${c.max_active_backlogs === 1 ? "" : "s"}`);
   if (c.max_historical_arrears !== null) out.push(`At most ${c.max_historical_arrears} historical arrear${c.max_historical_arrears === 1 ? "" : "s"}`);
   if (c.passing_years.length) out.push(`Passing year: ${c.passing_years.join(", ")}`);

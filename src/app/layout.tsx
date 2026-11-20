@@ -2,17 +2,14 @@ import type { Metadata, Viewport } from "next";
 import { cookies } from "next/headers";
 import { connection } from "next/server";
 import { THEME_COOKIE, parseTheme } from "@/lib/theme";
-import { Geist, Geist_Mono, Space_Grotesk } from "next/font/google";
+import { Archivo, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// One variable font for everything: body text at normal width, the public site's display capitals stretched to 125%.
+const archivo = Archivo({
+  variable: "--font-archivo",
   subsets: ["latin"],
-});
-
-const display = Space_Grotesk({
-  variable: "--font-display",
-  subsets: ["latin"],
+  axes: ["wdth"],
 });
 
 const geistMono = Geist_Mono({
@@ -36,7 +33,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       data-theme={theme === "system" ? undefined : theme}
-      className={`${geistSans.variable} ${geistMono.variable} ${display.variable} h-full antialiased`}
+      className={`${archivo.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>

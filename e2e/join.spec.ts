@@ -37,18 +37,18 @@ test.describe.serial("college sign-up link, approval, separate sign-in pages", (
   });
   test.afterAll(async () => { for (const p of open) await p.context().close(); await closeAppDb(); });
 
-  test("sign-in is one full page: a Student / College staff switch and the form together; old links still work", async ({ browser }) => {
+  test("students and staff have their own sign-in pages, with the form on the page and the notices kept", async ({ browser }) => {
     const p = await newPage(browser);
-    await p.goto("/login");
+    await p.goto("/login/student");
     await expect(p.getByRole("heading", { name: "Student sign in" })).toBeVisible();
     await expect(p.getByLabel("Email")).toBeVisible();                                      // no extra step before the form
-    await p.getByRole("button", { name: "College staff" }).click();
-    await expect(p.getByRole("heading", { name: "College sign in" })).toBeVisible();
-    await expect(p.getByRole("button", { name: "College staff" })).toHaveAttribute("aria-pressed", "true");
+    await expect(p.getByRole("link", { name: "Staff sign in" })).toHaveAttribute("href", "/login/college");
     const a11y = await new AxeBuilder({ page: p }).withTags(TAGS).analyze();
     expect(a11y.violations.map((v) => v.id)).toEqual([]);
+    await p.goto("/login/college");
+    await expect(p.getByRole("heading", { name: "College staff sign in" })).toBeVisible();
     await p.goto("/login/student?welcome=1");
-    await expect(p).toHaveURL(/\/login\?welcome=1$/);
+    await expect(p).toHaveURL(/\/login\/student\?welcome=1$/);
     await expect(p.getByText("Your account is ready.")).toBeVisible();
   });
 
@@ -163,16 +163,15 @@ test.describe.serial("college sign-up link, approval, separate sign-in pages", (
     const invite = await admin.getByTestId("invite-link-panel").getByLabel("One-time link").inputValue();
     const p = await newPage(browser, "ntfA");                                              // this browser is signed in as a student
     await p.goto(invite);
-    await expect(p.getByText(/currently signed in as .* will sign that account out/)).toBeVisible();
+    await expect(p.getByText(/currently signed in as/)).toHaveCount(0);                    // a staff invitation does not touch the student's sign-in
     await p.getByLabel("Full name").fill("Invited Coordinator");
     await p.getByLabel("Choose a password", { exact: true }).fill("Invite-Pass-12345"); await p.getByLabel("Confirm password").fill("Invite-Pass-12345");
     await p.getByRole("button", { name: "Create account" }).click();
-    await p.waitForURL(/\/login\?welcome=1$/);
-    await expect(p.getByText("Your account is ready.")).toBeVisible();                     // the sign-in choice, not the student's home
-    await p.goto("/student"); await expect(p).toHaveURL(/\/login$/);                        // the previous account was signed out
-    await p.goto("/login/college?welcome=1");
+    await p.waitForURL(/\/login\/college\?welcome=1$/);                                    // the coordinator's own sign-in page, not the student's home
+    await expect(p.getByText("Your account is ready.")).toBeVisible();
     await p.getByLabel("Email").fill(`invited.${uniqueRef}@e2e.test`); await p.getByLabel("Password").fill("Invite-Pass-12345");
     await p.getByRole("button", { name: "Sign in" }).click();
     await p.waitForURL((u) => u.pathname === "/coordinator");
+    await p.goto("/student"); await expect(p).toHaveURL(/\/student$/);                     // the student is still signed in alongside
   });
 });
