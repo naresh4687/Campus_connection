@@ -93,9 +93,14 @@ jobs:
       - name: Check the live site is healthy
         env:
           BASE: ${{ vars.APP_BASE_URL }}
+          # Only needed while Vercel Authentication protects the site: the "Protection Bypass for Automation" secret from the Vercel project's
+          # Deployment Protection settings. Sent as a header only (never printed). Without it the check hits the login wall and cannot see 200.
+          BYPASS: ${{ secrets.VERCEL_BYPASS_SECRET }}
         run: |
+          hdr=()
+          if [ -n "${BYPASS:-}" ]; then hdr=(-H "x-vercel-protection-bypass: ${BYPASS}"); fi
           for i in $(seq 1 12); do
-            code=$(curl -s -o /dev/null -w "%{http_code}" "$BASE/api/health" || true)
+            code=$(curl -s -o /dev/null -w "%{http_code}" "${hdr[@]}" "$BASE/api/health" || true)
             echo "attempt $i: $code"
             if [ "$code" = "200" ]; then exit 0; fi
             sleep 10
