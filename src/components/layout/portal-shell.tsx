@@ -1,5 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { InstallCard } from "@/components/pwa/install-card";
+import { SignOutForm } from "@/components/pwa/sign-out-form";
 import { logoutAction } from "@/server/auth/actions";
 import { type SessionUser } from "@/server/auth/session";
 import { NAV } from "./nav";
@@ -65,14 +67,14 @@ export async function PortalShell({ session, children }: { session: SessionUser;
             </div>
             <div className="flex items-center gap-2">
               <ThemeSwitch tone="nav" />
-              <form action={logoutAction} className="flex-1">
+              <SignOutForm action={logoutAction} slot={session.slot} className="flex-1">
                 <button type="submit" className="inline-flex h-10 w-full items-center justify-center rounded-full border border-white/15 px-4 text-sm font-semibold text-white transition-colors hover:bg-white/10 active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand">Sign out</button>
-              </form>
+              </SignOutForm>
             </div>
           </div>
         </PortalChrome>
       </header>
-      <main className="portal-main portal-bg @container mx-auto w-full max-w-6xl min-w-0 flex-1 px-4 py-6 sm:px-6 sm:py-8 md:px-8 lg:px-10 lg:py-10 xl:max-w-7xl 2xl:max-w-[90rem]">{children}</main>
+      <main className="portal-main portal-bg @container mx-auto w-full max-w-6xl min-w-0 flex-1 px-4 py-6 sm:px-6 sm:py-8 md:px-8 lg:px-10 lg:py-10 xl:max-w-7xl 2xl:max-w-[90rem]"><InstallCard />{children}</main>
     </div>
   );
 }

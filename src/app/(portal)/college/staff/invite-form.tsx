@@ -35,7 +35,7 @@ export function InviteStaffForm({ departments }: { departments: { id: string; la
             </Select>
           )
         ) : null}
-        <p className="text-xs text-muted">The invitation is a one-time link that you send yourself (email delivery is not enabled). It expires in 7 days; inviting the same email again invalidates the earlier link.</p>
+        <p className="text-xs text-muted">The invitation is a one-time link you copy and share with the person. It expires in 7 days; inviting the same email again invalidates the earlier link.</p>
         <Button type="submit" disabled={pending}>{pending ? "Creating…" : "Create invitation"}</Button>
       </form>
       {state?.invite ? <InviteLinkPanel title="One-time invitation" link={state.invite.link} email={state.invite.email} expiresText={state.invite.expires} /> : null}

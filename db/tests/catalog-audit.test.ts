@@ -3,7 +3,7 @@ import { afterAll, describe, expect, it } from "vitest";
 import { closeAppDb, inspect } from "./world";
 
 // A standing audit of the real database catalog after all migrations: it fails when a future migration quietly widens what the runtime role can do.
-const APP_SCHEMAS = ["app", "auth", "platform", "college", "students", "academics", "achievements", "documents", "placement", "eligibility", "registrations", "rounds", "offers", "reports", "notifications", "announcements"];
+const APP_SCHEMAS = ["app", "auth", "platform", "college", "students", "academics", "achievements", "documents", "placement", "eligibility", "registrations", "rounds", "offers", "reports", "notifications", "announcements", "push"];
 const SNAPSHOT = "db/tests/snapshots/cc_app-executable-functions.txt";
 const list = (xs: unknown[]) => xs.map(String);
 afterAll(async () => { await closeAppDb(); });

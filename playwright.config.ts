@@ -2,6 +2,10 @@ import "dotenv/config";
 
 process.env.S3_BUCKET = "campusconnect-e2e"; // workers and the test server use their own bucket
 import { defineConfig, devices } from "@playwright/test";
+import { generateVAPIDKeys } from "web-push";
+
+// Throw-away VAPID keys for the test server only (generated fresh each run; never real credentials).
+const vapid = generateVAPIDKeys();
 
 export default defineConfig({
   testDir: "e2e",
@@ -29,6 +33,8 @@ export default defineConfig({
       S3_BUCKET: "campusconnect-e2e",
       S3_ACCESS_KEY: process.env.S3_ACCESS_KEY ?? "",
       S3_SECRET_KEY: process.env.S3_SECRET_KEY ?? "",
+      VAPID_PUBLIC_KEY: vapid.publicKey, VAPID_PRIVATE_KEY: vapid.privateKey, VAPID_SUBJECT: "mailto:e2e@example.test",
+      PUSH_WORKER_SECRET: "e2e-push-worker-secret-0123456789abcdef",
       TRUSTED_PROXY_HOPS: "0",
       // Turns on the deliberate-crash pages used by e2e/error-pages.spec.ts. Never set this anywhere else.
       E2E_FAULT_ROUTES: "e2e-test-server-only",

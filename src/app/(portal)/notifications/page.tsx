@@ -8,6 +8,8 @@ import { markAllReadAction } from "@/server/notifications/actions";
 import { listNotifications } from "@/server/notifications/queries";
 import { requireSession } from "@/server/auth/session";
 import { scopedHref } from "@/lib/portals";
+import { PushControls } from "@/components/pwa/push-controls";
+import { pushPublicKey } from "@/server/push/config";
 
 export const metadata = { title: "Notifications — CampusConnect" };
 
@@ -25,6 +27,7 @@ export default async function Notifications({ searchParams }: { searchParams: Pr
         <div className="flex gap-3"><Link href={scopedHref("/notifications/preferences", s.slot)} className="inline-flex h-10 items-center text-sm underline">Preferences</Link>
           <form action={markAllReadAction}><Button type="submit" variant="secondary" disabled={unread === 0 && page === 1}>Mark all as read</Button></form></div>
       </div>
+      {s.collegeId && pushPublicKey() ? <PushControls compact publicKey={pushPublicKey()} slot={s.slot} /> : null}
       {rows.length === 0 ? <p className="card p-6 text-sm text-muted">You have no notifications yet. Updates about drives, results, offers and reviews appear here.</p> : (
         <ul className="divide-y divide-border card" aria-label="Notifications">
           {rows.map((n) => (

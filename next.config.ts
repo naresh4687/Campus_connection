@@ -10,6 +10,8 @@ const nextConfig: NextConfig = {
   allowedDevOrigins: ["10.46.210.202"],
   async headers() {
     return [
+      // The service worker file must always be re-checked so updates are found; it may control the whole site.
+      { source: "/sw.js", headers: [{ key: "Cache-Control", value: "no-cache, no-store, must-revalidate" }, { key: "Service-Worker-Allowed", value: "/" }, { key: "Content-Type", value: "text/javascript; charset=utf-8" }] },
       {
         source: "/:path*",
         headers: [

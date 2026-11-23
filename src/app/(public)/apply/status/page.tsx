@@ -10,7 +10,7 @@ export const metadata = { title: "Application status — CampusConnect" };
 const COPY: Record<string, string> = {
   SUBMITTED: "We have received your application. The team has not started reviewing it yet.",
   UNDER_REVIEW: "Your application is being reviewed.",
-  APPROVED: "Your application was approved. We will send your college administrator a one-time invitation link directly (email delivery is not enabled yet). If you have not received it, contact us.",
+  APPROVED: "Your application was approved. The CampusConnect team will hand your college administrator a one-time invitation link directly. If it has not reached them, contact us.",
   REJECTED: "Your application was not approved.",
 };
 

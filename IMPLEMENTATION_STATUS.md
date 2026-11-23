@@ -23,6 +23,16 @@ Last updated: 2026-11-19. All results below are from commands actually run in th
 | 15 | In-app notifications; optional AI announcement helper | **Implemented and verified** (AI: verified against a stand-in provider only — see below) |
 | 16 | Production readiness (CSP, security suite, backup drill, reconciliation, deployment and data-protection documents) | **Implemented and verified locally; real-environment items remain (see below)** |
 
+## 2026-11-23 — Installable app, Web Push, email-ready channels
+
+Migration `0039_push.sql` (not yet applied to any real database). Details: `PWA_IMPLEMENTATION.md`, `PUSH_NOTIFICATIONS.md`.
+
+**Built:** web app manifest, icons from the logo mark, a small service worker (offline page and static assets only; nothing private is ever cached), install card (Chromium prompt, iOS instructions), update banner, `/app` start route; push subscriptions (per device, endpoint allowlist), an outbox (`push_jobs`) filled by a trigger on `notifications`, a dispatcher (`/api/push/dispatch`, `npm run push:worker`, GitHub Action `push-worker.yml`) with retries, expiry handling and delivery-time preference checks; generic push wording; preferences and device management; sign-out cleanup. Email: nothing was ever sent; wording that implied an email service was reworded, `src/server/email` and `channels.ts` are the single seam for a future provider (email stays unavailable).
+
+**Verification (actual):** `npm run lint` clean (1 pre-existing warning), `tsc` clean, unit + database tests 949 passed (includes 26 new database tests and 17 unit tests for push), new browser spec `e2e/pwa-push.spec.ts` 19 passed.
+
+**Not verified / not built:** delivery through the real push services and real Android/iOS/Edge/Firefox devices (the browser tests replace only `PushManager.subscribe`); push for College Administrator and Platform Administrator events, eligibility-change and registration-confirmation notifications (they have no inbox notification today); no cron is configured in `vercel.json`. The full browser regression was started after these changes; its result is not recorded here.
+
 ## 2026-11-19 — Announcements composer, canonical identifiers, external registration with screenshot evidence
 
 Migrations `0029_identifier_normalization.sql` and `0030_external_registration.sql` (both applied to the development database; the test database is rebuilt from them).

@@ -53,3 +53,13 @@ next-env.d.ts
 
 # local logs
 *.log
+
+# push / data exports and backups must never be committed
+*.key
+*.dump
+*.sql.gz
+*.sqlite
+*.sqlite3
+backups/
+*subscriptions*.json
+vapid*.json

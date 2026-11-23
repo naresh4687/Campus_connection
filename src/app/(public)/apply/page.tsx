@@ -9,7 +9,7 @@ export default function ApplyPage() {
       <h1 className="display text-[clamp(2.4rem,7vw,4rem)]">Apply as a college</h1>
       <p className="mt-5 text-lg text-muted">
         Tell us about your institution. The CampusConnect team reviews every application. After you submit you get a private link to
-        check its status. We do not send automatic emails yet, so keep that link. See <Link href="/how-it-works" className="font-medium text-foreground underline underline-offset-4">how onboarding works</Link>.
+        check its status. Keep that link: it is how you follow your application. See <Link href="/how-it-works" className="font-medium text-foreground underline underline-offset-4">how onboarding works</Link>.
       </p>
       <div className="mt-8 rounded-[1.75rem] border border-border bg-surface p-6 sm:p-8">
         <ApplyForm />

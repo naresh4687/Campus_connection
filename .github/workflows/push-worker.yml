@@ -1,0 +1,41 @@
+name: Push worker
+
+# Sends queued push notifications by calling the app's dispatch endpoint (see PUSH_NOTIFICATIONS.md).
+# GitHub's shortest schedule is every 5 minutes, and runs can start a few minutes late. For faster delivery use a real cron or `npm run push:worker`.
+# Needs, in the repository settings (Settings -> Secrets and variables -> Actions):
+#   secret   PUSH_WORKER_SECRET  the same value as the server's PUSH_WORKER_SECRET
+#   secret   APP_URL             the site's address, for example https://your-site.example (no trailing slash)
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch: {}
+
+permissions: {}
+
+# Never run two at once; a pass that is still going finishes first.
+concurrency:
+  group: push-worker
+  cancel-in-progress: false
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Dispatch queued pushes
+        env:
+          APP_URL: ${{ secrets.APP_URL }}
+          PUSH_WORKER_SECRET: ${{ secrets.PUSH_WORKER_SECRET }}
+        run: |
+          set -euo pipefail
+          if [ -z "${APP_URL:-}" ] || [ -z "${PUSH_WORKER_SECRET:-}" ]; then
+            echo "::error::Set the APP_URL and PUSH_WORKER_SECRET repository secrets."; exit 1
+          fi
+          case "$APP_URL" in https://*) ;; *) echo "::error::APP_URL must start with https://"; exit 1;; esac
+          # Housekeeping (old jobs and dead devices) once an hour, in the first run after the hour.
+          purge=""; if [ "$(date -u +%M)" -lt 5 ]; then purge="?purge=1"; fi
+          # The secret goes in a header only (never printed). 404 means the secret is wrong or unset on the server.
+          curl --fail-with-body --silent --show-error --max-time 60 --retry 2 --retry-delay 5 \
+            -X POST -H "Authorization: Bearer ${PUSH_WORKER_SECRET}" \
+            "${APP_URL%/}/api/push/dispatch${purge}"
+          echo

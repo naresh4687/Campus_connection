@@ -42,6 +42,6 @@ export const ONBOARDING_STEPS = [
   { title: "Apply", text: "Submit your college's details using the application form. You receive a private link to check your application's status." },
   { title: "Review", text: "The CampusConnect team reviews the application. The status moves from Submitted to Under review." },
   { title: "Decision", text: "The application is approved, or rejected with a reason you can read on your status page." },
-  { title: "Administrator invitation", text: "On approval we create your college workspace and a one-time invitation for your college administrator. Because email delivery is not enabled yet, the platform team sends you the link directly." },
+  { title: "Administrator invitation", text: "On approval we create your college workspace and a one-time invitation for your college administrator. The platform team hands the link to you directly." },
   { title: "Set up", text: "Your administrator accepts the invitation, sets a password, and begins setting up departments, staff and students." },
 ];

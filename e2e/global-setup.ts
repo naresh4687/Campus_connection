@@ -43,6 +43,12 @@ export default async function globalSetup() {
   users.tabAdmin = (await mk(pa, "COLLEGE_ADMIN", collegeC, "tabAdmin")).email;
   users.tabOfficer = (await mk(adminC, "PLACEMENT_OFFICER", collegeC, "tabOfficer")).email;
   users.tabStudent = (await mk(adminC, "STUDENT", collegeC, "tabStudent")).email;
+  // The installable-app and push scenarios have a college of their own, so no other spec's counts or sign-in budgets are touched.
+  const collegeP = await createCollege("Installable App College");
+  const adminP = await mk(pa, "COLLEGE_ADMIN", collegeP, "pwaAdmin");
+  users.pwaAdmin = adminP.email;
+  for (const k of ["pwaStudent", "pwaStudent2"]) users[k] = (await mk(adminP, "STUDENT", collegeP, k)).email;
+  users.pwaOfficer = (await mk(adminP, "PLACEMENT_OFFICER", collegeP, "pwaOfficer")).email;
 
   // Registration scenarios live in their own department (REG) with their own coordinator, so earlier specs' fixtures are untouched.
   // regA: verified & strong, regB: verified & weak, regC: nothing verified.

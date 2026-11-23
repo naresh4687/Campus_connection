@@ -16,6 +16,7 @@ export function buildCsp({ nonce, dev, upgrade }: { nonce: string; dev: boolean;
     "form-action 'self'",
     "frame-ancestors 'none'",
     "manifest-src 'self'",
+    "worker-src 'self'",
   ];
   if (upgrade) directives.push("upgrade-insecure-requests");
   return directives.join("; ");
