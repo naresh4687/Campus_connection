@@ -1,0 +1,12 @@
+.env*
+!.env.example
+.next
+.next-dev
+node_modules
+.git
+test-results
+playwright-report
+e2e/.seed.json
+*.log
+*.gguf
+.claude

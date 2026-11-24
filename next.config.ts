@@ -1,5 +1,12 @@
 import type { NextConfig } from "next";
+import { networkInterfaces } from "node:os";
 import { PHASE_DEVELOPMENT_SERVER } from "next/constants";
+
+// Dev only: the addresses this computer has on the local network (they change with every Wi-Fi), plus any extras in DEV_ALLOWED_ORIGINS
+// (comma separated hostnames, e.g. a tunnel). Without them a phone opening http://<this-ip>:3000 gets no scripts, so forms fall back to plain
+// posts and sign-in fails with "Invalid Server Actions request".
+const lanHosts = Object.values(networkInterfaces()).flat().filter((i) => i && i.family === "IPv4" && !i.internal).map((i) => i!.address);
+const extraHosts = (process.env.DEV_ALLOWED_ORIGINS ?? "").split(",").map((h) => h.trim()).filter(Boolean);
 
 const nextConfig: NextConfig = {
   output: "standalone",
@@ -7,7 +14,7 @@ const nextConfig: NextConfig = {
   // Dev only: hides the floating route/Turbopack badge (it renders unstyled under our strict CSP). Compile and runtime errors still show.
   devIndicators: false,
   // Dev only: lets a phone/another PC on the LAN open the dev server by IP (otherwise Next blocks its scripts/CSS and the page is blank).
-  allowedDevOrigins: ["10.46.210.202"],
+  allowedDevOrigins: [...lanHosts, ...extraHosts],
   async headers() {
     return [
       // The service worker file must always be re-checked so updates are found; it may control the whole site.
