@@ -20,7 +20,7 @@ export async function createCampusEventAction(_p: ActionState, fd: FormData): Pr
   const mode = str(fd, "mode") === "posted" ? "posted" : "new";
   const drive = mode === "posted" ? uuidSchema.safeParse(str(fd, "driveId")) : null;
   const values: Record<string, string> = { mode, driveId: str(fd, "driveId"), company: str(fd, "company", 200), title: str(fd, "title", 200), details: str(fd, "details", 3200), venue: str(fd, "venue", 300), at: str(fd, "at"),
-    years: str(fd, "years", 100), roundCount: str(fd, "roundCount", 3) };
+    roundCount: str(fd, "roundCount", 3) };
   const fe: Record<string, string> = {};
   if (mode === "posted" && !drive?.success) fe.driveId = "Choose the posted drive.";
   if (mode === "new" && values.company.trim().length < 2) fe.company = "Enter the company name.";
@@ -29,8 +29,7 @@ export async function createCampusEventAction(_p: ActionState, fd: FormData): Pr
   const names = fd.getAll("roundName").filter((v): v is string => typeof v === "string").map((v) => v.trim().slice(0, 100)).filter(Boolean).slice(0, 10);
   const times = fd.getAll("roundAt").map((v) => (typeof v === "string" ? v : ""));
   if (names.length === 0) fe.rounds = "Add at least one round.";
-  const years = values.years.split(/[,\s]+/).filter(Boolean).map(Number);
-  if (years.some((y) => !Number.isInteger(y) || y < 2000 || y > 2100)) fe.years = "Enter batch years such as 2027, 2028.";
+  const years = fd.getAll("year").map((v) => Number(v)).filter((y) => Number.isInteger(y) && y >= 2000 && y <= 2100).slice(0, 12);
   if (Object.keys(fe).length) return { error: "Please correct the highlighted fields.", fieldErrors: fe, values };
   const rounds = names.map((name, i) => ({ name, scheduled_at: times[i] ? istToIso(times[i]) : null }));
   let id: string;

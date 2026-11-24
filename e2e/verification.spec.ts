@@ -47,8 +47,8 @@ test.describe.serial("academic records and verification", () => {
     await admin.getByLabel("College email").fill("sec.student@e2e.test");
     await admin.getByLabel("Department").selectOption({ label: "SEC — Security Studies" });
     await admin.getByLabel("Degree / course").selectOption("B.Tech");
-    await admin.getByLabel("Admission year").fill("2022");
-    await admin.getByLabel("Passing year").fill("2026");
+    await admin.getByLabel("Admission year").selectOption("2022");
+    await admin.getByLabel("Passing year").selectOption("2026");
     await admin.getByRole("button", { name: "Add student" }).click();
     await admin.waitForURL(/\/college\/students\/[0-9a-f-]{36}\?created=1$/);
     await admin.getByRole("button", { name: "Create invitation" }).click();

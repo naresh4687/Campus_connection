@@ -75,8 +75,8 @@ test.describe.serial("student management", () => {
     await admin.getByLabel("College email").fill("not-an-email");
     await admin.getByLabel("Department").selectOption({ label: "STU — Students Test Dept" });
     await admin.getByLabel("Degree / course").selectOption("B.E.");
-    await admin.getByLabel("Admission year").fill("2022");
-    await admin.getByLabel("Passing year").fill("2021");
+    await admin.getByLabel("Admission year").selectOption("2022");
+    await admin.getByLabel("Passing year").selectOption("2021");
     await admin.getByRole("button", { name: "Add student" }).click();
     await settle(admin);
     await expect(admin.locator("#collegeEmail-error")).toBeVisible();
@@ -85,7 +85,7 @@ test.describe.serial("student management", () => {
     await expect(admin.getByLabel("Department")).toHaveValue(/.+/);                    // kept
 
     await admin.getByLabel("College email").fill("exist001@students.e2e.test");
-    await admin.getByLabel("Passing year").fill("2026");
+    await admin.getByLabel("Passing year").selectOption("2026");
     await admin.getByRole("button", { name: "Add student" }).click();
     await admin.waitForURL(/\/college\/students\/[0-9a-f-]{36}\?created=1$/);
     existingUrl = admin.url().split("?")[0];
@@ -96,7 +96,7 @@ test.describe.serial("student management", () => {
     const fill = async (reg: string, email: string) => {
       await admin.getByLabel("Register number").fill(reg); await admin.getByLabel("Full name").fill("Dup Person"); await admin.getByLabel("College email").fill(email);
       await admin.getByLabel("Department").selectOption({ label: "STU — Students Test Dept" }); await admin.getByLabel("Degree / course").selectOption("B.E.");
-      await admin.getByLabel("Admission year").fill("2022"); await admin.getByLabel("Passing year").fill("2026");
+      await admin.getByLabel("Admission year").selectOption("2022"); await admin.getByLabel("Passing year").selectOption("2026");
       await admin.getByRole("button", { name: "Add student" }).click(); await settle(admin);
     };
     await fill("exist001", "other@students.e2e.test");
@@ -465,7 +465,7 @@ test.describe.serial("student management", () => {
     await admin.getByLabel("Full name").fill("Asha de Souza");
     await admin.getByLabel("College email").fill("Norm.CASE@Students.E2E.test");
     await admin.getByLabel("Department").selectOption({ label: "STU — Students Test Dept" }); await admin.getByLabel("Degree / course").selectOption("B.E.");
-    await admin.getByLabel("Admission year").fill("2022"); await admin.getByLabel("Passing year").fill("2026");
+    await admin.getByLabel("Admission year").selectOption("2022"); await admin.getByLabel("Passing year").selectOption("2026");
     await admin.getByRole("button", { name: "Add student" }).click(); await settle(admin);
     await expect(admin.getByRole("heading", { name: "Asha de Souza" })).toBeVisible();      // the name is not upper-cased
     const [row] = await inspect<{ r: string; e: string }>("SELECT register_number::text AS r, college_email::text AS e FROM students WHERE full_name = 'Asha de Souza'");

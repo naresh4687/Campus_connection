@@ -13,6 +13,8 @@ export type StudentFormValues = {
   departmentId: string; registerNumber: string; fullName: string; collegeEmail: string; personalEmail: string; phone: string;
   degree: string; specialization: string; admissionYear: string; passingYear: string;
 };
+/** Year choices that move with the calendar (this year +/- a window); a value already saved outside the window is still offered so editing never loses it. */
+const years = (from: number, to: number, keep: string) => { const l = Array.from({ length: to - from + 1 }, (_, i) => from + i); const k = Number(keep); return Number.isInteger(k) && k > 0 && !l.includes(k) ? [...l, k].sort((a, b) => a - b) : l; };
 const EMPTY: StudentFormValues = { departmentId: "", registerNumber: "", fullName: "", collegeEmail: "", personalEmail: "", phone: "", degree: "", specialization: "", admissionYear: "", passingYear: "" };
 
 /** Create (no id) or edit (with id) a student record. College email is frozen once the student has an account. */
@@ -20,6 +22,7 @@ export function StudentForm({ id, initial, departments, emailLocked }: { id?: st
   const [state, action, pending] = useActionState(id ? updateStudentAction : createStudentAction, undefined);
   const v = { ...(initial ?? EMPTY), ...(state?.values ?? {}) } as StudentFormValues;
   const e = state?.fieldErrors ?? {};
+  const thisYear = new Date().getFullYear();
   return (
     <form action={action} className="max-w-3xl space-y-4" noValidate>
       {state?.error ? <Alert kind="error">{state.error}</Alert> : null}
@@ -49,8 +52,12 @@ export function StudentForm({ id, initial, departments, emailLocked }: { id?: st
         <Field id="specialization" label="Specialization (optional)" maxLength={100} defaultValue={v.specialization} error={e.specialization} />
       </div>
       <div className="grid gap-4 @xl:grid-cols-2">
-        <Field id="admissionYear" label="Admission year" type="number" inputMode="numeric" required defaultValue={v.admissionYear} error={e.admissionYear} />
-        <Field id="passingYear" label="Passing year" type="number" inputMode="numeric" required defaultValue={v.passingYear} error={e.passingYear} />
+        <Select key={`adm-${v.admissionYear}`} id="admissionYear" label="Admission year" required defaultValue={v.admissionYear} error={e.admissionYear}>
+          <option value="" disabled>Choose…</option>{years(thisYear - 10, thisYear, v.admissionYear).map((y) => <option key={y} value={y}>{y}</option>)}
+        </Select>
+        <Select key={`pass-${v.passingYear}`} id="passingYear" label="Passing year" required defaultValue={v.passingYear} error={e.passingYear}>
+          <option value="" disabled>Choose…</option>{years(thisYear - 6, thisYear + 8, v.passingYear).map((y) => <option key={y} value={y}>{y}</option>)}
+        </Select>
       </div>
       <Button type="submit" disabled={pending}>{pending ? "Saving…" : id ? "Save changes" : "Add student"}</Button>
     </form>

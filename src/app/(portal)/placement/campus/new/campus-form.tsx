@@ -14,7 +14,7 @@ type Round = { key: number; name: string; at: string };
 let nextKey = 100;
 
 /** Step-free single page: who the drive is for, when and where, who may attend, and the rounds. Creating it generates every round's attendance link. */
-export function CampusForm({ drives, departments }: { drives: PostedDrive[]; departments: { id: string; code: string; name: string }[] }) {
+export function CampusForm({ drives, departments, years }: { drives: PostedDrive[]; departments: { id: string; code: string; name: string }[]; years: number[] }) {
   const [state, action, pending] = useActionState(createCampusEventAction, undefined);
   const v = state?.values ?? {}; const e = state?.fieldErrors ?? {};
   const [mode, setMode] = useState<"posted" | "new">(v.mode === "new" || drives.length === 0 ? "new" : "posted");
@@ -62,11 +62,14 @@ export function CampusForm({ drives, departments }: { drives: PostedDrive[]; dep
 
       <fieldset className="space-y-3">
         <legend className="text-sm font-semibold">3. Who may attend round 1 (optional)</legend>
-        <p className="text-xs text-muted">Leave everything unticked to allow every department and batch.</p>
+        <p className="text-xs text-muted">Leave everything unticked to allow every department and batch (the years follow the calendar).</p>
         <ul className="flex flex-wrap gap-x-5 gap-y-1">
           {departments.map((d) => <li key={d.id}><label className="inline-flex items-center gap-2 text-sm"><input type="checkbox" name="dept" value={d.id} />{d.code}</label></li>)}
         </ul>
-        <Field id="years" label="Passing years" defaultValue={v.years} error={e.years} hint="Comma separated, e.g. 2027, 2028. Empty = all batches." />
+        <p className="text-sm font-semibold">Passing year (batch)</p>
+        <ul className="flex flex-wrap gap-x-5 gap-y-1">
+          {years.map((y) => <li key={y}><label className="inline-flex items-center gap-2 text-sm"><input type="checkbox" name="year" value={y} />{y}</label></li>)}
+        </ul>
       </fieldset>
 
       <fieldset className="space-y-3">
