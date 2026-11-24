@@ -3,9 +3,9 @@ import Link from "next/link";
 /** A single live number. `testId` keeps the label-based id used by tests. */
 export function StatTile({ label, value, href, hint }: { label: string; value: number | string; href?: string; hint?: string }) {
   const body = (
-    <div className={`h-full card p-5 transition-colors duration-150 ${href ? "hover:bg-tint" : ""}`}>
-      <p className="text-sm text-muted">{label}</p>
-      <p className="mt-2 text-3xl font-bold tabular-nums" data-testid={`stat-${label}`}>{value}</p>
+    <div className={`h-full card p-3.5 transition-colors sm:p-5 duration-150 ${href ? "hover:bg-tint" : ""}`}>
+      <p className="text-xs text-muted sm:text-sm">{label}</p>
+      <p className="mt-1.5 text-2xl font-bold tabular-nums sm:mt-2 sm:text-3xl" data-testid={`stat-${label}`}>{value}</p>
       {hint ? <p className="mt-1 text-xs text-muted">{hint}</p> : null}
     </div>
   );

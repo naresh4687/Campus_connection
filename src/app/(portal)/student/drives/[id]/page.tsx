@@ -49,19 +49,6 @@ export default async function StudentDrive({ params, searchParams }: { params: P
       {notice && NOTICE[notice] ? <Alert kind="success">{NOTICE[notice]}</Alert> : null}
       {error ? <Alert kind="error">{error.slice(0, 300)}</Alert> : null}
       <div className="flex flex-wrap items-center gap-3"><h1 className="text-2xl font-semibold tracking-tight">{d.job_title}</h1><span className="text-muted">{d.company_name}</span><span className="text-sm text-muted">{DRIVE_STATUS_LABEL[d.status]}</span></div>
-      <Card title="Your eligibility">
-        <p className="flex flex-wrap items-center gap-2 text-sm"><StatusBadge value={e.result} label={ELIGIBILITY_LABEL[e.result]} />{e.registration && e.registration.status !== "WITHDRAWN" ? <StatusBadge value={view.tone} label={view.label} /> : null}</p>
-        <Table head={["Criterion", "Required", "Your value", "Result"]} empty={undefined}>
-          {e.checks.map((c, i) => (
-            <tr key={i}>
-              <Td>{CRITERION_LABEL[c.criterion] ?? c.criterion}</Td><Td>{c.required ?? "—"}</Td><Td>{c.actual ?? "—"}</Td>
-              <Td><span className="font-medium">{CHECK_LABEL[c.status]}</span>{c.message ? <span className="block text-xs text-muted">{c.message}</span> : null}</Td>
-            </tr>
-          ))}
-        </Table>
-        {e.checks.length === 0 ? <EmptyState title="No checks">Nothing to evaluate.</EmptyState> : null}
-        <p className="mt-2 text-xs text-muted">Only your coordinator-verified academic record is used. A value that is missing is never treated as zero.</p>
-      </Card>
       <Card title="Registration">
         <p className="mb-2 text-sm"><span className="text-muted">Registration method: </span><strong>{external ? "Through the company’s website" : "CampusConnect (one click)"}</strong></p>
         {external ? (
@@ -70,9 +57,10 @@ export default async function StudentDrive({ params, searchParams }: { params: P
             {reg?.status === "REGISTERED" ? (
               <div className="space-y-1 text-sm" data-testid="external-status">
                 <p>Registration status: <strong>REGISTERED</strong></p>
-                <p>External confirmation evidence: <strong>{latest ? EVIDENCE_LABEL[latest.status === "SUPERSEDED" ? "SUBMITTED_PENDING_REVIEW" : latest.status] : "—"}</strong></p>
-                {reg.evidence_status === "SUBMITTED_PENDING_REVIEW" ? <p className="text-muted">Your external registration screenshot has been submitted successfully. It has not been independently verified yet: placement staff will check it.</p> : null}
-                {reg.evidence_status === "VERIFIED" ? <p className="text-muted">Placement staff verified your screenshot.</p> : null}
+                <p className="text-muted">Your registration is complete. Your screenshot is saved as proof{latest ? ` (${fmtDateTime(latest.submitted_at)})` : ""}. You can replace it below until the deadline.</p>
+                {open && reg.evidence_status !== "REJECTED" && reg.evidence_status !== "RESUBMISSION_REQUIRED" ? (
+                  <details className="pt-1"><summary className="cursor-pointer font-medium">Replace the screenshot</summary><div className="mt-2"><UploadScreenshot id={d.id} replace /></div></details>
+                ) : null}
               </div>
             ) : null}
             {reg?.status === "PENDING_EXTERNAL" ? (
@@ -105,6 +93,19 @@ export default async function StudentDrive({ params, searchParams }: { params: P
           </>
         )}
         <p className="mt-2 text-xs text-muted">Eligibility, the deadline and the drive status are checked again by the server when you register.</p>
+      </Card>
+      <Card title="Your eligibility">
+        <p className="flex flex-wrap items-center gap-2 text-sm"><StatusBadge value={e.result} label={ELIGIBILITY_LABEL[e.result]} />{e.registration && e.registration.status !== "WITHDRAWN" ? <StatusBadge value={view.tone} label={view.label} /> : null}</p>
+        <Table head={["Criterion", "Required", "Your value", "Result"]} empty={undefined}>
+          {e.checks.map((c, i) => (
+            <tr key={i}>
+              <Td>{CRITERION_LABEL[c.criterion] ?? c.criterion}</Td><Td>{c.required ?? "—"}</Td><Td>{c.actual ?? "—"}</Td>
+              <Td><span className="font-medium">{CHECK_LABEL[c.status]}</span>{c.message ? <span className="block text-xs text-muted">{c.message}</span> : null}</Td>
+            </tr>
+          ))}
+        </Table>
+        {e.checks.length === 0 ? <EmptyState title="No checks">Nothing to evaluate.</EmptyState> : null}
+        <p className="mt-2 text-xs text-muted">Only your coordinator-verified academic record is used. A value that is missing is never treated as zero.</p>
       </Card>
       {rounds.length > 0 ? (
         <Card title="Recruitment rounds">

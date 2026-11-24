@@ -5,6 +5,7 @@ import { CompletionChecklist } from "@/components/students/completion-card";
 import { requireRole } from "@/server/auth/session";
 import { myStudentRecord } from "@/server/students/queries";
 import { ContactForm } from "./contact-form";
+import { LinksForm } from "./links-form";
 
 export const metadata = { title: "My profile — CampusConnect" };
 
@@ -31,6 +32,7 @@ export default async function StudentProfile() {
         <p className="mt-3 text-xs text-muted">These details are maintained by your college. If something is wrong, ask your college administrator to correct it.</p>
       </Card>
       <Card title="Career interest"><CareerPanel current={st.career_preference} categories={categories} history={history} /><p className="mt-3 text-sm text-muted">Your department coordinator keeps this up to date. Talk to them if it should change.</p></Card>
+      <Card title="Coding & professional profiles"><LinksForm github={st.github_url ?? ""} leetcode={st.leetcode_url ?? ""} linkedin={st.linkedin_url ?? ""} /></Card>
       <Card title="Contact details"><ContactForm phone={st.phone ?? ""} personalEmail={st.personal_email ?? ""} /></Card>
     </div>
   );

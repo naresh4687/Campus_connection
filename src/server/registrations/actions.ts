@@ -38,18 +38,6 @@ export async function beginExternalAction(_p: ActionState, fd: FormData): Promis
   redirect(`/student/drives/${id.data}?notice=external-started`);
 }
 
-/** A reviewer's decision on the latest screenshot. The database checks that this reviewer may see this student (an officer, or the department's coordinator). */
-export async function reviewEvidenceAction(_p: ActionState, fd: FormData): Promise<ActionState> {
-  await assertSameOrigin();
-  const s = await requireRole("PLACEMENT_OFFICER", "COORDINATOR");
-  const id = uuidSchema.safeParse(str(fd, "evidence"));
-  const decision = str(fd, "decision", 30);
-  if (!id.success || !["VERIFIED", "REJECTED", "RESUBMISSION_REQUIRED"].includes(decision)) return { error: GENERIC_ERROR };
-  try { await withSession(s, (t) => sql`SELECT registrations.review_evidence(${id.data}::uuid, ${decision}, ${str(fd, "note", 500) || null})`.execute(t)); } catch (e) { return { error: dbMessage(e) }; }
-  revalidatePath("/placement", "layout"); revalidatePath("/coordinator", "layout"); revalidatePath("/student", "layout");
-  // The decided row leaves the "waiting" list, so the confirmation is shown by the reloaded page rather than by the row's own form.
-  redirect(`${s.role === "COORDINATOR" ? "/coordinator" : "/placement"}/evidence?decided=${decision}`);
-}
 
 export async function allowLateEvidenceAction(_p: ActionState, fd: FormData): Promise<ActionState> {
   await assertSameOrigin();

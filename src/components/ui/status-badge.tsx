@@ -20,7 +20,7 @@ export const humanize = (v: string) => v.toLowerCase().replace(/_/g, " ").replac
 export function StatusBadge({ value, label }: { value: string; label?: string }) {
   const t = STYLE[TONE[value] ?? "neutral"];
   return (
-    <span className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold ${t.chip}`}>
+    <span className={`badge inline-flex max-w-full items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold ${t.chip}`}>
       <span aria-hidden="true" className={`h-1.5 w-1.5 rounded-full ${t.dot}`} />
       {label ?? humanize(value)}
     </span>

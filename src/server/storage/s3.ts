@@ -10,7 +10,12 @@ let io: S3Client | undefined;
 let signer: S3Client | undefined;
 const make = (endpoint: string) => {
   const c = storageConfig();
-  return new S3Client({ endpoint, region: c.region, forcePathStyle: c.forcePathStyle, credentials: { accessKeyId: c.accessKey, secretAccessKey: c.secretKey } });
+  return new S3Client({
+    endpoint, region: c.region, forcePathStyle: c.forcePathStyle, credentials: { accessKeyId: c.accessKey, secretAccessKey: c.secretKey },
+    // Newer SDKs add a CRC32 checksum (sent as a streaming trailer) to every upload by default. S3 accepts it; Cloudflare R2 and some other S3-compatible stores refuse it.
+    // "WHEN_REQUIRED" sends checksums only where an operation demands one, which every S3-compatible store (S3, R2, MinIO, Neon storage) accepts.
+    requestChecksumCalculation: "WHEN_REQUIRED", responseChecksumValidation: "WHEN_REQUIRED",
+  });
 };
 const client = () => (io ??= make(storageConfig().endpoint));
 /** Signs against the browser-reachable endpoint (the host is part of the signature). Signing is local; no request is made. */

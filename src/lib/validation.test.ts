@@ -56,10 +56,14 @@ describe("helpers", () => {
 
 describe("department and staff validation", () => {
   it("normalises department codes and rejects bad ones", () => {
-    expect(departmentSchema.parse({ name: "Computer Science", code: " cse-2 " }).code).toBe("CSE-2");
-    for (const code of ["a", "-BAD", "HAS SPACE", "WAYTOOLONGCODE1", "<b>", ""]) expect(departmentSchema.safeParse({ name: "Valid", code }).success, code).toBe(false);
-    expect(departmentSchema.safeParse({ name: "X", code: "CSE" }).success).toBe(false);
-    expect(departmentSchema.safeParse({ name: "Valid", code: "CSE", description: "x".repeat(501) }).success).toBe(false);
+    expect(departmentSchema.parse({ name: "Computer Science", code: " cse-2 ", degree: "B.E." }).code).toBe("CSE-2");
+    for (const code of ["a", "-BAD", "HAS SPACE", "WAYTOOLONGCODE1", "<b>", ""]) expect(departmentSchema.safeParse({ name: "Valid", code, degree: "B.E." }).success, code).toBe(false);
+    expect(departmentSchema.safeParse({ name: "X", code: "CSE", degree: "B.E." }).success).toBe(false);
+    // The degree is required and must be one of the college's degrees.
+    expect(departmentSchema.safeParse({ name: "Valid", code: "CSE" }).success).toBe(false);
+    expect(departmentSchema.safeParse({ name: "Valid", code: "CSE", degree: "PhD" }).success).toBe(false);
+    expect(departmentSchema.safeParse({ name: "Valid", code: "CSE", degree: "B.Tech" }).success).toBe(true);
+    expect(departmentSchema.safeParse({ name: "Valid", code: "CSE", degree: "B.E.", description: "x".repeat(501) }).success).toBe(false);
   });
   it("staff invitations allow only officer and coordinator roles", () => {
     expect(staffInviteSchema.safeParse({ email: "a@b.test", role: "PLACEMENT_OFFICER" }).success).toBe(true);

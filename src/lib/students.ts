@@ -2,8 +2,8 @@ import { normalizeStudentRegistrationNumber } from "./normalize";
 import { z } from "zod";
 import { emailField, phoneField } from "./validation";
 
-export const DEGREES = ["B.E.", "B.Tech", "M.E.", "M.Tech", "MCA", "MBA", "B.Sc", "M.Sc", "Diploma", "Other"] as const;
-export type Degree = (typeof DEGREES)[number];
+import { DEGREES, type Degree } from "./degrees";
+export { DEGREES, type Degree };
 
 const squash = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
 
@@ -160,6 +160,15 @@ export const studentFormSchema = z.object({
 export const ownContactSchema = z.object({
   phone: z.string().trim().optional().transform((v) => v || undefined).pipe(phoneField.optional()),
   personalEmail: z.string().trim().max(254).optional().transform((v) => v || undefined).pipe(emailField.optional()),
+});
+
+const profileUrl = (hosts: RegExp, what: string, example: string) =>
+  z.string().trim().max(200).optional().transform((v) => v || undefined)
+    .refine((v) => v === undefined || hosts.test(v), `Enter the full ${what} address, for example ${example}.`);
+export const ownLinksSchema = z.object({
+  github: profileUrl(/^https:\/\/(www\.)?github\.com\/[A-Za-z0-9._-]+\/?$/, "GitHub profile", "https://github.com/yourname"),
+  leetcode: profileUrl(/^https:\/\/(www\.)?leetcode\.com\/(u\/)?[A-Za-z0-9._-]+\/?$/, "LeetCode profile", "https://leetcode.com/u/yourname"),
+  linkedin: profileUrl(/^https:\/\/([a-z]{2,3}\.)?linkedin\.com\/in\/[A-Za-z0-9._%-]+\/?$/, "LinkedIn profile", "https://www.linkedin.com/in/yourname"),
 });
 
 export const ACCOUNT_STATUSES = ["NOT_INVITED", "INVITED", "ACTIVE", "DISABLED"] as const;

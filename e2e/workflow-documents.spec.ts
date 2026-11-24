@@ -47,6 +47,7 @@ test.describe.serial("private documents", () => {
     await admin.goto("/college/departments");
     await admin.getByLabel("Department name").fill("Isolated Studies");
     await admin.getByLabel("Code").fill("ISO");
+    await admin.getByLabel("Degree").selectOption("B.E.");
     await admin.getByRole("button", { name: "Add department" }).click();
     await expect(admin.getByText("Department ISO created.")).toBeVisible();
   });

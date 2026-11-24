@@ -50,14 +50,14 @@ export function registrationView(r: RegState): { label: string; tone: string; ne
   if (r.method !== "EXTERNAL") return { label: "Registered", tone: "APPROVED", next: null };
   switch (r.status === "PENDING_EXTERNAL" ? "PENDING" : r.evidence_status) {
     case "PENDING": return { label: "External registration pending", tone: "PENDING", next: "Finish the company’s form, then upload a screenshot of its confirmation page." };
-    case "SUBMITTED_PENDING_REVIEW": return { label: "Registered — evidence pending review", tone: "PENDING", next: null };
-    case "VERIFIED": return { label: "Registered — evidence verified", tone: "APPROVED", next: null };
+    case "SUBMITTED_PENDING_REVIEW":   // the screenshot is proof on file; nobody reviews it
+    case "VERIFIED": return { label: "Registered", tone: "APPROVED", next: null };
     case "REJECTED": return { label: "Action required — upload a new screenshot", tone: "REJECTED", next: "Your screenshot was not accepted. Read the reason below and upload a new one." };
     case "RESUBMISSION_REQUIRED": return { label: "Action required — upload a new screenshot", tone: "REJECTED", next: "Staff asked for a new screenshot. Read the reason below and upload it." };
     default: return { label: "Registered", tone: "APPROVED", next: null };
   }
 }
-export const EVIDENCE_LABEL: Record<string, string> = { NOT_SUBMITTED: "Not submitted", SUBMITTED_PENDING_REVIEW: "Awaiting verification", VERIFIED: "Verified", REJECTED: "Rejected", RESUBMISSION_REQUIRED: "New screenshot requested", SUPERSEDED: "Replaced" };
+export const EVIDENCE_LABEL: Record<string, string> = { NOT_SUBMITTED: "Not submitted", SUBMITTED_PENDING_REVIEW: "On file", VERIFIED: "On file", REJECTED: "Rejected", RESUBMISSION_REQUIRED: "New screenshot requested", SUPERSEDED: "Replaced" };
 
 /** What each link in a company message is for. A guess from the address and the words around it: staff must confirm before it is used for registration. */
 export type LinkPurpose = "REGISTRATION_FORM" | "COMPANY_WEBSITE" | "JOB_DESCRIPTION" | "OTHER";

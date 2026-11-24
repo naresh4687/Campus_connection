@@ -27,6 +27,7 @@ export default async function DepartmentPage({ params }: { params: Promise<{ id:
       <div className="flex flex-wrap items-center gap-3">
         <h1 className="text-2xl font-semibold tracking-tight">{dept.name}</h1>
         <span className="font-mono text-sm text-muted">{dept.code}</span>
+        {dept.degree ? <span className="text-sm text-muted">{dept.degree}</span> : null}
         <StatusBadge value={dept.status} />
       </div>
 

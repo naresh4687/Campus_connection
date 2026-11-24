@@ -27,7 +27,7 @@ export function Icon({ name, className = "h-5 w-5" }: { name: keyof typeof ICONS
 /** A raised card with the icon-tile header used throughout the dashboards. */
 export function DashCard({ title, icon, id, action, children, tone, className = "" }: { title: string; icon?: string; id: string; action?: ReactNode; children: ReactNode; tone?: "attention"; className?: string }) {
   return (
-    <section aria-labelledby={id} className={`card p-5 ${tone === "attention" ? "bg-[color-mix(in_srgb,var(--accent)_13%,var(--surface))]" : ""} ${className}`}>
+    <section aria-labelledby={id} className={`card p-4 sm:p-5 ${tone === "attention" ? "bg-[color-mix(in_srgb,var(--accent)_13%,var(--surface))]" : ""} ${className}`}>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
         <div className="flex min-w-0 max-w-full items-center gap-3">
           {icon ? <span aria-hidden="true" className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl neu-inset ${tone === "attention" ? "text-accent" : ""}`}><Icon name={icon} className="h-[18px] w-[18px]" /></span> : null}
@@ -127,12 +127,12 @@ export function ProgressRows({ title, rows, empty = "Nothing to show yet." }: { 
 export function Pipeline({ label, stages, ids, footnote }: { label: string; stages: { label: string; value: number; icon: string; note?: string }[]; ids?: boolean; footnote?: string }) {
   return (
     <div role="group" aria-label={label} className="space-y-3">
-      <ol className="relative grid grid-cols-1 gap-3 sm:grid-cols-[repeat(auto-fit,minmax(6.6rem,1fr))]">
+      <ol className="relative grid grid-cols-2 gap-2.5 [&>*:last-child:nth-child(odd)]:col-span-2 sm:grid-cols-[repeat(auto-fit,minmax(6.6rem,1fr))] sm:gap-3 sm:[&>*:last-child:nth-child(odd)]:col-span-1">
         {stages.map((s, i) => (
           <li key={s.label} className="relative flex">
             {i < stages.length - 1 ? <span aria-hidden="true" className="absolute left-[calc(50%+2.2rem)] right-[-1rem] top-7 hidden h-0.5 bg-border sm:block" /> : null}
-            <div className="card relative flex w-full flex-col items-center gap-1.5 p-3 text-center">
-              <span aria-hidden="true" className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-brand text-brand-foreground neu-raise-sm"><Icon name={s.icon} className="h-5 w-5" /></span>
+            <div className="card relative flex w-full flex-col items-center gap-1 p-2.5 text-center sm:gap-1.5 sm:p-3">
+              <span aria-hidden="true" className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-brand text-brand-foreground neu-raise-sm sm:h-11 sm:w-11"><Icon name={s.icon} className="h-5 w-5" /></span>
               <span className="text-xs font-medium text-muted">{s.label}</span>
               <span className="text-2xl font-bold leading-none tabular-nums" data-testid={ids ? `stat-${s.label}` : undefined}>{s.value}</span>
               <span className="min-h-[1.1em] text-[0.7rem] text-muted">{s.note ?? " "}</span>
@@ -148,10 +148,10 @@ export type Attention = { label: string; value: number; href: string; icon: stri
 /** The tinted card: three counts that need someone's action, each a link. */
 export function AttentionTiles({ items }: { items: Attention[] }) {
   return (
-    <ul className="grid grid-cols-1 gap-3 sm:grid-cols-3" aria-label="Needs attention">
+    <ul className="grid grid-cols-3 gap-2 sm:gap-3" aria-label="Needs attention">
       {items.map((a) => (
         <li key={a.label}>
-          <Link href={a.href} className="card block p-3 text-center hover:bg-tint focus-visible:outline-2 focus-visible:outline-primary">
+          <Link href={a.href} className="card block p-2 text-center sm:p-3 hover:bg-tint focus-visible:outline-2 focus-visible:outline-primary">
             <span aria-hidden="true" className="mx-auto inline-flex h-8 w-8 items-center justify-center rounded-lg neu-inset"><Icon name={a.icon} className="h-4 w-4" /></span>
             <span className="mt-1 block text-2xl font-bold leading-none tabular-nums">{a.value}</span>
             <span className="mt-1 block text-xs text-muted">{a.label}</span>

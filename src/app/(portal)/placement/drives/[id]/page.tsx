@@ -65,11 +65,11 @@ export default async function DrivePage({ params, searchParams }: { params: Prom
         </Card>) : null}
       {ext && d.registration_method === "EXTERNAL" ? (
         <Card title="External registrations">
-          <dl className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3" aria-label="External registration counts">
-            {([["Started", ext.external_started], ["Screenshots submitted", ext.screenshots_submitted], ["Awaiting review", ext.pending_review], ["Verified", ext.verified], ["Rejected", ext.rejected], ["Student action needed", ext.action_required]] as const).map(([k, v]) => <div key={k} className="rounded-xl border border-border p-3"><dt className="text-xs text-muted">{k}</dt><dd className="text-2xl font-semibold" data-testid={`ext-${k}`}>{v}</dd></div>)}
+          <dl className="grid grid-cols-2 gap-3 text-sm" aria-label="External registration counts">
+            {([["Started, no screenshot yet", ext.external_started], ["Registered with a screenshot", ext.screenshots_submitted]] as const).map(([k, v]) => <div key={k} className="rounded-xl border border-border p-3"><dt className="text-xs text-muted">{k}</dt><dd className="text-2xl font-semibold" data-testid={`ext-${k}`}>{v}</dd></div>)}
           </dl>
-          <p className="mt-3 text-xs text-muted">Counted once per student, however many screenshots they uploaded. “Registered” in CampusConnect is not the same as verified: only a reviewed screenshot is verified.</p>
-          <p className="mt-2 text-sm"><Link href="/placement/evidence" className="underline">Review screenshots</Link></p>
+          <p className="mt-3 text-xs text-muted">Counted once per student, however many screenshots they uploaded. A screenshot is kept as proof; nobody has to verify it.</p>
+          <p className="mt-2 text-sm"><Link href={`/placement/drives/${d.id}/applicants`} className="underline">See the registered students and their screenshots</Link></p>
         </Card>) : null}
       {counts ? <Card title="Eligibility and registrations"><DriveCountsView c={counts} /><div className="mt-4 flex flex-wrap gap-3" role="group" aria-label="Registration views">
         <ButtonLink href={`/placement/drives/${d.id}/participation`}>Registered and not registered</ButtonLink>

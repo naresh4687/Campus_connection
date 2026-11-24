@@ -31,12 +31,15 @@ export async function driveCounts(s: SessionUser, driveId: string) {
 export type Applicant = {
   student_id: string; full_name: string; register_number: string; department_code: string; degree: string; passing_year: number; college_email: string; phone: string | null;
   cgpa: string | null; tenth: string | null; twelfth: string | null; diploma: string | null; active_backlogs: number | null; historical_arrears: number | null; registered_at: Date; resume_id: string | null; method?: string; evidence_status?: string | null;
+  github_url?: string | null; leetcode_url?: string | null; linkedin_url?: string | null;
 };
 export async function applicants(s: SessionUser, driveId: string) {
   return withSession(s, async (t) => {
     const rows = (await sql<Applicant>`SELECT * FROM registrations.list_for_drive(${driveId}::uuid)`.execute(t)).rows;
     const how = new Map((await sql<{ student_id: string; method: string; evidence_status: string | null }>`SELECT student_id, method, evidence_status FROM registrations WHERE drive_id = ${driveId}::uuid`.execute(t)).rows.map((r) => [r.student_id, r]));
-    return rows.map((r) => ({ ...r, method: how.get(r.student_id)?.method ?? "INTERNAL", evidence_status: how.get(r.student_id)?.evidence_status ?? null }));
+    const links = new Map((await sql<{ id: string; github_url: string | null; leetcode_url: string | null; linkedin_url: string | null }>`SELECT id, github_url, leetcode_url, linkedin_url FROM students WHERE id = ANY (${rows.map((r) => r.student_id)}::uuid[])`.execute(t)).rows.map((r) => [r.id, r]));
+    return rows.map((r) => ({ ...r, method: how.get(r.student_id)?.method ?? "INTERNAL", evidence_status: how.get(r.student_id)?.evidence_status ?? null,
+      github_url: links.get(r.student_id)?.github_url ?? null, leetcode_url: links.get(r.student_id)?.leetcode_url ?? null, linkedin_url: links.get(r.student_id)?.linkedin_url ?? null }));
   });
 }
 
@@ -50,12 +53,11 @@ export async function deptParticipation(s: SessionUser) {
 export type EvidenceVersion = { id: string; version: number; status: string; original_name: string; size_bytes: number; submitted_at: Date; reviewed_by_name: string | null; reviewed_at: Date | null; review_note: string | null };
 export const evidenceHistory = (s: SessionUser, registrationId: string) => withSession(s, async (t) => (await sql<EvidenceVersion>`SELECT * FROM registrations.evidence_history(${registrationId}::uuid)`.execute(t)).rows);
 
-export type InboxRow = {
-  registration_id: string; drive_id: string; company_name: string; job_title: string; student_id: string; full_name: string; register_number: string; department_code: string;
-  evidence_status: string; evidence_id: string; version: number; submitted_at: Date; review_note: string | null; reviewed_by_name: string | null; reviewed_at: Date | null; versions: number;
-};
-/** Staff: the screenshots the caller may review (an officer: the college's; a coordinator: their departments'). */
-export const evidenceInbox = (s: SessionUser, onlyPending: boolean) => withSession(s, async (t) => (await sql<InboxRow>`SELECT * FROM registrations.evidence_inbox(${onlyPending})`.execute(t)).rows);
+
+export type DriveEvidenceRow = { registration_id: string; student_id: string; evidence_status: string | null; evidence_id: string | null; version: number | null; submitted_at: Date | null; review_note: string | null; reviewed_by_name: string | null; versions: number };
+/** Staff: the latest screenshot of each external registration in one drive that the caller may review, keyed by student (for the registered-students tables). */
+export const driveEvidence = (s: SessionUser, driveId: string) => withSession(s, async (t) =>
+  new Map((await sql<DriveEvidenceRow>`SELECT * FROM registrations.evidence_queue(${driveId}::uuid)`.execute(t)).rows.map((r) => [r.student_id, r] as const)));
 
 export type ExternalCounts = { internal_registered: number; external_started: number; screenshots_submitted: number; pending_review: number; verified: number; rejected: number; action_required: number };
 export const externalCounts = (s: SessionUser, driveId: string) => withSession(s, async (t) => (await sql<ExternalCounts>`SELECT * FROM registrations.external_counts(${driveId}::uuid)`.execute(t)).rows[0]);

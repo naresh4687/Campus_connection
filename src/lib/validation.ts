@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { DEGREES } from "./degrees";
 import { COLLEGE_TYPES, INDIAN_STATES } from "./india";
 
 const clean = (max: number, min = 1) => z.string().trim().min(min).max(max);
@@ -66,6 +67,7 @@ export const departmentSchema = z.object({
   name: clean(100, 2),
   code: z.string().trim().toUpperCase().regex(/^[A-Z0-9][A-Z0-9-]{1,11}$/, "Use 2–12 letters, digits or hyphens (e.g. CSE, ECE-2)."),
   description: z.string().trim().max(500, "Keep the description under 500 characters.").optional(),
+  degree: z.enum(DEGREES, "Choose the degree this department offers."),
 });
 
 export const STAFF_ROLES = ["PLACEMENT_OFFICER", "COORDINATOR"] as const;

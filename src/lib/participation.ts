@@ -44,7 +44,7 @@ export function countRows(rows: PartRow[]): Counts & { toChase: number } {
 }
 
 export const registrationText = (r: Pick<PartRow, "registration_status" | "evidence_status">) =>
-  r.registration_status === "REGISTERED" ? (r.evidence_status ? (r.evidence_status === "VERIFIED" ? "Registered (evidence verified)" : r.evidence_status === "SUBMITTED_PENDING_REVIEW" ? "Registered (evidence awaiting review)" : "Registered (new screenshot needed)") : "Registered")
+  r.registration_status === "REGISTERED" ? (r.evidence_status === "REJECTED" || r.evidence_status === "RESUBMISSION_REQUIRED" ? "Registered (new screenshot needed)" : "Registered")
   : r.registration_status === "PENDING_EXTERNAL" ? "Started, screenshot not uploaded" : r.registration_status === "WITHDRAWN" ? "Withdrawn" : "Not registered";
 
 /** Spreadsheet-safe (csvCell neutralises formulas). Names and numbers come from student records; nothing is added or guessed. */

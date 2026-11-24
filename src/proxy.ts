@@ -13,6 +13,8 @@ export function proxy(request: NextRequest) {
   const as = request.nextUrl.searchParams.get("as");
   const slot = slotOfPath(request.nextUrl.pathname) ?? (isSlot(as) ? as : null);
   headers.delete(SLOT_HEADER);
+  headers.delete("x-cc-path");     // the request path, for "sign in then come back" (see requireSession); never client-supplied
+  headers.set("x-cc-path", request.nextUrl.pathname);
   headers.delete("x-cc-portal");   // the earlier name of this header: never let a client supply it either
   if (slot) headers.set(SLOT_HEADER, slot);
 

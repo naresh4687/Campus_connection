@@ -69,3 +69,9 @@ export function slotOfPath(pathname: string): Slot | null {
 export function scopedHref(href: string, slot: Slot): string {
   return `${href}${href.includes("?") ? "&" : "?"}as=${slot}`;
 }
+
+/**
+ * Where a sign-in may send the person afterwards instead of their home page. A narrow allow-list (never a free redirect): the attendance link of an
+ * on-campus drive, so a student who opens it signed-out comes back to it after signing in.
+ */
+export const safeNextPath = (v: unknown): string | null => (typeof v === "string" && /^\/student\/campus\/attend\/[0-9a-f]{64}$/.test(v) ? v : null);

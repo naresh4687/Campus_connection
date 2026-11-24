@@ -2,7 +2,7 @@ import { sql } from "kysely";
 import { db } from "../db";
 import { withSession, type SessionUser } from "../auth/session";
 
-export type JoinPage = { college_name: string; departments: { id: string; code: string; name: string }[] };
+export type JoinPage = { college_name: string; departments: { id: string; code: string; name: string; degree: string | null }[] };
 
 /** What the public sign-up page may show: the college's name and its ACTIVE departments — only if the link is switched on and current. */
 export async function peekJoin(college: string, version: number): Promise<JoinPage | null> {

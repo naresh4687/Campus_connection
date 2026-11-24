@@ -8,7 +8,7 @@ import type { RequestContext, Role } from "../db/context";
 import type { Transaction } from "kysely";
 import { clientIpHash, userAgent } from "./request";
 import { hashToken, isWellFormedToken, newToken } from "./tokens";
-import { isSlot, LOGIN_PATH, PORTAL_OF_SLOT, SLOT_HEADER, SLOTS, slotOfRole, type Portal, type Slot } from "@/lib/portals";
+import { isSlot, LOGIN_PATH, PORTAL_OF_SLOT, safeNextPath, SLOT_HEADER, SLOTS, slotOfRole, type Portal, type Slot } from "@/lib/portals";
 
 export const SESSION_IDLE_SECONDS = 30 * 60;
 export const SESSION_ABSOLUTE_SECONDS = 12 * 60 * 60;
@@ -138,7 +138,9 @@ export async function requireSession(): Promise<SessionUser> {
   const s = await getSession();
   if (s) return s;
   const slot = await requestSlot();
-  redirect(slot ? LOGIN_PATH[PORTAL_OF_SLOT[slot]] : "/login");
+  // An attendance link opened while signed out: sign in, then come back to it (allow-listed paths only).
+  const next = safeNextPath((await headers()).get("x-cc-path"));
+  redirect(slot ? `${LOGIN_PATH[PORTAL_OF_SLOT[slot]]}${next ? `?next=${encodeURIComponent(next)}` : ""}` : "/login");
 }
 
 /** Page/action guard: not signed in -> /login; signed in with the wrong role -> that user's own home. */

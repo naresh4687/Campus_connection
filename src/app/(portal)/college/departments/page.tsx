@@ -18,11 +18,12 @@ export default async function DepartmentsPage() {
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold tracking-tight">Departments</h1>
       <StatStrip label="Department totals" items={[{ label: "Active departments", value: dep.active }, { label: "Inactive departments", value: dep.inactive }, { label: "Departments without a coordinator", value: dep.without_coordinator, attention: true }]} />
-      <Table head={["Code", "Department", "Students", "Coordinators", "Status"]} empty={rows.length === 0 ? <EmptyState title="No departments yet">Add your first department below.</EmptyState> : undefined}>
+      <Table head={["Code", "Department", "Degree", "Students", "Coordinators", "Status"]} empty={rows.length === 0 ? <EmptyState title="No departments yet">Add your first department below.</EmptyState> : undefined}>
         {rows.map((d) => (
           <tr key={d.id}>
             <Td className="font-mono">{d.code}</Td>
             <Td><Link href={`/college/departments/${d.id}`} className="font-medium underline">{d.name}</Link></Td>
+            <Td>{d.degree ?? <span className="text-muted">Not set</span>}</Td>
             <Td><Link href={`/college/students?dept=${d.id}`} className="underline" data-testid={`dept-students-${d.code}`}>{d.students}</Link></Td>
             <Td>{d.coordinators === 0 ? <span className="text-muted">None assigned</span> : d.coordinators}</Td>
             <Td><StatusBadge value={d.status} /></Td>
