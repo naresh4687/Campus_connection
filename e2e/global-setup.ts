@@ -75,10 +75,11 @@ export default async function globalSetup() {
   users.extOfficerB = (await mk(adminB, "PLACEMENT_OFFICER", collegeB, "extOfficerB")).email;
   users.annOfficer = (await mk(adminA, "PLACEMENT_OFFICER", collegeA, "annOfficer")).email;
   users.roundOfficer = (await mk(adminA, "PLACEMENT_OFFICER", collegeA, "roundOfficer")).email;
+  users.campOfficer = (await mk(adminA, "PLACEMENT_OFFICER", collegeA, "campOfficer")).email;       // the on-campus drive spec's own officer
   users.offerOfficer = (await mk(adminA, "PLACEMENT_OFFICER", collegeA, "offerOfficer")).email;
   users.rptOfficer = (await mk(adminA, "PLACEMENT_OFFICER", collegeA, "rptOfficer")).email;
   users.rptAdmin = (await mk(pa, "COLLEGE_ADMIN", collegeA, "rptAdmin")).email;   // own login budget for the rounds spec
-  for (const [key, cgpa] of [["regA", 8.5], ["regB", 5.5], ["regC", 0], ["regD", 8], ["offA", 8], ["offB", 8], ["rptA", 8], ["rptB", 8], ["ntfA", 8], ["annA", 8], ["extA", 8], ["extB", 8], ["partA", 8], ["partB", 8], ["profA", 8]] as const) {
+  for (const [key, cgpa] of [["regA", 8.5], ["regB", 5.5], ["regC", 0], ["regD", 8], ["offA", 8], ["offB", 8], ["rptA", 8], ["rptB", 8], ["ntfA", 8], ["annA", 8], ["extA", 8], ["extB", 8], ["partA", 8], ["partB", 8], ["profA", 8], ["campA", 8], ["campB", 8]] as const) {
     const st = await mk(adminA, "STUDENT", collegeA, key);
     users[key] = st.email;
     const [r] = await inspect<{ register_number: string; full_name: string; college_email: string; degree: string; admission_year: number; passing_year: number }>(

@@ -67,6 +67,26 @@ If a newer commit reaches `main` while a deploy is waiting for approval, the old
 7. Add the repository **variable** `DEPLOY_ENABLED` = `true` (Settings → Secrets and variables → Actions → Variables). Until it is set, the deploy workflow skips itself, so pushing before the setup is finished is safe.
 8. **Only now** rely on `vercel.json`. Once it is on `main`, Vercel stops deploying `main` by itself, so steps 1 to 6 must already be in place or pushes will not deploy at all.
 
+### 3b. Free file storage on Cloudflare R2 (instead of Neon Object Storage)
+
+Added 2026-11-24. The code change (the storage client no longer sends the default upload checksum that R2 refuses) is tested against the local S3 server only; **R2 itself has not been tried from here** — do steps 4 and 5 below and upload one file through the live app before relying on it. R2's free tier (about 10 GB, no download fees) is the cheapest place for the private bucket; check Cloudflare's current limits.
+
+1. Cloudflare dashboard → **R2 Object Storage** → create a bucket, for example `campusconnect-private`. Leave it **private** (no public access, no custom domain).
+2. R2 → **Manage API tokens** → create a token with **Object Read & Write**, limited to that one bucket. Copy the **Access Key ID**, the **Secret Access Key** and the account's S3 endpoint `https://<account-id>.r2.cloudflarestorage.com` (shown on the same page). The secret is shown once.
+3. In Vercel → Project → Settings → Environment Variables (Production), replace the storage values:
+   - `S3_ENDPOINT` = `https://<account-id>.r2.cloudflarestorage.com`
+   - `S3_PUBLIC_ENDPOINT` = the same value
+   - `S3_REGION` = `auto`
+   - `S3_BUCKET` = the bucket name
+   - `S3_ACCESS_KEY`, `S3_SECRET_KEY` = the token (mark both Sensitive)
+   - `S3_FORCE_PATH_STYLE` = `true`
+4. If the old bucket already holds files, copy them first so existing links keep working (keys stay identical):
+   `SRC_S3_ENDPOINT=… SRC_S3_BUCKET=… SRC_S3_ACCESS_KEY=… SRC_S3_SECRET_KEY=… DEST_S3_ENDPOINT=https://<account-id>.r2.cloudflarestorage.com DEST_S3_REGION=auto DEST_S3_BUCKET=… DEST_S3_ACCESS_KEY=… DEST_S3_SECRET_KEY=… npx tsx scripts/storage-copy.ts --dry-run` and then without `--dry-run`. Nothing is deleted from the old bucket.
+5. Redeploy (so the new variables apply), then as a student upload a document and open it, and as an officer open it again. Run `npm run storage:reconcile` against the new bucket afterwards to confirm the database and the bucket agree.
+6. Only after that, remove the old Neon storage variables and keep the old bucket for a week as a fallback.
+
+Notes: the bucket is never public — files leave it only through short-lived signed links the app issues after the database approves the request, exactly as before. R2 has no per-object "virus scan" or lifecycle rules set up here; the retention script `npm run storage:reconcile` is unchanged.
+
 ### Things that behave differently on Vercel
 
 - **Upload limit.** Vercel rejects request bodies over 4.5 MB, so the app limit is 4 MB (`MAX_DOCUMENT_MB` in `src/lib/documents.ts`). Larger files would need direct-to-bucket uploads.

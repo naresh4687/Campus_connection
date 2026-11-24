@@ -37,7 +37,7 @@ const COPY: Record<Portal, { heading: string; hint: string; panel: string; panel
  * Phone and tablet: a compact panel card on top and the form below; the example preview is left out.
  * The platform page uses the ink panel.
  */
-export function LoginScreen({ portal, banner }: { portal: Portal; banner?: ReactNode }) {
+export function LoginScreen({ portal, banner, next }: { portal: Portal; banner?: ReactNode; next?: string | null }) {
   const c = COPY[portal];
   const ink = portal === "platform";
   return (
@@ -72,7 +72,7 @@ export function LoginScreen({ portal, banner }: { portal: Portal; banner?: React
               <p className="mt-2 text-sm text-muted lg:text-base">{c.hint}</p>
             </div>
             {banner}
-            <LoginForm portal={portal} />
+            <LoginForm portal={portal} next={next ?? undefined} />
             <p className="text-center text-sm"><Link href="/forgot-password" className="underline underline-offset-4">Forgot your password?</Link></p>
             {c.foot ? <p className="border-t border-border pt-4 text-center text-sm text-muted">{c.foot}</p> : null}
           </div>

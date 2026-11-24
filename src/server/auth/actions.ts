@@ -9,7 +9,7 @@ import { allow, allowIp } from "./rate-limit";
 import { assertSameOrigin, clientIpHash } from "./request";
 import { dummyHash, hashPassword, newPasswordSchema, verifyPassword } from "./password";
 import { hashToken, isWellFormedToken } from "./tokens";
-import { isPortal, LOGIN_PATH, loginPathForRole, portalOfRole, slotOfRole, type Portal } from "@/lib/portals";
+import { isPortal, LOGIN_PATH, loginPathForRole, portalOfRole, safeNextPath, slotOfRole, type Portal } from "@/lib/portals";
 
 /**
  * `values` echoes back NON-secret fields so the form does not lose them after an error (passwords are never echoed).
@@ -74,7 +74,8 @@ export async function loginAction(_prev: FormState, formData: FormData): Promise
   if (!slot) return { error: GENERIC_LOGIN_ERROR, values };
   await startSession(user.id, slot);   // this role's own cookie: other roles signed in in this browser are untouched
   await logEvent(user.id, "LOGIN_SUCCEEDED");
-  redirect(HOME_PATH[user.role as keyof typeof HOME_PATH]);
+  const next = slot === "student" ? safeNextPath(formData.get("next")) : null;   // e.g. an attendance link the student opened while signed out
+  redirect(next ?? HOME_PATH[user.role as keyof typeof HOME_PATH]);
 }
 
 export async function logoutAction(): Promise<void> {

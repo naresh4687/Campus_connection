@@ -15,10 +15,11 @@ test.describe.serial("college administrator console", () => {
   let cseUrl = "";
 
   const newContextPage = async (browser: Browser) => { const p = await (await browser.newContext()).newPage(); open.push(p); return p; };
-  const addDept = async (name: string, code: string) => {
+  const addDept = async (name: string, code: string, degree = "B.E.") => {
     await admin.goto("/college/departments");
     await admin.getByLabel("Department name").fill(name);
     await admin.getByLabel("Code").fill(code);
+    await admin.getByLabel("Degree").selectOption(degree);
     await admin.getByRole("button", { name: "Add department" }).click();
     await settle(admin);
   };
@@ -33,7 +34,7 @@ test.describe.serial("college administrator console", () => {
     for (const n of ["Dashboard", "Departments", "Staff", "College profile", "Audit log", "Account"]) await expect(admin.getByRole("navigation", { name: "Main" }).getByRole("link", { name: n })).toBeVisible();
     await expect(admin.getByRole("group", { name: "Verified academic records by department" })).toBeVisible();           // the home page is charts; the totals live in their own sections
     await admin.goto("/college/departments"); expect(await stat(admin, "Active departments")).toBe(2); // seeded: GEN (the seeded students need a department) and REG (registration scenarios)
-    await admin.goto("/college/staff"); expect(await stat(admin, "Placement officers")).toBe(9);       // seeded: officerA, officerX, roundOfficer, offerOfficer, rptOfficer, annOfficer, extOfficer, partOfficer
+    await admin.goto("/college/staff"); expect(await stat(admin, "Placement officers")).toBe(10);      // seeded: officerA, officerX, roundOfficer, campOfficer, offerOfficer, rptOfficer, annOfficer, extOfficer, partOfficer
     expect(await stat(admin, "Coordinators")).toBe(6);                                                  // seeded: coordA, regCoord, annCoord, extCoord, secCoord, partCoord
     await admin.goto("/college/students"); expect(await stat(admin, "Students")).toBeGreaterThanOrEqual(6);
   });
@@ -54,7 +55,9 @@ test.describe.serial("college administrator console", () => {
     await addDept("Computer Science and Engineering", "cse");
     await expect(admin.getByText("Department CSE created.")).toBeVisible();
     await expect(admin.getByLabel("Department name")).toHaveValue(""); // form cleared after success
-    await addDept("Electronics and Communication", "ECE");
+    await expect(admin.getByRole("row", { name: /CSE/ })).toContainText("B.E.");                     // the degree is kept and listed
+    await addDept("Electronics and Communication", "ECE", "B.Tech");
+    await expect(admin.getByRole("row", { name: /ECE/ })).toContainText("B.Tech");
     await addDept("Mechanical Engineering", "MECH");
 
     await addDept("Another Name", "CSE"); // duplicate code

@@ -51,6 +51,7 @@ test.describe.serial("student management", () => {
     await admin.goto("/college/departments");
     await admin.getByLabel("Department name").fill("Students Test Dept");
     await admin.getByLabel("Code").fill("STU");
+    await admin.getByLabel("Degree").selectOption("B.E.");
     await admin.getByRole("button", { name: "Add department" }).click();
     await expect(admin.getByText("Department STU created.")).toBeVisible();
   });

@@ -9,7 +9,8 @@ import { fmtDateTime } from "@/lib/format";
 import { uuidSchema } from "@/lib/validation";
 import { requireRole } from "@/server/auth/session";
 import { getDrive } from "@/server/drives/queries";
-import { participation } from "@/server/registrations/queries";
+import { StudentEvidence } from "@/components/evidence/student-evidence";
+import { driveEvidence, participation } from "@/server/registrations/queries";
 import { linkableDrives } from "@/server/announcements/queries";
 import { ReminderForms } from "./reminders";
 
@@ -22,7 +23,10 @@ export async function ParticipationView({ role, id, sp }: { role: Role; id: stri
   if (!uuidSchema.safeParse(id).success) notFound();
   const base = role === "COORDINATOR" ? `/coordinator/drives/${id}` : `/placement/drives/${id}/participation`;
   const dept = sp.dept && uuidSchema.safeParse(sp.dept).success ? sp.dept : "";
-  const view = parseView(sp.view); const who = parseWho(sp.who, view);
+  const evidence = await driveEvidence(s, id);
+  // A drive with screenshots opens on the registered students, where those screenshots are. Stable (not "only while one is waiting"), so a decided row stays put with its confirmation.
+  const view = sp.view === undefined && evidence.size > 0 ? "registered" : parseView(sp.view);
+  const who = parseWho(sp.who, view);
   let all: PartRow[];
   try { all = await participation(s, id, null); } catch (e) { if ((e as { code?: string }).code === "22023") notFound(); throw e; }
   // Drive details: an officer reads the drive; a coordinator takes the name from the list of drives open to their departments.
@@ -30,6 +34,7 @@ export async function ParticipationView({ role, id, sp }: { role: Role; id: stri
   const lite = role === "COORDINATOR" ? (await linkableDrives(s)).find((d) => d.id === id) ?? null : null;
   const title = drive ? `${drive.job_title} — ${drive.company_name}` : lite ? `${lite.job_title} — ${lite.company_name}` : "Drive";
   const open = drive ? drive.status === "PUBLISHED" && !!drive.application_deadline && new Date(drive.application_deadline) > new Date() : lite?.status === "PUBLISHED";
+  const anyExternal = evidence.size > 0;
   const scoped = dept ? all.filter((r) => r.department_id === dept) : all;
   const c = countRows(scoped);
   const rows = filterRows(scoped, view, who);
@@ -55,12 +60,13 @@ export async function ParticipationView({ role, id, sp }: { role: Role; id: stri
           <button type="submit" className="h-10 border border-border bg-surface px-4 text-sm font-medium hover:bg-tint">Apply filters</button>
           <a href={downloadHref} className="inline-flex h-10 items-center bg-primary px-4 text-sm font-semibold text-primary-foreground" data-testid="download-csv">Download CSV ({rows.length})</a>
         </form>
-        <Table head={["Register no.", "Student", "Dept", "Contact", "Eligibility", "Registration"]} empty={rows.length === 0 ? <EmptyState title="No students match">Change the filters above.</EmptyState> : null}>
+        <Table head={["Register no.", "Student", "Dept", "Contact", "Eligibility", "Registration", ...(anyExternal ? ["Screenshot"] : [])]} empty={rows.length === 0 ? <EmptyState title="No students match">Change the filters above.</EmptyState> : null}>
           {rows.map((r) => (
             <tr key={r.student_id}>
               <Td>{r.register_number}</Td><Td>{r.full_name}{r.has_account ? null : <span className="block text-xs text-muted">No account yet</span>}</Td><Td>{r.department_code}</Td>
               <Td><span className="break-all">{r.college_email}</span>{r.phone ? <span className="block text-xs text-muted">{r.phone}</span> : null}</Td>
               <Td>{ELIGIBILITY_TEXT[r.eligibility] ?? r.eligibility}</Td><Td>{registrationText(r)}</Td>
+              {anyExternal ? <Td>{evidence.has(r.student_id) ? <StudentEvidence e={evidence.get(r.student_id)} /> : <span className="text-muted">—</span>}</Td> : null}
             </tr>))}
         </Table>
         <p className="mt-2 text-xs text-muted">Eligibility is the platform’s own result from each student’s verified record. Downloads contain student contact details and are recorded in the audit log.</p>

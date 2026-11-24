@@ -3,7 +3,7 @@
 import { sql } from "kysely";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { mappingProblem, ownContactSchema, STUDENT_FIELDS, studentFormSchema, validateRows, buildDeptLookup, type Mapping } from "@/lib/students";
+import { mappingProblem, ownContactSchema, ownLinksSchema, STUDENT_FIELDS, studentFormSchema, validateRows, buildDeptLookup, type Mapping } from "@/lib/students";
 import { uuidSchema } from "@/lib/validation";
 import { dbMessage, firstErrors, GENERIC_ERROR, str, type ActionState } from "../action-utils";
 import { invitationLink } from "../auth/links";
@@ -160,6 +160,22 @@ export async function cancelImportAction(_p: ActionState, fd: FormData): Promise
   }
   refresh();
   redirect("/college/students/import");
+}
+
+// ───────────── student's own profile links (GitHub / LeetCode / LinkedIn) ─────────────
+export async function updateOwnLinksAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  await assertSameOrigin();
+  const s = await requireRole("STUDENT");
+  const values = { github: str(fd, "github", 300), leetcode: str(fd, "leetcode", 300), linkedin: str(fd, "linkedin", 300) };
+  const r = ownLinksSchema.safeParse(values);
+  if (!r.success) return { error: "Please correct the highlighted fields.", fieldErrors: firstErrors(r.error), values };
+  try {
+    await withSession(s, (t) => sql`SELECT students.update_own_links(${r.data.github ?? null}, ${r.data.leetcode ?? null}, ${r.data.linkedin ?? null})`.execute(t));
+  } catch (e) {
+    return { error: dbMessage(e), values };
+  }
+  revalidatePath("/student", "layout"); revalidatePath("/placement", "layout"); revalidatePath("/coordinator", "layout"); revalidatePath("/college", "layout");
+  return { ok: "Profile links saved.", values };
 }
 
 // ───────────── student's own contact details ─────────────

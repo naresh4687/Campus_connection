@@ -1,3 +1,4 @@
+import { ProfileLinks } from "@/components/students/profile-links";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Card } from "@/components/ui/card";
@@ -52,6 +53,7 @@ export default async function CoordinatorStudent({ params }: { params: Promise<{
           <dt className="text-muted">College email</dt><dd>{st.college_email}</dd>
           <dt className="text-muted">Personal email</dt><dd>{st.personal_email ?? "—"}</dd>
           <dt className="text-muted">Phone</dt><dd>{st.phone ?? "—"}</dd>
+          <dt className="text-muted">Profiles</dt><dd><ProfileLinks st={st} empty="—" /></dd>
           <dt className="text-muted">Has an account</dt><dd>{st.has_account ? "Yes" : "No"}</dd>
         </dl>
         <p className="mt-3 text-xs text-muted">Read-only. Identity details are managed by your college administrator; academic records and verification arrive with the next module.</p>

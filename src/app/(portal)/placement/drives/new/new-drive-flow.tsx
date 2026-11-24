@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { clientUuid } from "@/lib/uuid";
 import { startIntakeAction } from "@/server/intake/actions";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -13,7 +14,7 @@ type Mode = "manual" | "ai";
 export function NewDriveFlow({ modelOn, companies, departments, initial }: { modelOn: boolean; companies: { id: string; name: string }[]; departments: { id: string; code: string; name: string }[]; initial: DriveValues }) {
   const [mode, setMode] = useState<Mode>("manual");
   const [state, run, pending] = useActionState(startIntakeAction, undefined);
-  const [key, setKey] = useState(() => crypto.randomUUID());
+  const [key, setKey] = useState(() => clientUuid());
   const opt = (m: Mode, title: string, body: string) => (
     <button type="button" role="radio" aria-checked={mode === m} onClick={() => setMode(m)} data-option={m}
       className={`rounded-2xl border p-4 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${mode === m ? "border-foreground bg-tint" : "border-border bg-surface hover:border-foreground/35"}`}>
@@ -32,7 +33,7 @@ export function NewDriveFlow({ modelOn, companies, departments, initial }: { mod
             <input type="hidden" name="key" value={key} />
             <div className="space-y-1.5">
               <label htmlFor="announcement" className="block text-sm font-semibold">Company announcement</label>
-              <textarea id="announcement" name="announcement" rows={12} maxLength={MAX_SOURCE_CHARS + 50} defaultValue={state?.values?.announcement ?? ""} onChange={() => setKey(crypto.randomUUID())}
+              <textarea id="announcement" name="announcement" rows={12} maxLength={MAX_SOURCE_CHARS + 50} defaultValue={state?.values?.announcement ?? ""} onChange={() => setKey(clientUuid())}
                 aria-describedby="announcement-hint" className="w-full rounded-xl border border-border bg-surface px-3 py-2 text-sm outline-none hover:border-foreground/35 focus-visible:border-foreground focus-visible:ring-2 focus-visible:ring-foreground/15" />
               <p id="announcement-hint" className="text-xs text-muted">Paste the email, circular or WhatsApp message as received (up to {MAX_SOURCE_CHARS.toLocaleString("en-IN")} characters). Do not paste students’ personal data. The original text is kept with the draft.</p>
             </div>

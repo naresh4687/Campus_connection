@@ -18,6 +18,9 @@ export function buildCsp({ nonce, dev, upgrade }: { nonce: string; dev: boolean;
     "manifest-src 'self'",
     "worker-src 'self'",
   ];
+  // Dev only: Next's own error overlay (font-styles.tsx / react-dom inside next-devtools) sets inline style="" attributes. We can't change that code,
+  // so development allows style attributes; production keeps them blocked.
+  if (dev) directives.push("style-src-attr 'unsafe-inline'");
   if (upgrade) directives.push("upgrade-insecure-requests");
   return directives.join("; ");
 }

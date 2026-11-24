@@ -22,11 +22,11 @@ const refresh = () => revalidatePath("/college", "layout");
 // ───────────── departments ─────────────
 export async function createDepartmentAction(_p: ActionState, fd: FormData): Promise<ActionState> {
   const s = await admin();
-  const values = { name: str(fd, "name", 200), code: str(fd, "code", 40), description: str(fd, "description", 700) };
+  const values = { name: str(fd, "name", 200), code: str(fd, "code", 40), description: str(fd, "description", 700), degree: str(fd, "degree", 20) };
   const parsed = departmentSchema.safeParse(values);
   if (!parsed.success) return { error: "Please correct the highlighted fields.", fieldErrors: firstErrors(parsed.error), values };
   try {
-    await withSession(s, (t) => sql`SELECT college.create_department(${parsed.data.name}, ${parsed.data.code}, ${parsed.data.description ?? null})`.execute(t));
+    await withSession(s, (t) => sql`SELECT college.create_department(${parsed.data.name}, ${parsed.data.code}, ${parsed.data.description ?? null}, ${parsed.data.degree})`.execute(t));
   } catch (e) {
     return { error: dbMessage(e), values };
   }
@@ -37,12 +37,12 @@ export async function createDepartmentAction(_p: ActionState, fd: FormData): Pro
 export async function updateDepartmentAction(_p: ActionState, fd: FormData): Promise<ActionState> {
   const s = await admin();
   const id = uuidSchema.safeParse(str(fd, "id"));
-  const values = { name: str(fd, "name", 200), code: str(fd, "code", 40), description: str(fd, "description", 700) };
+  const values = { name: str(fd, "name", 200), code: str(fd, "code", 40), description: str(fd, "description", 700), degree: str(fd, "degree", 20) };
   const parsed = departmentSchema.safeParse(values);
   if (!id.success) return { error: GENERIC_ERROR };
   if (!parsed.success) return { error: "Please correct the highlighted fields.", fieldErrors: firstErrors(parsed.error), values };
   try {
-    await withSession(s, (t) => sql`SELECT college.update_department(${id.data}::uuid, ${parsed.data.name}, ${parsed.data.code}, ${parsed.data.description ?? null})`.execute(t));
+    await withSession(s, (t) => sql`SELECT college.update_department(${id.data}::uuid, ${parsed.data.name}, ${parsed.data.code}, ${parsed.data.description ?? null}, ${parsed.data.degree})`.execute(t));
   } catch (e) {
     return { error: dbMessage(e), values };
   }

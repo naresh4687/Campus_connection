@@ -60,8 +60,11 @@ test.describe.serial("reports", () => {
     expect(raw.placed).toBeGreaterThanOrEqual(1); expect(raw.accepted).toBeGreaterThan(raw.placed);
     await expect(officer.getByTestId("stat-Highest CTC")).toContainText("12.00 LPA");                  // only the verified placement counts, never the 8 LPA accepted offer
     await expect(officer.getByTestId("stat-Average CTC")).toContainText("12.00 LPA");
-    const row = officer.getByRole("row", { name: /Registration Studies|REG/ }).first();
-    await expect(row).toBeVisible();
+    await expect(officer.getByRole("list", { name: "Placement rate by department (values)" })).toContainText("REG");
+    // The departments view lists the same department with its own numbers.
+    await officer.goto("/placement/reports?view=departments");
+    await expect(officer.getByRole("row", { name: /REG/ }).first()).toBeVisible();
+    await officer.goto("/placement/reports");
   });
 
   test("the administrator sees the same report; the chart has a text alternative; the year filter narrows it", async () => {
@@ -72,7 +75,7 @@ test.describe.serial("reports", () => {
     await admin.goto("/college/reports?year=1999");
     expect(Number(await tile(admin, "Students in scope"))).toBe(0);
     expect(await tile(admin, "Placement rate")).toBe("—");                                              // no students: not a misleading 0%
-    await expect(admin.getByText("No verified placements yet")).toBeVisible();
+    await expect(admin.getByText("No students match these filters").first()).toBeVisible();
   });
 
   test("CSV export: correct type, attachment, formula-safe, audited; other roles and anonymous are refused", async () => {

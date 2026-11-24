@@ -25,7 +25,10 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   if (!s || s.role !== "STUDENT") return new NextResponse("Forbidden", { status: 403 });
   const { id } = await ctx.params;
   if (!uuidSchema.safeParse(id).success) return new NextResponse("Not found", { status: 404 });
-  const back = async (qs: string) => NextResponse.redirect(new URL(`/student/drives/${id}?${qs}`, await appBaseUrl()), 303);
+  // A script-driven upload (Accept: application/json) is told where to go as a plain path, so the browser stays on the address it is already using
+  // (APP_BASE_URL can differ from it, e.g. localhost vs a LAN address, and CSP connect-src 'self' blocks following a redirect to another origin).
+  const wantsJson = (req.headers.get("accept") ?? "").includes("application/json");
+  const back = async (qs: string) => wantsJson ? NextResponse.json({ to: `/student/drives/${id}?${qs}` }) : NextResponse.redirect(new URL(`/student/drives/${id}?${qs}`, await appBaseUrl()), 303);
   const fail = (msg: string) => back(`error=${encodeURIComponent(msg)}`);
   if (!(await allow("evidence-upload", s.userId, 20, 3600))) return fail("Too many uploads. Please wait a while and try again.");
   const tooBig = uploadSizeStatus(req.headers.get("content-length"), MAX_EVIDENCE_BYTES + 64 * 1024);

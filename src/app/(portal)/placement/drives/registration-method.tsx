@@ -15,7 +15,7 @@ type Props = {
  * How students register: in CampusConnect (one click) or through the company's own form. A link in a company message is only a suggestion: the officer
  * chooses it and ticks that it really is the registration form. A company website or job-description page is never made a registration requirement by itself.
  */
-export function RegistrationMethod({ id, method: m0, url: u0, instructions: i0, confirmed: c0, review: r0, locked, suggestions }: Props) {
+export function RegistrationMethod({ id, method: m0, url: u0, instructions: i0, confirmed: c0, locked, suggestions }: Props) {
   const [state, run, pending] = useActionState(setDriveRegistrationAction, undefined);
   const [method, setMethod] = useState(m0);
   const [url, setUrl] = useState(state?.values?.url ?? u0);
@@ -48,7 +48,6 @@ export function RegistrationMethod({ id, method: m0, url: u0, instructions: i0, 
             <textarea id="instructions" name="instructions" rows={3} maxLength={2000} defaultValue={state?.values?.instructions ?? i0}
               className="w-full rounded-xl border border-border bg-surface px-3 py-2 text-sm outline-none focus-visible:border-foreground focus-visible:ring-2 focus-visible:ring-foreground/15" /></div>
           <label className="flex items-start gap-2 text-sm"><input type="checkbox" name="confirmed" value="yes" defaultChecked={c0} disabled={locked} className="mt-0.5 h-4 w-4" /><span>I confirm this link is the company’s actual registration form, not a company website or an information page. A drive cannot be published until this is ticked.</span></label>
-          <label className="flex items-start gap-2 text-sm"><input type="checkbox" name="review" value="yes" defaultChecked={r0} disabled={locked} className="mt-0.5 h-4 w-4" /><span>Staff verify each screenshot. A screenshot never proves the external form was accepted on its own.</span></label>
         </div>
       ) : null}
       {!locked ? <Button type="submit" disabled={pending} pending={pending}>{pending ? "Saving…" : "Save registration method"}</Button> : null}

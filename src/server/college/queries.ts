@@ -7,12 +7,12 @@ import { withSession, type SessionUser } from "../auth/session";
 const where = (c: RawBuilder<unknown>[]) => (c.length ? sql`WHERE ${sql.join(c, sql` AND `)}` : sql``);
 const n = (v: unknown) => Number(v ?? 0);
 
-export type DepartmentRow = { id: string; name: string; code: string; description: string | null; status: string; coordinators: number; students: number };
+export type DepartmentRow = { id: string; name: string; code: string; degree: string | null; description: string | null; status: string; coordinators: number; students: number };
 
 export async function listDepartments(s: SessionUser) {
   return withSession(s, async (t) =>
     (await sql<DepartmentRow>`
-      SELECT d.id, d.name::text AS name, d.code::text AS code, d.description, d.status,
+      SELECT d.id, d.name::text AS name, d.code::text AS code, d.degree, d.description, d.status,
         (SELECT count(*)::int FROM coordinator_assignments a WHERE a.department_id = d.id AND a.ended_at IS NULL) AS coordinators,
         (SELECT count(*)::int FROM students st WHERE st.department_id = d.id) AS students
       FROM departments d ORDER BY d.status, d.code`.execute(t)).rows,
@@ -21,8 +21,8 @@ export async function listDepartments(s: SessionUser) {
 
 export async function getDepartment(s: SessionUser, id: string) {
   return withSession(s, async (t) => {
-    const dept = (await sql<{ id: string; name: string; code: string; description: string | null; status: string; created_at: Date }>`
-      SELECT id, name::text AS name, code::text AS code, description, status, created_at FROM departments WHERE id = ${id}`.execute(t)).rows[0];
+    const dept = (await sql<{ id: string; name: string; code: string; degree: string | null; description: string | null; status: string; created_at: Date }>`
+      SELECT id, name::text AS name, code::text AS code, degree, description, status, created_at FROM departments WHERE id = ${id}`.execute(t)).rows[0];
     if (!dept) return null;
     const assigned = (await sql<{ user_id: string; full_name: string; email: string; status: string; assigned_at: Date }>`
       SELECT u.id AS user_id, u.full_name, u.email::text AS email, u.status, a.assigned_at

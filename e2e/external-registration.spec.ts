@@ -72,43 +72,37 @@ test.describe.serial("external company registration with screenshot evidence", (
     await a.getByRole("button", { name: "Submit screenshot" }).click();
     await expect(a.getByText("Your external registration screenshot has been submitted successfully.").first()).toBeVisible();
     const st = a.getByTestId("external-status");
-    await expect(st).toContainText("Registration status: REGISTERED"); await expect(st).toContainText("Awaiting verification");
-    await expect(st).not.toContainText("verified successfully");
-    await a.goto("/student/drives"); await expect(a.getByText("Registered — evidence pending review")).toBeVisible();
+    await expect(st).toContainText("Registration status: REGISTERED"); await expect(st).toContainText("saved as proof");
+    await a.goto("/student/drives"); await expect(a.getByText("Registered", { exact: true }).first()).toBeVisible();        // plain "Registered": the screenshot is proof, nobody verifies it
+    await expect(a.getByText(/pending review|awaiting verification/i)).toHaveCount(0);
     const [{ id }] = await inspect<{ id: string }>("SELECT id FROM registration_evidence WHERE drive_id = $1", [driveId]); evidenceId = id;
     const files = await inspect<{ n: string }>("SELECT count(*)::text AS n FROM registration_evidence WHERE drive_id = $1", [driveId]); expect(files[0].n).toBe("1");
   });
 
-  test("the department's coordinator sees it, must give a reason to reject, and the student is told what to do", async () => {
-    await coord.goto("/coordinator/evidence");
-    await expect(coord.getByText("Zooye External Corp — WordPress Developer")).toBeVisible();
+  test("staff just open the screenshot from the drive's student table; there is nothing to verify", async () => {
+    await coord.goto(`/coordinator/drives/${driveId}`);
+    await expect(coord.getByRole("link", { name: /Open screenshot/ }).first()).toBeVisible();
+    await expect(coord.getByRole("button", { name: /Mark verified|Reject|Ask for a new screenshot/ })).toHaveCount(0);
     const r = await new AxeBuilder({ page: coord }).withTags(TAGS).analyze(); expect(r.violations.map((v) => v.id)).toEqual([]);
-    await coord.getByRole("button", { name: "Reject" }).click();
-    await expect(coord.getByText(/Give the student a reason/)).toBeVisible();
-    await coord.getByLabel(/^Reason/).fill("The page is cropped; show the confirmation text.");
-    await coord.getByRole("button", { name: "Reject" }).click();
-    await expect(coord.getByText("Rejected. The student was told why.")).toBeVisible();
-    await a.goto(`/student/drives/${driveId}`);
-    await expect(a.getByTestId("external-action")).toContainText("Reason: The page is cropped; show the confirmation text.");
-    await expect(a.getByText("Action required — upload a new screenshot").first()).toBeVisible();
-    await a.goto("/notifications"); await expect(a.getByText("Screenshot not accepted")).toBeVisible();
+    await officer.goto(`/placement/drives/${driveId}/applicants`);
+    await expect(officer.getByRole("link", { name: /Open screenshot/ })).toBeVisible();
+    await expect(officer.getByRole("button", { name: /Mark verified|Reject/ })).toHaveCount(0);
+    await officer.goto(`/placement/drives/${driveId}`);
+    await expect(officer.getByTestId("ext-Registered with a screenshot")).toHaveText("1");
+    await expect(officer.getByText(/Awaiting review|Verified/)).toHaveCount(0);
   });
 
-  test("the student replaces the screenshot without a second registration; the old version is kept; an officer verifies", async () => {
+  test("the student can replace the screenshot without a second registration; the old version is kept", async () => {
     await a.goto(`/student/drives/${driveId}`);
+    await a.getByText("Replace the screenshot").click();
     await a.getByLabel("Upload a new screenshot").setInputFiles({ name: "again.png", mimeType: "image/png", buffer: PNG });
     await a.getByRole("button", { name: "Submit the new screenshot" }).click();
-    await expect(a.getByTestId("external-status")).toContainText("Awaiting verification");
+    await a.waitForURL(/notice=evidence-submitted/);                                              // the upload finished and the page reloaded
+    await expect(a.getByTestId("external-status")).toContainText("saved as proof");
     const rows = await inspect<{ version: number; status: string }>("SELECT version, status FROM registration_evidence WHERE drive_id = $1 ORDER BY version", [driveId]);
     expect(rows).toEqual([{ version: 1, status: "SUPERSEDED" }, { version: 2, status: "SUBMITTED_PENDING_REVIEW" }]);
     expect((await inspect<{ n: string }>("SELECT count(*)::text AS n FROM registrations WHERE drive_id = $1", [driveId]))[0].n).toBe("1");
-    await officer.goto("/placement/evidence");
-    await officer.getByRole("button", { name: "Mark verified" }).click();
-    await expect(officer.getByText("Marked verified.")).toBeVisible();
-    await a.goto("/student/drives"); await expect(a.getByText("Registered — evidence verified")).toBeVisible();
-    await officer.goto(`/placement/drives/${driveId}`);
-    await expect(officer.getByTestId("ext-Verified")).toHaveText("1"); await expect(officer.getByTestId("ext-Screenshots submitted")).toHaveText("1");
-    await officer.goto(`/placement/drives/${driveId}/applicants`); await expect(officer.getByText("Registered — evidence verified")).toBeVisible();
+    const [{ id }] = await inspect<{ id: string }>("SELECT id FROM registration_evidence WHERE drive_id = $1 AND version = 2", [driveId]); evidenceId = id;      // the privacy test below opens the current one
   });
 
   test("screenshots are private: only the owner and permitted staff can open one; another student and another college cannot", async () => {

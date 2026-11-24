@@ -1,6 +1,7 @@
 "use client";
 
 import { startTransition, useActionState, useState, type FormEvent } from "react";
+import { clientUuid } from "@/lib/uuid";
 import Link from "next/link";
 import { CATEGORY_LABEL, DESTINATION_OF, PURPOSES, PURPOSE_LABEL, classifyMessage, resolveCategory, isPurpose, type Category, type Classification, type Purpose } from "@/lib/composer/classify";
 import { MAX_SOURCE_CHARS, MIN_SOURCE_CHARS } from "@/lib/intake/catalog";
@@ -23,7 +24,7 @@ export function Composer({ canCreateDrives, base }: { canCreateDrives: boolean; 
   const [purpose, setPurpose] = useState<Purpose>("AUTO");
   const [result, setResult] = useState<Classification | null>(null);
   const [category, setCategory] = useState<Category>("GENERAL");
-  const [key, setKey] = useState(() => crypto.randomUUID());
+  const [key, setKey] = useState(() => clientUuid());
   const [problem, setProblem] = useState<string | null>(null);
   const state = drive?.error ? drive : ann;
   const pending = drivePending || annPending;
@@ -41,7 +42,7 @@ export function Composer({ canCreateDrives, base }: { canCreateDrives: boolean; 
     if (category === "NEW_DRIVE") { fd.set("announcement", text); fd.set("key", key); fd.set("sourceType", "PASTED"); startTransition(() => runDrive(fd)); }
     else { fd.set("message", text); fd.set("category", category); startTransition(() => runAnn(fd)); }
   };
-  const onText = (v: string) => { setText(v); setResult(null); setKey(crypto.randomUUID()); };
+  const onText = (v: string) => { setText(v); setResult(null); setKey(clientUuid()); };
   const err = problem ?? state?.error;
   return (
     <form onSubmit={submit} className="max-w-3xl space-y-4" noValidate>

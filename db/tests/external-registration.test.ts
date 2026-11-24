@@ -80,12 +80,12 @@ describe("the student's path", () => {
     const s = await student(); expect(await code(begin(s, id))).toBe("22023");
     expect((await inspect<{ n: string }>("SELECT count(*)::text AS n FROM registrations WHERE drive_id = $1", [id]))[0].n).toBe("0");
   });
-  it("a screenshot makes the registration REGISTERED with the evidence awaiting review; it is never described as verified", async () => {
+  it("a screenshot completes the registration straight away; nobody has to verify it", async () => {
     const id = await externalDrive(); const s = await student(); await begin(s, id);
     await submit(s, id);
     expect(await regOf(s, id)).toMatchObject({ status: "REGISTERED", evidence_status: "SUBMITTED_PENDING_REVIEW" });
     expect((await run(w.A.officer, sql`SELECT * FROM registrations.list_for_drive(${id}::uuid)`)).rows).toHaveLength(1);
-    const notes = await inspect<{ title: string }>("SELECT title FROM notifications WHERE user_id = $1 AND title = 'Screenshot submitted'", [s.userId]); expect(notes).toHaveLength(1);
+    const notes = await inspect<{ title: string }>("SELECT title FROM notifications WHERE user_id = $1 AND title = 'You are registered'", [s.userId]); expect(notes).toHaveLength(1);
   });
   it("a screenshot is refused without a started registration, for a key that is not the student's own, or a type that is not an image", async () => {
     const id = await externalDrive(); const s = await student(); const other = await student();
@@ -96,9 +96,10 @@ describe("the student's path", () => {
     expect(await code(submit(s, id, undefined, "application/pdf"))).toBe("22023");
     expect((await regOf(s, id)).status).toBe("PENDING_EXTERNAL");
   });
-  it("a second screenshot is refused while the first awaits review; other students and colleges cannot upload for this registration", async () => {
+  it("the student may replace the screenshot (the old version is kept); other students and colleges cannot upload for this registration", async () => {
     const id = await externalDrive(); const s = await student(); await begin(s, id); await submit(s, id);
-    expect(await code(submit(s, id))).toBe("22023");
+    expect(await code(submit(s, id))).toBe("OK");
+    expect((await inspect<{ version: number; status: string }>("SELECT version, status FROM registration_evidence WHERE drive_id = $1 ORDER BY version", [id])).map((r) => [r.version, r.status])).toEqual([[1, "SUPERSEDED"], [2, "SUBMITTED_PENDING_REVIEW"]]);
     const other = await student(); expect(await code(submit(other, id))).toBe("22023");
     expect(await code(submit(w.B.student, id))).toBe("22023");
   });

@@ -10,16 +10,15 @@ import { requireRole } from "@/server/auth/session";
 import { companyStats } from "@/server/companies/queries";
 import { closingSoon, driveStats, openDriveRegistrations } from "@/server/drives/queries";
 import { funnel, listPlacements, unissuedCount } from "@/server/offers/queries";
-import { evidenceInbox, recentRegistrations, registrationsPerDay } from "@/server/registrations/queries";
+import { recentRegistrations, registrationsPerDay } from "@/server/registrations/queries";
 
 export const metadata = { title: "Placement overview — CampusConnect" };
 
 export default async function PlacementHome() {
   const s = await requireRole("PLACEMENT_OFFICER");
-  const [c, ds, soon, f, pending, unissued, open, shots, perDay, recent] = await Promise.all([companyStats(s), driveStats(s), closingSoon(s), funnel(s), listPlacements(s, "PENDING_VERIFICATION"), unissuedCount(s), openDriveRegistrations(s), evidenceInbox(s, true), registrationsPerDay(s), recentRegistrations(s, 5)]);
+  const [c, ds, soon, f, pending, unissued, open, perDay, recent] = await Promise.all([companyStats(s), driveStats(s), closingSoon(s), funnel(s), listPlacements(s, "PENDING_VERIFICATION"), unissuedCount(s), openDriveRegistrations(s), registrationsPerDay(s), recentRegistrations(s, 5)]);
   const todo: { text: string; href: string }[] = [];
   if (pending.length > 0) todo.push({ text: `${pending.length} joining record(s) are waiting for your verification.`, href: "/placement/placements" });
-  if (shots.length > 0) todo.push({ text: `${shots.length} registration screenshot${shots.length === 1 ? "" : "s"} waiting for review.`, href: "/placement/evidence" });
   if (unissued > 0) todo.push({ text: `${unissued} selected student(s) have no offer issued yet.`, href: "/placement/placements#manage-offers" });
   for (const d of soon) todo.push({ text: `“${d.job_title}” (${d.company_name}) closes for registration ${fmtDateTime(d.application_deadline)}.`, href: `/placement/drives/${d.id}/participation` });
   const today = new Date().toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Kolkata" });
@@ -71,7 +70,6 @@ export default async function PlacementHome() {
         </DashCard>
         <DashCard title="Needs attention" icon="alert" id="attn" tone="attention">
           <AttentionTiles items={[
-            { label: "Screenshots to review", value: shots.length, href: "/placement/evidence", icon: "upload" },
             { label: "Joinings to verify", value: pending.length, href: "/placement/placements#awaiting-verification", icon: "shield" },
             { label: "Selected without an offer", value: unissued, href: "/placement/placements#manage-offers", icon: "file" }]} />
         </DashCard>

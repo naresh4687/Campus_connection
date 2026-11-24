@@ -8,11 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import type { Portal } from "@/lib/portals";
 
-export function LoginForm({ portal }: { portal: Portal }) {
+export function LoginForm({ portal, next }: { portal: Portal; next?: string }) {
   const [state, action, pending] = useActionState(loginAction, undefined);
   return (
     <form action={action} className="space-y-4">
       <input type="hidden" name="portal" value={portal} />
+      {next ? <input type="hidden" name="next" value={next} /> : null}
       {state?.error ? (
         <Alert kind="error">
           {state.error}

@@ -37,6 +37,7 @@ test.describe.serial("academic records and verification", () => {
     await admin.goto("/college/departments");
     await admin.getByLabel("Department name").fill("Security Studies");
     await admin.getByLabel("Code").fill("SEC");
+    await admin.getByLabel("Degree").selectOption("B.E.");
     await admin.getByRole("button", { name: "Add department" }).click();
     await expect(admin.getByText("Department SEC created.")).toBeVisible();
 

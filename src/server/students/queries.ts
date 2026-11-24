@@ -65,6 +65,7 @@ export type StudentDetail = {
   id: string; department_id: string; dept_code: string; dept_name: string; register_number: string; full_name: string; college_email: string; personal_email: string | null; phone: string | null;
   degree: string; specialization: string | null; admission_year: number; passing_year: number; has_account: boolean; created_at: Date; updated_at: Date; import_id: string | null;
   user_id: string | null; user_status: string | null; last_login_at: Date | null; invite_expires: Date | null; career_preference: string;
+  github_url: string | null; leetcode_url: string | null; linkedin_url: string | null;
 };
 
 export async function getStudent(s: SessionUser, id: string) {
@@ -72,7 +73,7 @@ export async function getStudent(s: SessionUser, id: string) {
     (await sql<StudentDetail>`
       SELECT st.id, st.department_id, d.code::text AS dept_code, d.name::text AS dept_name, st.register_number::text AS register_number, st.full_name, st.college_email::text AS college_email,
              st.personal_email::text AS personal_email, st.phone, st.degree, st.specialization, st.admission_year, st.passing_year, st.user_id IS NOT NULL AS has_account,
-             st.created_at, st.updated_at, st.import_id, st.user_id, u.status AS user_status, u.last_login_at, st.career_preference,
+             st.created_at, st.updated_at, st.import_id, st.user_id, u.status AS user_status, u.last_login_at, st.career_preference, st.github_url, st.leetcode_url, st.linkedin_url,
              (SELECT max(i.expires_at) FROM invitations i WHERE i.student_id = st.id AND i.accepted_at IS NULL AND i.revoked_at IS NULL AND i.expires_at > now()) AS invite_expires
       FROM students st JOIN departments d ON d.id = st.department_id LEFT JOIN users u ON u.id = st.user_id WHERE st.id = ${id}`.execute(t)).rows[0] ?? null,
   );
@@ -87,7 +88,7 @@ export async function myStudentRecord(s: SessionUser) {
     (await sql<StudentDetail>`
       SELECT st.id, st.department_id, d.code::text AS dept_code, d.name::text AS dept_name, st.register_number::text AS register_number, st.full_name, st.college_email::text AS college_email,
              st.personal_email::text AS personal_email, st.phone, st.degree, st.specialization, st.admission_year, st.passing_year, true AS has_account, st.created_at, st.updated_at, st.import_id,
-             NULL::uuid AS user_id, NULL::text AS user_status, NULL::timestamptz AS last_login_at, NULL::timestamptz AS invite_expires, st.career_preference
+             NULL::uuid AS user_id, NULL::text AS user_status, NULL::timestamptz AS last_login_at, NULL::timestamptz AS invite_expires, st.career_preference, st.github_url, st.leetcode_url, st.linkedin_url
       FROM students st JOIN departments d ON d.id = st.department_id`.execute(t)).rows[0] ?? null,
   );
 }

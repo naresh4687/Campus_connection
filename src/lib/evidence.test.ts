@@ -29,8 +29,8 @@ describe("what the student sees", () => {
   it("keeps CampusConnect registration and external verification apart", () => {
     expect(registrationView({ status: "REGISTERED", method: "INTERNAL" }).label).toBe("Registered");
     expect(registrationView({ status: "PENDING_EXTERNAL", method: "EXTERNAL", evidence_status: "NOT_SUBMITTED" }).label).toBe("External registration pending");
-    expect(registrationView({ status: "REGISTERED", method: "EXTERNAL", evidence_status: "SUBMITTED_PENDING_REVIEW" }).label).toBe("Registered — evidence pending review");
-    expect(registrationView({ status: "REGISTERED", method: "EXTERNAL", evidence_status: "VERIFIED" }).label).toBe("Registered — evidence verified");
+    expect(registrationView({ status: "REGISTERED", method: "EXTERNAL", evidence_status: "SUBMITTED_PENDING_REVIEW" }).label).toBe("Registered");             // the screenshot is proof on file, not something staff review
+    expect(registrationView({ status: "REGISTERED", method: "EXTERNAL", evidence_status: "VERIFIED" }).label).toBe("Registered");
     for (const e of ["REJECTED", "RESUBMISSION_REQUIRED"]) expect(registrationView({ status: "REGISTERED", method: "EXTERNAL", evidence_status: e }).next).toBeTruthy();
     expect(registrationView({ status: "WITHDRAWN", method: "EXTERNAL", evidence_status: "VERIFIED" }).label).toBe("Not registered");
   });
