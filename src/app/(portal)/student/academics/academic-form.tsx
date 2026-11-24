@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { submitAcademicsAction } from "@/server/academics/actions";
+import { MAX_SEMESTERS } from "@/lib/academics";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
@@ -31,11 +32,11 @@ export function AcademicForm({ initial, updating, evidence }: { initial: Academi
         <Field id="backlogs" label="Active backlogs" inputMode="numeric" required defaultValue={v.backlogs} error={e.backlogs} hint="Type 0 if you have none." />
         <Field id="arrears" label="Historical arrears" inputMode="numeric" required defaultValue={v.arrears} error={e.arrears} hint="Total arrears you have had in the past, including cleared ones. Type 0 if none." />
       </div>
-      <details className="rounded-xl border border-border p-4" open={Array.from({ length: 12 }, (_, i) => v[`sem${i + 1}_sgpa`]).some(Boolean)}>
+      <details className="rounded-xl border border-border p-4" open={Array.from({ length: MAX_SEMESTERS }, (_, i) => v[`sem${i + 1}_sgpa`]).some(Boolean)}>
         <summary className="cursor-pointer text-sm font-medium">Semester-wise results (optional)</summary>
         <p className="mt-2 text-xs text-muted">Add the semesters you have completed. Leave the rest blank. Your overall CGPA above is not calculated from these; a large gap only triggers a reminder to check both.</p>
         <div className="mt-3 grid gap-3 @xl:grid-cols-2">
-          {Array.from({ length: 12 }, (_, i) => i + 1).map((n) => (
+          {Array.from({ length: MAX_SEMESTERS }, (_, i) => i + 1).map((n) => (
             <div key={n} className="grid grid-cols-2 gap-2">
               <Field id={`sem${n}_sgpa`} label={`Semester ${n} SGPA`} inputMode="decimal" defaultValue={v[`sem${n}_sgpa`] ?? ""} error={e[`sem${n}_sgpa`]} />
               <Field id={`sem${n}_backlogs`} label="Backlogs" inputMode="numeric" defaultValue={v[`sem${n}_backlogs`] ?? ""} error={e[`sem${n}_backlogs`]} hint="Blank = 0" />

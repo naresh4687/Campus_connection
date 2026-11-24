@@ -39,12 +39,13 @@ export const fmtCgpa = (v: string | number) => Number(v).toFixed(2);
 
 export const SUBMISSION_LABEL: Record<string, string> = { SUBMITTED: "Awaiting review", VERIFIED: "Verified", REJECTED: "Rejected", SUPERSEDED: "Superseded", WITHDRAWN: "Withdrawn" };
 
-export const MAX_SEMESTERS = 12;
+/** The college offers 8-semester programmes; the form and the parser accept semesters 1 to 8. (The database still allows up to 12, so nothing already saved is lost.) */
+export const MAX_SEMESTERS = 8;
 /** SGPA average vs stated CGPA: beyond this gap the reviewer and student see a (non-blocking) note. The CGPA is never computed from semesters. */
 export const CGPA_GAP_WARNING = 0.5;
 
 /**
- * Optional semester results from form fields `sem<n>_sgpa` / `sem<n>_backlogs` (n = 1..12). A semester counts only when its SGPA is typed;
+ * Optional semester results from form fields `sem<n>_sgpa` / `sem<n>_backlogs` (n = 1..8). A semester counts only when its SGPA is typed;
  * typing backlogs without an SGPA is an error. Text is validated before conversion, like the rest of the form (no rounding, no 0 by default).
  */
 export function parseSemesters(get: (key: string) => string): { rows: { semester: number; sgpa: number; backlogs: number }[]; errors: Record<string, string> } {

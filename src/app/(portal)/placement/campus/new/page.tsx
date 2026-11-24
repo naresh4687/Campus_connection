@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireRole } from "@/server/auth/session";
 import { postedDrives } from "@/server/campus/queries";
+import { yearOptions } from "@/lib/drives";
 import { driveFormOptions } from "@/server/drives/queries";
 import { CampusForm } from "./campus-form";
 
@@ -13,7 +14,7 @@ export default async function NewCampusEvent() {
     <div className="space-y-6">
       <p className="text-sm"><Link href="/placement/campus" className="underline">← On-campus drives</Link></p>
       <h1 className="text-2xl font-semibold tracking-tight">Create an on-campus drive</h1>
-      <CampusForm drives={drives} departments={departments} />
+      <CampusForm drives={drives} departments={departments} years={yearOptions()} />
     </div>
   );
 }
