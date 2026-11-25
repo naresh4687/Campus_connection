@@ -5,12 +5,12 @@
 import { pct } from "./reports";
 
 export type PoolRow = {
-  student_id: string; full_name: string; register_number: string; department_id: string; department_code: string; degree: string; passing_year: number; college_email: string;
+  student_id: string; full_name: string; register_number: string; department_id: string; department_code: string; degree: string; passing_year: number; contact_email: string | null;
   phone: string | null; cgpa: string | null; github_url: string | null; leetcode_url: string | null; linkedin_url: string | null;
   registered: number; selected: number; offers_accepted: number; placed: boolean; campus_attended: number;
 };
 export type PlacementRow = {
-  student_id: string; full_name: string; register_number: string; department_code: string; degree: string; passing_year: number; college_email: string; phone: string | null; cgpa: string | null;
+  student_id: string; full_name: string; register_number: string; department_code: string; degree: string; passing_year: number; contact_email: string | null; phone: string | null; cgpa: string | null;
   company_id: string; company_name: string; job_title: string | null; drive_id: string | null; ctc_lpa: string | null; placed_on: string; source: "PLATFORM" | "MANUAL";
   github_url: string | null; leetcode_url: string | null; linkedin_url: string | null;
 };

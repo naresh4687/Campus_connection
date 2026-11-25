@@ -104,7 +104,7 @@ function Placed({ rows }: { rows: PlacementRow[] }) {
           <tr key={`${p.student_id}-${i}`}>
             <Td className="font-medium">{p.full_name}<span className="block text-xs text-muted">Batch {p.passing_year}</span></Td><Td>{p.register_number}</Td><Td>{p.department_code}</Td><Td>{p.degree}</Td><Td>{p.cgpa ?? "—"}</Td>
             <Td>{p.company_name}{p.source === "MANUAL" ? <span className="block text-xs text-muted">Recorded by staff</span> : null}</Td><Td>{p.job_title ?? "—"}</Td><Td>{p.ctc_lpa ? lpa(p.ctc_lpa) : "—"}</Td><Td>{fmtDate(p.placed_on)}</Td>
-            <Td><span className="break-all">{p.college_email}</span>{p.phone ? <span className="block text-xs text-muted">{p.phone}</span> : null}</Td>
+            <Td><span className="break-all">{p.contact_email ?? "Personal email not added"}</span>{p.phone ? <span className="block text-xs text-muted">{p.phone}</span> : null}</Td>
             <Td><ProfileLinks st={p} empty="—" /></Td>
           </tr>))}
       </Table>
@@ -120,7 +120,7 @@ function Unplaced({ rows, total }: { rows: PoolRow[]; total: number }) {
           <tr key={p.student_id}>
             <Td className="font-medium">{p.full_name}<span className="block text-xs text-muted">Batch {p.passing_year}</span></Td><Td>{p.register_number}</Td><Td>{p.department_code}</Td><Td>{p.degree}</Td><Td>{p.cgpa ?? "—"}</Td>
             <Td>{p.registered}</Td><Td>{p.selected}</Td><Td>{p.offers_accepted}</Td><Td>{p.campus_attended}</Td>
-            <Td><span className="break-all">{p.college_email}</span>{p.phone ? <span className="block text-xs text-muted">{p.phone}</span> : null}</Td>
+            <Td><span className="break-all">{p.contact_email ?? "Personal email not added"}</span>{p.phone ? <span className="block text-xs text-muted">{p.phone}</span> : null}</Td>
             <Td><ProfileLinks st={p} empty="—" /></Td>
           </tr>))}
       </Table>

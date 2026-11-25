@@ -3,6 +3,7 @@ import { Alert } from "@/components/ui/alert";
 import { Card } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { fmtDateTime } from "@/lib/format";
+import { mfaSwitchedOn } from "@/server/auth/mfa";
 import { requireSession } from "@/server/auth/session";
 import { myPasswordRequest, pendingRequests } from "@/server/auth/password-requests-queries";
 import { PasswordForm } from "./password-form";
@@ -34,6 +35,12 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
             {!req || ["DENIED", "EXPIRED", "USED"].includes(req.status) ? <RequestPasswordButton /> : null}
           </div>)}
       </Card>
+      {mfaSwitchedOn() ? (
+        <Card title="Two-step sign-in">
+          <p className="mb-3 text-sm text-muted">After your password, also enter a code from your phone.</p>
+          <Link href={`/security?as=${session.slot}`} className="text-sm font-semibold underline">Manage two-step sign-in</Link>
+        </Card>
+      ) : null}
     </div>
   );
 }

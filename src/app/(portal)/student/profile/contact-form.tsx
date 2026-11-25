@@ -15,7 +15,7 @@ export function ContactForm({ phone, personalEmail }: { phone: string; personalE
       {state?.error ? <Alert kind="error">{state.error}</Alert> : null}
       {state?.ok ? <Alert kind="success">{state.ok}</Alert> : null}
       <Field id="phone" label="Phone" type="tel" defaultValue={v.phone} error={e.phone} />
-      <Field id="personalEmail" label="Personal email" type="email" defaultValue={v.personalEmail} error={e.personalEmail} hint="Optional. Your college email is used to sign in." />
+      <Field id="personalEmail" label="Personal email" type="email" required defaultValue={v.personalEmail} error={e.personalEmail} hint="Placement drives and downloaded lists use this address. Your college email is only for signing in." />
       <Button type="submit" disabled={pending}>{pending ? "Saving…" : "Save contact details"}</Button>
     </form>
   );

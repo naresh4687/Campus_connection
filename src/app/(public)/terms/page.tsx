@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Alert } from "@/components/ui/alert";
+import { OperatorDetails } from "@/components/operator-details";
 
 export const metadata = { title: "Terms of service — CampusConnect" };
 
@@ -27,8 +28,12 @@ export default function TermsPage() {
       <h2 className="border-t border-border pt-6 text-xl font-semibold">Suspension</h2>
       <p>The platform team may suspend a college&apos;s access, with a recorded reason, for example for security or contractual reasons. Suspended colleges&apos; data is retained and access can be restored.</p>
 
+      <h2 className="border-t border-border pt-6 text-xl font-semibold">Students under 18</h2>
+      <p>Colleges must obtain a parent or guardian’s consent before creating an account for a student under 18.</p>
+
       <h2 className="border-t border-border pt-6 text-xl font-semibold">Contact</h2>
       <p>Questions about these terms: use the <Link href="/contact" className="underline">contact form</Link>.</p>
+      <OperatorDetails />
     </main>
   );
 }

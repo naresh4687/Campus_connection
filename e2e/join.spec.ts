@@ -18,7 +18,7 @@ test.describe.serial("college sign-up link, approval, separate sign-in pages", (
   const fill = async (p: Page, o: Record<string, string>) => {
     await p.getByLabel("Full name").fill(o.name); await p.getByLabel("Register number").fill(o.reg);
     await p.getByLabel("Department").selectOption(o.dept);
-    await p.getByLabel("College email").fill(o.email); await p.getByLabel("Mobile number").fill(o.phone ?? "+91 98765 43210");
+    await p.getByLabel("College email").fill(o.email); await p.getByLabel("Personal email").fill(`personal.${o.email}`); await p.getByLabel("Mobile number").fill(o.phone ?? "+91 98765 43210");
     await p.getByLabel("Degree").selectOption("B.E."); await p.getByLabel("Year you joined").selectOption(String(new Date().getFullYear() - 3)); await p.getByLabel("Year you finish").selectOption(String(new Date().getFullYear() + 1));
     await p.getByLabel("Choose a password", { exact: true }).fill(o.pw ?? "Join-Pass-12345"); await p.getByLabel("Confirm password").fill(o.pw ?? "Join-Pass-12345");
   };
@@ -73,7 +73,7 @@ test.describe.serial("college sign-up link, approval, separate sign-in pages", (
     expect(options.some((o) => o.includes(hiddenName))).toBe(false);                     // deactivated department: not offered
     await expect(p.getByLabel("College email")).toBeVisible(); await expect(p.getByLabel("Mobile number")).toBeVisible();
     await p.getByRole("button", { name: "Request my account" }).click();
-    for (const f of ["fullName", "registerNumber", "departmentId", "collegeEmail", "phone", "degree", "admissionYear", "passingYear", "password"]) await expect(p.locator(`#${f}-error`), f).toBeVisible();
+    for (const f of ["fullName", "registerNumber", "departmentId", "collegeEmail", "personalEmail", "phone", "degree", "admissionYear", "passingYear", "password"]) await expect(p.locator(`#${f}-error`), f).toBeVisible();
     const a11y = await new AxeBuilder({ page: p }).withTags(TAGS).analyze();
     expect(a11y.violations.map((v) => v.id)).toEqual([]);
   });

@@ -64,7 +64,7 @@ export async function ParticipationView({ role, id, sp }: { role: Role; id: stri
           {rows.map((r) => (
             <tr key={r.student_id}>
               <Td>{r.register_number}</Td><Td>{r.full_name}{r.has_account ? null : <span className="block text-xs text-muted">No account yet</span>}</Td><Td>{r.department_code}</Td>
-              <Td><span className="break-all">{r.college_email}</span>{r.phone ? <span className="block text-xs text-muted">{r.phone}</span> : null}</Td>
+              <Td><span className="break-all">{r.contact_email ?? "Personal email not added"}</span>{r.phone ? <span className="block text-xs text-muted">{r.phone}</span> : null}</Td>
               <Td>{ELIGIBILITY_TEXT[r.eligibility] ?? r.eligibility}</Td><Td>{registrationText(r)}</Td>
               {anyExternal ? <Td>{evidence.has(r.student_id) ? <StudentEvidence e={evidence.get(r.student_id)} /> : <span className="text-muted">—</span>}</Td> : null}
             </tr>))}

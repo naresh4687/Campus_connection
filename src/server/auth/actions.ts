@@ -1,6 +1,7 @@
 "use server";
 
 import { sql } from "kysely";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db, withTenantTx } from "../db";
@@ -8,7 +9,10 @@ import { contextOf, currentTokenHash, endSession, HOME_PATH, requireSession, sta
 import { allow, allowIp } from "./rate-limit";
 import { assertSameOrigin, clientIpHash } from "./request";
 import { dummyHash, hashPassword, newPasswordSchema, verifyPassword } from "./password";
-import { hashToken, isWellFormedToken } from "./tokens";
+import { hashToken, isWellFormedToken, newToken } from "./tokens";
+import { mfaEnabled } from "./mfa";
+import { mfaCookieName } from "./mfa-cookie";
+import { config } from "../config";
 import { isPortal, LOGIN_PATH, loginPathForRole, portalOfRole, safeNextPath, slotOfRole, type Portal } from "@/lib/portals";
 
 /**
@@ -72,6 +76,13 @@ export async function loginAction(_prev: FormState, formData: FormData): Promise
 
   const slot = slotOfRole(user.role);
   if (!slot) return { error: GENERIC_LOGIN_ERROR, values };
+  // Two-step sign-in: no session yet, only a five-minute challenge that the code page can finish.
+  if (await mfaEnabled(user.id)) {
+    const challenge = newToken();
+    await sql`SELECT auth.mfa_begin_challenge(${user.id}::uuid, ${hashToken(challenge)})`.execute(db());
+    (await cookies()).set(mfaCookieName(), challenge, { httpOnly: true, secure: config().AUTH_COOKIE_SECURE, sameSite: "lax", path: "/", maxAge: 300 });
+    redirect("/login/verify");
+  }
   await startSession(user.id, slot);   // this role's own cookie: other roles signed in in this browser are untouched
   await logEvent(user.id, "LOGIN_SUCCEEDED");
   const next = slot === "student" ? safeNextPath(formData.get("next")) : null;   // e.g. an attendance link the student opened while signed out

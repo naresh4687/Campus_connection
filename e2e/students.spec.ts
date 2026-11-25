@@ -10,11 +10,11 @@ const TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"];
 const studentPassword = "Student-Passw0rd!-One";
 const coordPassword = "Coord-Passw0rd!-Roster";
 
-const HEADERS = "Reg No,Student Name,Email,Mobile,Branch,Course,Year of Admission,Year of Passing,Specialization";
+const HEADERS = "Reg No,Student Name,Email,Personal Email,Mobile,Branch,Course,Year of Admission,Year of Passing,Specialization";
 const row = (n: number, over: Partial<Record<"reg" | "name" | "email" | "dept" | "degree" | "adm" | "pass", string>> = {}) => {
   const i = String(n).padStart(2, "0");
   const q = (v: string) => (/[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);   // proper CSV quoting for the test data
-  return [over.reg ?? `IMP${String(n).padStart(3, "0")}`, q(over.name ?? `Import Student ${i}`), over.email ?? `imp${i}@students.e2e.test`, "9876500000", over.dept ?? (n % 2 ? "STU" : "Students Test Dept"),
+  return [over.reg ?? `IMP${String(n).padStart(3, "0")}`, q(over.name ?? `Import Student ${i}`), over.email ?? `imp${i}@students.e2e.test`, `imp${i}.personal@example.test`, "9876500000", over.dept ?? (n % 2 ? "STU" : "Students Test Dept"),
           over.degree ?? ["BE", "B.Tech", "b.e."][n % 3], over.adm ?? "2022", over.pass ?? "2026", "AI"].join(",");
 };
 const csv = (rows: string[]) => Buffer.from([HEADERS, ...rows].join("\n"), "utf8");
@@ -80,11 +80,13 @@ test.describe.serial("student management", () => {
     await admin.getByRole("button", { name: "Add student" }).click();
     await settle(admin);
     await expect(admin.locator("#collegeEmail-error")).toBeVisible();
+    await expect(admin.locator("#personalEmail-error")).toBeVisible();                 // required
     await expect(admin.locator("#passingYear-error")).toBeVisible();
     await expect(admin.getByLabel("Full name")).toHaveValue("Existing Original");     // kept
     await expect(admin.getByLabel("Department")).toHaveValue(/.+/);                    // kept
 
     await admin.getByLabel("College email").fill("exist001@students.e2e.test");
+    await admin.getByLabel("Personal email").fill("exist001.personal@example.test");
     await admin.getByLabel("Passing year").selectOption("2026");
     await admin.getByRole("button", { name: "Add student" }).click();
     await admin.waitForURL(/\/college\/students\/[0-9a-f-]{36}\?created=1$/);
@@ -94,7 +96,7 @@ test.describe.serial("student management", () => {
 
     await admin.goto("/college/students/new");   // duplicates
     const fill = async (reg: string, email: string) => {
-      await admin.getByLabel("Register number").fill(reg); await admin.getByLabel("Full name").fill("Dup Person"); await admin.getByLabel("College email").fill(email);
+      await admin.getByLabel("Register number").fill(reg); await admin.getByLabel("Full name").fill("Dup Person"); await admin.getByLabel("College email").fill(email); await admin.getByLabel("Personal email").fill("dup.personal@example.test");
       await admin.getByLabel("Department").selectOption({ label: "STU — Students Test Dept" }); await admin.getByLabel("Degree / course").selectOption("B.E.");
       await admin.getByLabel("Admission year").selectOption("2022"); await admin.getByLabel("Passing year").selectOption("2026");
       await admin.getByRole("button", { name: "Add student" }).click(); await settle(admin);
@@ -167,7 +169,7 @@ test.describe.serial("student management", () => {
     await expect(student.getByLabel("Phone")).toHaveValue("+91 90000 11111");
     await admin.goto(existingUrl);
     await expect(admin.getByLabel("Phone (optional)")).toHaveValue("+91 90000 11111");
-    await expect(admin.getByLabel("Personal email (optional)")).toHaveValue("exist.personal@example.test");
+    await expect(admin.getByLabel("Personal email")).toHaveValue("exist.personal@example.test");
   });
 
   test("a student cannot open college or coordinator pages", async () => {
@@ -220,8 +222,8 @@ test.describe.serial("student management", () => {
     await expect(admin.locator("#map_register_number")).toHaveValue("0");
     await expect(admin.locator("#map_full_name")).toHaveValue("1");
     await expect(admin.locator("#map_college_email")).toHaveValue("2");
-    await expect(admin.locator("#map_department")).toHaveValue("4");
-    await expect(admin.locator("#map_personal_email")).toHaveValue("");
+    await expect(admin.locator("#map_department")).toHaveValue("5");
+    await expect(admin.locator("#map_personal_email")).toHaveValue("3");
 
     // a bad mapping is refused with a clear message
     await admin.locator("#map_full_name").selectOption("0");
@@ -231,7 +233,7 @@ test.describe.serial("student management", () => {
     await admin.locator("#map_department").selectOption("");
     await admin.getByRole("button", { name: "Check the file" }).click();
     await expect(formAlert(admin)).toContainText("Department");
-    await admin.locator("#map_department").selectOption("4");
+    await admin.locator("#map_department").selectOption("5");
     await admin.getByRole("button", { name: "Check the file" }).click();
 
     await expect(admin.getByText("Review before importing")).toBeVisible();
@@ -464,6 +466,7 @@ test.describe.serial("student management", () => {
     await expect(reg).toHaveValue("23AI-C9Z");                                    // shown in capitals while typing
     await admin.getByLabel("Full name").fill("Asha de Souza");
     await admin.getByLabel("College email").fill("Norm.CASE@Students.E2E.test");
+    await admin.getByLabel("Personal email").fill("asha.personal@example.test");
     await admin.getByLabel("Department").selectOption({ label: "STU — Students Test Dept" }); await admin.getByLabel("Degree / course").selectOption("B.E.");
     await admin.getByLabel("Admission year").selectOption("2022"); await admin.getByLabel("Passing year").selectOption("2026");
     await admin.getByRole("button", { name: "Add student" }).click(); await settle(admin);

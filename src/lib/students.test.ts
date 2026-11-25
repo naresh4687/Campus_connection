@@ -6,7 +6,7 @@ const enc = (s: string) => new TextEncoder().encode(s);
 const depts = buildDeptLookup([{ id: "d1", code: "CSE", name: "Computer Science and Engineering", status: "ACTIVE" }, { id: "d2", code: "OLD", name: "Old Dept", status: "INACTIVE" }]);
 const ctx = (over: Partial<ImportContext> = {}): ImportContext => ({ depts, existingRegisters: new Set(), existingEmails: new Set(), ...over });
 const mapping: Mapping = { register_number: 0, full_name: 1, college_email: 2, personal_email: 3, phone: 4, department: 5, degree: 6, specialization: 7, admission_year: 8, passing_year: 9 };
-const good = ["CS2201", "Asha Rao", "Asha@College.edu", "", "9876543210", "cse", "BE", "AI", "2022", "2026"];
+const good = ["CS2201", "Asha Rao", "Asha@College.edu", "Asha@Mail.test", "9876543210", "cse", "BE", "AI", "2022", "2026"];
 
 describe("csvCell (formula injection)", () => {
   it.each([["=1+1", "'=1+1"], ["+cmd|' /C calc'!A0", "'+cmd|' /C calc'!A0"], ["-2+3", "'-2+3"], ["@SUM(A1)", "'@SUM(A1)"], ["\tTAB", "'\tTAB"], ["\rCR", "\"'\rCR\""]])("neutralises %j", (input, expected) => {
@@ -72,7 +72,8 @@ describe("header auto-mapping", () => {
     expect(mappingProblem({ ...mapping, full_name: 0 }, 10)).toMatch(/same column/);
     expect(mappingProblem({ ...mapping, phone: 99 }, 10)).toMatch(/does not exist/);
     expect(mappingProblem(mapping, 10)).toBeNull();
-    expect(mappingProblem({ ...mapping, personal_email: null, phone: null, specialization: null }, 10)).toBeNull();
+    expect(mappingProblem({ ...mapping, phone: null, specialization: null }, 10)).toBeNull();
+    expect(mappingProblem({ ...mapping, personal_email: null }, 10)).toMatch(/Personal email/);
   });
 });
 
@@ -80,7 +81,7 @@ describe("validateRows", () => {
   it("accepts a good row and normalises it", () => {
     const [r] = validateRows([good], mapping, ctx());
     expect(r.status).toBe("VALID");
-    expect(r.normalized).toMatchObject({ register_number: "CS2201", college_email: "asha@college.edu", degree: "B.E.", department_id: "d1", admission_year: 2022, passing_year: 2026, personal_email: null, specialization: "AI" });
+    expect(r.normalized).toMatchObject({ register_number: "CS2201", college_email: "asha@college.edu", degree: "B.E.", department_id: "d1", admission_year: 2022, passing_year: 2026, personal_email: "asha@mail.test", specialization: "AI" });
   });
   it("matches departments by code or name, case-insensitively; rejects unknown and inactive ones", () => {
     const run = (dept: string) => validateRows([[...good.slice(0, 5), dept, ...good.slice(6)]], mapping, ctx())[0];
@@ -99,6 +100,10 @@ describe("validateRows", () => {
     expect(r.status).toBe("ERROR");
     expect(r.errors.length).toBeGreaterThan(0);
     expect(r.normalized).toBeNull();
+  });
+  it("requires a personal email", () => {
+    const row = [...good]; row[3] = "";
+    expect(validateRows([row], mapping, ctx())[0].errors).toContain("Personal email is missing.");
   });
   it("checks the year order and the 8-year limit", () => {
     const y = (a: string, p: string) => { const row = [...good]; row[8] = a; row[9] = p; return validateRows([row], mapping, ctx())[0]; };
@@ -135,19 +140,20 @@ describe("validateRows", () => {
 });
 
 describe("single-student form schema", () => {
-  const ok = { departmentId: "3f2b8c1e-5d4a-4e7b-9c1a-0b2d3e4f5a6b", registerNumber: "CS2201", fullName: "Asha Rao", collegeEmail: "A@B.test", degree: "B.E.", admissionYear: "2022", passingYear: "2026" };
+  const ok = { departmentId: "3f2b8c1e-5d4a-4e7b-9c1a-0b2d3e4f5a6b", registerNumber: "CS2201", fullName: "Asha Rao", collegeEmail: "A@B.test", personalEmail: "me@mail.test", degree: "B.E.", admissionYear: "2022", passingYear: "2026" };
   it("accepts a valid student and lower-cases the email; optional fields may be blank", () => {
-    const r = studentFormSchema.parse({ ...ok, personalEmail: "", phone: "", specialization: "" });
+    const r = studentFormSchema.parse({ ...ok, personalEmail: " me@mail.test ", phone: "", specialization: "" });
     expect(r.collegeEmail).toBe("a@b.test");
-    expect(r.personalEmail).toBeUndefined();
+    expect(r.personalEmail).toBe("me@mail.test");
+    for (const personalEmail of ["", undefined, "no"]) expect(studentFormSchema.safeParse({ ...ok, personalEmail }).success, String(personalEmail)).toBe(false);
   });
   it("rejects bad values", () => {
-    for (const over of [{ degree: "PhD" }, { passingYear: "2020" }, { registerNumber: "x" }, { collegeEmail: "no" }, { departmentId: "not-a-uuid" }, { phone: "abc" }]) expect(studentFormSchema.safeParse({ ...ok, ...over }).success, JSON.stringify(over)).toBe(false);
+    for (const over of [{ personalEmail: "" }, { degree: "PhD" }, { passingYear: "2020" }, { registerNumber: "x" }, { collegeEmail: "no" }, { departmentId: "not-a-uuid" }, { phone: "abc" }]) expect(studentFormSchema.safeParse({ ...ok, ...over }).success, JSON.stringify(over)).toBe(false);
   });
 });
 
 describe("register numbers are canonical", () => {
-  const row = (reg: string, email = "asha@college.edu") => [reg, "Asha Rao", email, "", "9876543210", "cse", "BE", "AI", "2022", "2026"];
+  const row = (reg: string, email = "asha@college.edu") => [reg, "Asha Rao", email, "asha@mail.test", "9876543210", "cse", "BE", "AI", "2022", "2026"];
   it("an imported 23ai000 is stored as 23AI000", () => {
     const r = validateRows([row("23ai000")], mapping, ctx())[0];
     expect(r.status).toBe("VALID"); expect(r.normalized!.register_number).toBe("23AI000");
@@ -161,7 +167,7 @@ describe("register numbers are canonical", () => {
     expect(r.map((x) => x.status)).toEqual(["VALID", "VALID"]);
   });
   it("the single-student form canonicalizes too", () => {
-    const f = studentFormSchema.safeParse({ departmentId: "00000000-0000-4000-8000-000000000001", registerNumber: " 23ai000 ", fullName: "Asha Rao", collegeEmail: "Asha@College.edu", degree: "B.E.", admissionYear: 2022, passingYear: 2026 });
+    const f = studentFormSchema.safeParse({ departmentId: "00000000-0000-4000-8000-000000000001", registerNumber: " 23ai000 ", fullName: "Asha Rao", collegeEmail: "Asha@College.edu", personalEmail: "asha@mail.test", degree: "B.E.", admissionYear: 2022, passingYear: 2026 });
     expect(f.success && f.data.registerNumber).toBe("23AI000");
   });
 });

@@ -64,6 +64,7 @@ test.describe("public website", () => {
     const missing = page.getByRole("list", { name: "Not included yet" });
     await expect(missing).toContainText("Email or SMS notifications");
     await expect(missing).toContainText("virus scanning");
+    await expect(missing).toContainText("Instant or automatic deletion");
     await expect(missing).toContainText("not yet been tried with a live AI provider");
   });
 

@@ -33,7 +33,7 @@ export default async function Applicants({ params }: { params: Promise<{ id: str
           {rows.map((r) => (
             <tr key={r.student_id}>
               <Td className="font-medium">{r.full_name}</Td><Td>{r.register_number}</Td><Td>{r.department_code}</Td>
-              <Td>{r.college_email}{r.phone ? <span className="block text-xs text-muted">{r.phone}</span> : null}</Td>
+              <Td>{r.contact_email ?? <span className="text-muted">Personal email not added</span>}{r.phone ? <span className="block text-xs text-muted">{r.phone}</span> : null}</Td>
               <Td>{r.cgpa ?? "—"}</Td><Td>{r.tenth ?? "—"}</Td><Td>{r.twelfth ?? r.diploma ?? "—"}</Td>
               <Td>{r.active_backlogs ?? "—"} / {r.historical_arrears ?? "—"}</Td><Td>{fmtDateTime(r.registered_at)}</Td><Td>{(() => { const v = registrationView({ status: "REGISTERED", method: r.method, evidence_status: r.evidence_status }); return r.method === "EXTERNAL" ? <StatusBadge value={v.tone} label={v.label} /> : "CampusConnect"; })()}</Td>
               <Td>{r.resume_id ? <a href={`/documents/${r.resume_id}/download`} className="underline">Open résumé</a> : <span className="text-muted">None uploaded</span>}</Td>

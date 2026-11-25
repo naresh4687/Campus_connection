@@ -29,13 +29,14 @@ export async function driveCounts(s: SessionUser, driveId: string) {
 }
 
 export type Applicant = {
-  student_id: string; full_name: string; register_number: string; department_code: string; degree: string; passing_year: number; college_email: string; phone: string | null;
+  student_id: string; full_name: string; register_number: string; department_code: string; degree: string; passing_year: number; contact_email: string | null; phone: string | null;
   cgpa: string | null; tenth: string | null; twelfth: string | null; diploma: string | null; active_backlogs: number | null; historical_arrears: number | null; registered_at: Date; resume_id: string | null; method?: string; evidence_status?: string | null;
   github_url?: string | null; leetcode_url?: string | null; linkedin_url?: string | null;
 };
 export async function applicants(s: SessionUser, driveId: string) {
   return withSession(s, async (t) => {
-    const rows = (await sql<Applicant>`SELECT * FROM registrations.list_for_drive(${driveId}::uuid)`.execute(t)).rows;
+    const rows = (await sql<Applicant & { college_email: string | null }>`SELECT * FROM registrations.list_for_drive(${driveId}::uuid)`.execute(t)).rows
+      .map(({ college_email, ...r }) => ({ ...r, contact_email: college_email }));   // the personal email (migration 0049)
     const how = new Map((await sql<{ student_id: string; method: string; evidence_status: string | null }>`SELECT student_id, method, evidence_status FROM registrations WHERE drive_id = ${driveId}::uuid`.execute(t)).rows.map((r) => [r.student_id, r]));
     const links = new Map((await sql<{ id: string; github_url: string | null; leetcode_url: string | null; linkedin_url: string | null }>`SELECT id, github_url, leetcode_url, linkedin_url FROM students WHERE id = ANY (${rows.map((r) => r.student_id)}::uuid[])`.execute(t)).rows.map((r) => [r.id, r]));
     return rows.map((r) => ({ ...r, method: how.get(r.student_id)?.method ?? "INTERNAL", evidence_status: how.get(r.student_id)?.evidence_status ?? null,
@@ -64,7 +65,8 @@ export const externalCounts = (s: SessionUser, driveId: string) => withSession(s
 
 /** Every student of the drive's departments the caller may see (a coordinator: their own), with the engine's eligibility result and the registration status. */
 export async function participation(s: SessionUser, driveId: string, dept: string | null) {
-  return withSession(s, async (t) => (await sql<PartRow>`SELECT * FROM registrations.participation(${driveId}::uuid, ${dept}::uuid)`.execute(t)).rows);
+  return withSession(s, async (t) => (await sql<PartRow & { college_email: string | null }>`SELECT * FROM registrations.participation(${driveId}::uuid, ${dept}::uuid)`.execute(t)).rows
+    .map(({ college_email, ...r }) => ({ ...r, contact_email: college_email })));   // the personal email (migration 0049)
 }
 export const logParticipationExport = (s: SessionUser, driveId: string, view: string, rows: number) =>
   withSession(s, (t) => sql`SELECT registrations.log_participation_export(${driveId}::uuid, ${view}, ${rows}::int)`.execute(t));

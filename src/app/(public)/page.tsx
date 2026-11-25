@@ -30,7 +30,7 @@ const TRUST = [
 const FAQ = [
   { q: "Is CampusConnect ready for my college?", a: "It is in early access. Colleges join by application, and the platform team reviews each one. The features page lists exactly what works today and what does not yet." },
   { q: "Does AI decide which students are eligible?", a: "No. Eligibility comes from a fixed rule engine and verified academic records. An optional assistant can help read a company announcement, and an officer checks every field before anything is saved." },
-  { q: "Will students and staff get emails?", a: "Not yet. Notifications appear inside CampusConnect, and your administrator shares invitation and reset links directly." },
+  { q: "Will students and staff get emails?", a: "Not yet. Notifications appear inside CampusConnect (and as browser push messages where switched on), and your administrator shares invitation and reset links directly." },
 ];
 
 // The hero illustration: an example drive, not real data.

@@ -50,6 +50,13 @@ export default async function globalSetup() {
   for (const k of ["pwaStudent", "pwaStudent2"]) users[k] = (await mk(adminP, "STUDENT", collegeP, k)).email;
   users.pwaOfficer = (await mk(adminP, "PLACEMENT_OFFICER", collegeP, "pwaOfficer")).email;
 
+  // Two-step sign-in and data deletion have a college of their own: one account enrols, another is erased.
+  const collegeM = await createCollege("Privacy Test College");
+  const adminM = await mk(pa, "COLLEGE_ADMIN", collegeM, "privacyAdmin");
+  users.privacyAdmin = adminM.email;
+  users.mfaStaff = (await mk(adminM, "PLACEMENT_OFFICER", collegeM, "mfaStaff")).email;
+  users.eraseStudent = (await mk(adminM, "STUDENT", collegeM, "eraseStudent")).email;
+
   // Registration scenarios live in their own department (REG) with their own coordinator, so earlier specs' fixtures are untouched.
   // regA: verified & strong, regB: verified & weak, regC: nothing verified.
   const regDept = (await withTenantTx(adminA, (t) => sql<{ id: string }>`SELECT college.create_department('Registration Studies', 'REG', null) AS id`.execute(t), appDb())).rows[0].id;
@@ -84,7 +91,7 @@ export default async function globalSetup() {
     users[key] = st.email;
     const [r] = await inspect<{ register_number: string; full_name: string; college_email: string; degree: string; admission_year: number; passing_year: number }>(
       "SELECT register_number::text AS register_number, full_name, college_email::text AS college_email, degree, admission_year, passing_year FROM students WHERE id = $1", [st.studentId]);
-    await withTenantTx(adminA, (t) => sql`SELECT students.update_student(${st.studentId}::uuid, ${regDept}::uuid, ${r.register_number}, ${r.full_name}, ${r.college_email}, null, null, ${r.degree}, null, ${r.admission_year}, ${r.passing_year})`.execute(t), appDb());
+    await withTenantTx(adminA, (t) => sql`SELECT students.update_student(${st.studentId}::uuid, ${regDept}::uuid, ${r.register_number}, ${r.full_name}, ${r.college_email}, ${`${key}.personal@e2e.test`}, null, ${r.degree}, null, ${r.admission_year}, ${r.passing_year})`.execute(t), appDb());
     if (key === "regC") continue;
     const id = (await withTenantTx(st, (t) => sql<{ id: string }>`SELECT academics.submit(${cgpa}::numeric, 80, 80, null, 0, 0, null) AS id`.execute(t), appDb())).rows[0].id;
     await withTenantTx(regCoord, (t) => sql`SELECT academics.verify(${id}::uuid, null)`.execute(t), appDb());
