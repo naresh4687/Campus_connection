@@ -14,6 +14,8 @@ import { AchievementList } from "@/components/students/achievement-list";
 import { fmtDateTime } from "@/lib/format";
 import { uuidSchema } from "@/lib/validation";
 import { requireRole } from "@/server/auth/session";
+import { MfaResetCard } from "@/components/mfa-reset-card";
+import { canResetMfa } from "@/server/auth/mfa-queries";
 import { issueResetLinkAction, setStaffStatusAction } from "@/server/college/actions";
 import { inviteStudentAction } from "@/server/students/actions";
 import { activeDepartments, getStudent, careerCategories, careerHistory, driveHistory } from "@/server/students/queries";
@@ -48,7 +50,9 @@ export default async function StudentPage({ params, searchParams }: { params: Pr
         <StatusBadge value={status} label={status === "NOT_INVITED" ? "Not invited" : undefined} />
       </div>
 
-      <Card title="Account">
+      {st.college_email.endsWith("@erased.invalid") ? <Alert kind="info">This student’s personal data was erased on request. The anonymous record is kept for placement figures.</Alert> : null}
+      {st.user_id && (await canResetMfa(s, st.user_id)) ? <MfaResetCard userId={st.user_id} /> : null}
+      {st.college_email.endsWith("@erased.invalid") ? null : <Card title="Account">
         <dl className="grid grid-cols-[10rem_1fr] gap-y-2 text-sm">
           <dt className="text-muted">Sign-in email</dt><dd>{st.college_email}</dd>
           <dt className="text-muted">Last sign-in</dt><dd>{st.has_account ? fmtDateTime(st.last_login_at) : "—"}</dd>
@@ -75,7 +79,7 @@ export default async function StudentPage({ params, searchParams }: { params: Pr
             </div>
           ) : null}
         </div>
-      </Card>
+      </Card>}
 
 
       <Card title="Career interest"><CareerPanel current={st.career_preference} categories={categories} history={history} /></Card>

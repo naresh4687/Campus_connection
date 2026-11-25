@@ -3,7 +3,7 @@ import { afterAll, describe, expect, it } from "vitest";
 import { closeAppDb, inspect } from "./world";
 
 // A standing audit of the real database catalog after all migrations: it fails when a future migration quietly widens what the runtime role can do.
-const APP_SCHEMAS = ["app", "auth", "platform", "college", "students", "academics", "achievements", "documents", "placement", "eligibility", "registrations", "rounds", "offers", "reports", "notifications", "announcements", "push", "campus"];
+const APP_SCHEMAS = ["app", "auth", "platform", "college", "students", "academics", "achievements", "documents", "placement", "eligibility", "registrations", "rounds", "offers", "reports", "notifications", "announcements", "push", "campus", "privacy"];
 const SNAPSHOT = "db/tests/snapshots/cc_app-executable-functions.txt";
 const list = (xs: unknown[]) => xs.map(String);
 afterAll(async () => { await closeAppDb(); });
@@ -33,7 +33,7 @@ describe("tables", () => {
       (has_table_privilege('cc_app', c.oid, 'SELECT') OR has_any_column_privilege('cc_app', c.oid, 'SELECT')) AS visible
       FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'public' AND c.relkind IN ('r', 'p') ORDER BY 1`);
     expect(list(t.filter((x) => !x.forced && x.visible).map((x) => x.name)), "readable without forced RLS").toEqual([]);
-    expect(list(t.filter((x) => !x.forced).map((x) => x.name)), "the deliberate internal tables").toEqual(["password_resets", "rate_limits", "schema_migrations", "sessions"]);
+    expect(list(t.filter((x) => !x.forced).map((x) => x.name)), "the deliberate internal tables").toEqual(["mfa_challenges", "mfa_recovery_codes", "password_resets", "rate_limits", "schema_migrations", "sessions", "user_mfa"]);
   });
   it("views read with the caller's rights (security_invoker), so they cannot bypass row-level security", async () => {
     const v = await inspect<{ name: string; opts: string[] | null }>("SELECT c.relname AS name, c.reloptions AS opts FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE c.relkind IN ('v', 'm') AND n.nspname NOT IN ('pg_catalog', 'information_schema')");

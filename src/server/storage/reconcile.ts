@@ -10,12 +10,12 @@ export async function loadDbRefs(ownerUrl: string): Promise<DbFileRef[]> {
     await c.query("BEGIN READ ONLY");
     await c.query("SET LOCAL ROLE cc_auth");
     const docs = await c.query<{ storage_key: string; status: string; purged_at: Date | null }>("SELECT storage_key, status, purged_at FROM documents");
-    const files = await c.query<{ storage_key: string }>("SELECT storage_key FROM selection_files");
+    const files = await c.query<{ storage_key: string; purged_at: Date | null }>("SELECT storage_key, purged_at FROM selection_files");
     const evidence = await c.query<{ storage_key: string; purged_at: Date | null }>("SELECT storage_key, purged_at FROM registration_evidence");
     await c.query("COMMIT");
     return [
       ...docs.rows.map((r): DbFileRef => ({ key: r.storage_key, state: r.status === "ACTIVE" ? "ACTIVE" : r.purged_at ? "PURGED" : "DELETED_PENDING_PURGE" })),
-      ...files.rows.map((r): DbFileRef => ({ key: r.storage_key, state: "ACTIVE" })),
+      ...files.rows.map((r): DbFileRef => ({ key: r.storage_key, state: r.purged_at ? "PURGED" : "ACTIVE" })),
       ...evidence.rows.map((r): DbFileRef => ({ key: r.storage_key, state: r.purged_at ? "PURGED" : "ACTIVE" })),
     ];
   } finally {

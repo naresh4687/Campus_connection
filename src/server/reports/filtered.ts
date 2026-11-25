@@ -5,9 +5,9 @@ import { withSession, type SessionUser } from "../auth/session";
 
 export type FilterOptions = { years: number[]; departments: { id: string; code: string; degree: string | null }[]; companies: { id: string; name: string }[] };
 
-const poolQ = (f: ReportFilters) => sql<PoolRow>`SELECT student_id, full_name, register_number, department_id, department_code, degree, passing_year, college_email, phone, cgpa::text AS cgpa, github_url, leetcode_url, linkedin_url,
+const poolQ = (f: ReportFilters) => sql<PoolRow>`SELECT student_id, full_name, register_number, department_id, department_code, degree, passing_year, college_email AS contact_email, phone, cgpa::text AS cgpa, github_url, leetcode_url, linkedin_url,
   registered, selected, offers_accepted, placed, campus_attended FROM reports.student_pool(${f.year}::int, ${f.dept}::uuid, ${f.degree})`;
-const placementsQ = (f: ReportFilters) => sql<PlacementRow>`SELECT student_id, full_name, register_number, department_code, degree, passing_year, college_email, phone, cgpa::text AS cgpa, company_id, company_name, job_title, drive_id,
+const placementsQ = (f: ReportFilters) => sql<PlacementRow>`SELECT student_id, full_name, register_number, department_code, degree, passing_year, college_email AS contact_email, phone, cgpa::text AS cgpa, company_id, company_name, job_title, drive_id,
   ctc_lpa::text AS ctc_lpa, placed_on::text AS placed_on, source, github_url, leetcode_url, linkedin_url FROM reports.placement_rows(${f.year}::int, ${f.dept}::uuid, ${f.degree}, ${f.company}::uuid, NULL::uuid, ${f.from}::date, ${f.to}::date)`;
 const funnelQ = (f: ReportFilters) => sql<FunnelRow>`SELECT drive_id, job_title, company_id, company_name, status, published_on::text AS published_on, registered, selected, offers_issued, accepted, placed
   FROM reports.funnel_rows(${f.year}::int, ${f.dept}::uuid, ${f.degree}, ${f.company}::uuid, ${f.from}::date, ${f.to}::date)`;

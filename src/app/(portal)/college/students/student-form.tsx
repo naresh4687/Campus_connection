@@ -35,7 +35,7 @@ export function StudentForm({ id, initial, departments, emailLocked }: { id?: st
       <div className="grid gap-4 @xl:grid-cols-2">
         <Field id="collegeEmail" label="College email" type="email" required readOnly={emailLocked} defaultValue={v.collegeEmail} error={e.collegeEmail}
           hint={emailLocked ? "Locked: this student already has an account." : "The student signs in with this address."} />
-        <Field id="personalEmail" label="Personal email (optional)" type="email" defaultValue={v.personalEmail} error={e.personalEmail} />
+        <Field id="personalEmail" label="Personal email" type="email" required defaultValue={v.personalEmail} error={e.personalEmail} />
       </div>
       <div className="grid gap-4 @xl:grid-cols-2">
         <Select key={`dept-${v.departmentId}`} id="departmentId" label="Department" required defaultValue={v.departmentId} error={e.departmentId}>

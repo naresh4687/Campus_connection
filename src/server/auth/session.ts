@@ -6,6 +6,7 @@ import { config } from "../config";
 import { db, withTenantTx, type Database } from "../db";
 import type { RequestContext, Role } from "../db/context";
 import type { Transaction } from "kysely";
+import { mfaSetupRequired } from "./mfa";
 import { clientIpHash, userAgent } from "./request";
 import { hashToken, isWellFormedToken, newToken } from "./tokens";
 import { isSlot, LOGIN_PATH, PORTAL_OF_SLOT, safeNextPath, SLOT_HEADER, SLOTS, slotOfRole, type Portal, type Slot } from "@/lib/portals";
@@ -66,7 +67,7 @@ export async function startSession(userId: string, slot: Slot): Promise<void> {
  * Other areas stay signed in. Server Actions / Route Handlers only.
  */
 export async function endSession(slot?: Slot | null): Promise<SessionUser | null> {
-  const current = slot ? await getSessionFor(slot) : await getSession();
+  const current = slot ? await sessionFor(slot) : await anySession();
   const area = slot ?? current?.slot ?? (await requestSlot());
   if (!area) return current;
   const jar = await cookies();
@@ -77,8 +78,8 @@ export async function endSession(slot?: Slot | null): Promise<SessionUser | null
 }
 
 /** Hash of the caller's current session token, so "change password" can keep this session alive. */
-export async function currentTokenHash(): Promise<Buffer | null> {
-  const s = await getSession();
+export async function currentTokenHash(of?: SessionUser): Promise<Buffer | null> {
+  const s = of ?? (await getSession());
   const token = s ? (await cookies()).get(cookieNameFor(s.slot))?.value : undefined;
   return isWellFormedToken(token) ? hashToken(token) : null;
 }
@@ -87,7 +88,7 @@ export async function currentTokenHash(): Promise<Buffer | null> {
  * One area's session, from that area's cookie, checked against the database. A cookie only ever counts for its own
  * area: a session whose role belongs elsewhere is ignored. Memoised per request.
  */
-export const getSessionFor = cache(async (slot: Slot): Promise<SessionUser | null> => {
+const sessionFor = cache(async (slot: Slot): Promise<SessionUser | null> => {
   const token = (await cookies()).get(cookieNameFor(slot))?.value;
   if (!isWellFormedToken(token)) return null;
   const r = await sql<{
@@ -97,6 +98,30 @@ export const getSessionFor = cache(async (slot: Slot): Promise<SessionUser | nul
   if (!row || slotOfRole(row.role) !== slot) return null;
   return { sessionId: row.session_id, userId: row.user_id, role: row.role, collegeId: row.college_id, fullName: row.full_name, email: row.email, slot, portal: PORTAL_OF_SLOT[slot] };
 });
+
+/**
+ * One area's session as the app may use it: an administrator who has not yet set up two-step sign-in counts as not signed
+ * in everywhere except the setup page (see requireSession and requireAccountSession).
+ */
+export const getSessionFor = cache(async (slot: Slot): Promise<SessionUser | null> => {
+  const s = await sessionFor(slot);
+  return s && !(await mfaSetupRequired(s.userId, s.role)) ? s : null;
+});
+
+/** The request's session whether or not two-step setup is still owed. Only sign-out and the setup page use this. */
+async function anySession(): Promise<SessionUser | null> {
+  const slot = await requestSlot();
+  if (slot) return sessionFor(slot);
+  for (const s of SLOTS) { const x = await sessionFor(s); if (x) return x; }
+  return null;
+}
+
+/** Guard for the two-step setup page and its actions. */
+export async function requireAccountSession(): Promise<SessionUser> {
+  const s = await anySession();
+  if (s) return s;
+  redirect("/login");
+}
 
 /** Every area signed in in this browser (for shared downloads, which may belong to any of them). */
 /** The first signed-in session served by a sign-in page (any of its role slots). */
@@ -137,6 +162,8 @@ export const getSession = cache(async (): Promise<SessionUser | null> => {
 export async function requireSession(): Promise<SessionUser> {
   const s = await getSession();
   if (s) return s;
+  const unfinished = await anySession();
+  if (unfinished) redirect(`/security?as=${unfinished.slot}`);
   const slot = await requestSlot();
   // An attendance link opened while signed out: sign in, then come back to it (allow-listed paths only).
   const next = safeNextPath((await headers()).get("x-cc-path"));

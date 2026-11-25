@@ -6,6 +6,8 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { fmtDateTime } from "@/lib/format";
 import { uuidSchema } from "@/lib/validation";
 import { requireRole } from "@/server/auth/session";
+import { MfaResetCard } from "@/components/mfa-reset-card";
+import { canResetMfa } from "@/server/auth/mfa-queries";
 import { issueResetLinkAction, setStaffStatusAction, unassignCoordinatorAction } from "@/server/college/actions";
 import { getStaff } from "@/server/college/queries";
 import { AssignDepartmentForm } from "./assign-form";
@@ -59,6 +61,8 @@ export default async function StaffMemberPage({ params }: { params: Promise<{ id
           ) : <p className="mt-4 text-sm text-muted">Enable this account to assign departments.</p>}
         </Card>
       ) : null}
+
+      {(await canResetMfa(s, u.id)) ? <MfaResetCard userId={u.id} /> : null}
 
       {manageable ? (
         <>

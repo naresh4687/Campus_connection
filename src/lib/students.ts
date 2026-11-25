@@ -29,7 +29,7 @@ export const STUDENT_FIELDS = [
   { key: "register_number", label: "Register number", required: true, aliases: ["register number", "reg no", "regno", "register no", "roll number", "roll no", "registration number", "enrollment number", "enrolment number"] },
   { key: "full_name", label: "Full name", required: true, aliases: ["full name", "name", "student name", "name of the student"] },
   { key: "college_email", label: "College email", required: true, aliases: ["college email", "email", "official email", "institute email", "college mail", "email id", "college email id"] },
-  { key: "personal_email", label: "Personal email", required: false, aliases: ["personal email", "alternate email", "alt email", "personal mail", "gmail"] },
+  { key: "personal_email", label: "Personal email", required: true, aliases: ["personal email", "alternate email", "alt email", "personal mail", "gmail"] },
   { key: "phone", label: "Phone", required: false, aliases: ["phone", "mobile", "phone number", "mobile number", "contact number", "contact no", "mobile no"] },
   { key: "department", label: "Department (code or name)", required: true, aliases: ["department", "dept", "branch", "department code", "dept code", "department name"] },
   { key: "degree", label: "Degree / course", required: true, aliases: ["degree", "course", "programme", "program"] },
@@ -103,8 +103,9 @@ export function validateRows(rows: string[][], mapping: Mapping, ctx: ImportCont
     const email = emailField.safeParse(get("college_email"));
     if (!email.success) errors.push("College email is not a valid email address.");
     const personalRaw = get("personal_email");
-    const personal = personalRaw ? emailField.safeParse(personalRaw) : null;
-    if (personal && !personal.success) errors.push("Personal email is not a valid email address.");
+    const personal = emailField.safeParse(personalRaw);
+    if (!personalRaw) errors.push("Personal email is missing.");
+    else if (!personal.success) errors.push("Personal email is not a valid email address.");
     const phoneRaw = get("phone");
     if (phoneRaw && !phoneField.safeParse(phoneRaw).success) errors.push("Phone number is not valid.");
     const deptRaw = get("department");
@@ -136,7 +137,7 @@ export function validateRows(rows: string[][], mapping: Mapping, ctx: ImportCont
     return {
       n, status: "VALID", errors: [],
       normalized: {
-        register_number: register, full_name: name, college_email: emailV, personal_email: personal && personal.success ? personal.data : null,
+        register_number: register, full_name: name, college_email: emailV, personal_email: (personal as { data: string }).data,
         phone: phoneRaw || null, degree: degree as Degree, specialization: spec || null, admission_year: adm, passing_year: pas, department_id: (dept as { id: string }).id,
       },
     };
@@ -144,12 +145,14 @@ export function validateRows(rows: string[][], mapping: Mapping, ctx: ImportCont
 }
 
 // ───────────── single-student form ─────────────
+/** Required: drive lists, reports and downloads give this address (the college email is only for signing in). */
+const requiredPersonalEmail = z.string("Enter a personal email address.").trim().min(1, "Enter a personal email address.").max(254).pipe(emailField);
 export const studentFormSchema = z.object({
   departmentId: z.uuid("Choose a department."),
   registerNumber: z.string().transform(canonRegister).pipe(z.string().regex(REGISTER, "3–30 letters, digits or / . _ -")),
   fullName: z.string().trim().min(2, "Enter the student's name.").max(120).refine((v) => !CONTROL.test(v), "Remove control characters."),
   collegeEmail: emailField,
-  personalEmail: z.string().trim().max(254).optional().transform((v) => v || undefined).pipe(emailField.optional()),
+  personalEmail: requiredPersonalEmail,
   phone: z.string().trim().optional().transform((v) => v || undefined).pipe(phoneField.optional()),
   degree: z.enum(DEGREES, "Choose a degree."),
   specialization: z.string().trim().max(100).optional(),
@@ -159,7 +162,7 @@ export const studentFormSchema = z.object({
 
 export const ownContactSchema = z.object({
   phone: z.string().trim().optional().transform((v) => v || undefined).pipe(phoneField.optional()),
-  personalEmail: z.string().trim().max(254).optional().transform((v) => v || undefined).pipe(emailField.optional()),
+  personalEmail: requiredPersonalEmail,
 });
 
 const profileUrl = (hosts: RegExp, what: string, example: string) =>

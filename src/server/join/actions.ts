@@ -22,7 +22,7 @@ const joinSchema = z.object({
   fullName: z.string().trim().min(2, "Enter your full name.").max(120),
   registerNumber: z.string().transform((v) => normalizeStudentRegistrationNumber(v) ?? v.normalize("NFKC").trim().toUpperCase()).pipe(z.string().regex(/^[A-Za-z0-9][A-Za-z0-9/._-]{2,29}$/, "Enter your register number (letters, digits, / . _ - only).")),
   collegeEmail: z.string().trim().toLowerCase().max(254).pipe(z.email("Enter your college email address.")),
-  personalEmail: z.string().trim().toLowerCase().max(254).refine((v) => v === "" || z.email().safeParse(v).success, "Enter a valid email address, or leave this empty."),
+  personalEmail: z.string().trim().toLowerCase().max(254).pipe(z.email("Enter your personal email address.")),
   phone: z.string().trim().regex(/^[0-9+() -]{7,20}$/, "Enter your mobile number (digits, spaces, + and - only)."),
   departmentId: z.uuid("Choose your department."),
   degree: z.enum(DEGREES, "Choose your degree."),
@@ -45,7 +45,7 @@ export async function submitJoinAction(_p: ActionState, fd: FormData): Promise<A
   const v = r.data;
   if (!(await allowIp("join", 30, 3600)) || !(await allow("join-college", link.college, 120, 3600)) || !(await allow("join-email", v.collegeEmail, 5, 3600))) return { error: "Too many attempts. Please wait a while and try again.", values };
   try {
-    await sql`SELECT students.submit_join_request(${link.college}::uuid, ${link.version}::int, ${v.departmentId}::uuid, ${v.registerNumber}, ${v.fullName}, ${v.collegeEmail}, ${v.personalEmail || null}::citext, ${v.phone},
+    await sql`SELECT students.submit_join_request(${link.college}::uuid, ${link.version}::int, ${v.departmentId}::uuid, ${v.registerNumber}, ${v.fullName}, ${v.collegeEmail}, ${v.personalEmail}::citext, ${v.phone},
       ${v.degree}, ${v.admissionYear}::int, ${v.passingYear}::int, ${await hashPassword(v.password)}, ${await clientIpHash()})`.execute(db());
   } catch (e) {
     return { error: dbMessage(e), values };

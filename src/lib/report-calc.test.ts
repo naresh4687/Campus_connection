@@ -2,9 +2,9 @@ import { describe, expect, it } from "vitest";
 import { byCompany, byDepartment, ctcBands, ctcStats, kpis, monthlyTrend, type PlacementRow, type PoolRow } from "./report-calc";
 import { anyFilter, filterQuery, parseFilters } from "./report-filters";
 
-const pool = (id: string, dept: string, degree: string, o: Partial<PoolRow> = {}): PoolRow => ({ student_id: id, full_name: id, register_number: id, department_id: dept, department_code: dept, degree, passing_year: 2026, college_email: `${id}@x.test`,
+const pool = (id: string, dept: string, degree: string, o: Partial<PoolRow> = {}): PoolRow => ({ student_id: id, full_name: id, register_number: id, department_id: dept, department_code: dept, degree, passing_year: 2026, contact_email: `${id}@x.test`,
   phone: null, cgpa: null, github_url: null, leetcode_url: null, linkedin_url: null, registered: 0, selected: 0, offers_accepted: 0, placed: false, campus_attended: 0, ...o });
-const pl = (id: string, company: string, ctc: string | null, on: string, o: Partial<PlacementRow> = {}): PlacementRow => ({ student_id: id, full_name: id, register_number: id, department_code: "CSE", degree: "B.E.", passing_year: 2026, college_email: "", phone: null,
+const pl = (id: string, company: string, ctc: string | null, on: string, o: Partial<PlacementRow> = {}): PlacementRow => ({ student_id: id, full_name: id, register_number: id, department_code: "CSE", degree: "B.E.", passing_year: 2026, contact_email: "", phone: null,
   cgpa: null, company_id: company, company_name: company, job_title: null, drive_id: null, ctc_lpa: ctc, placed_on: on, source: "PLATFORM", github_url: null, leetcode_url: null, linkedin_url: null, ...o });
 
 describe("ctcStats", () => {

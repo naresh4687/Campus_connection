@@ -2,7 +2,7 @@ import { toCsv } from "./csv";
 
 /** One student of a drive's departments, as the database reports it (eligibility is the engine's result, never computed here). */
 export type PartRow = {
-  student_id: string; full_name: string; register_number: string; department_id: string; department_code: string; college_email: string; phone: string | null; has_account: boolean;
+  student_id: string; full_name: string; register_number: string; department_id: string; department_code: string; contact_email: string | null; phone: string | null; has_account: boolean;
   eligibility: string; registration_status: string | null; evidence_status: string | null;
 };
 export type Bucket = "REGISTERED" | "PENDING" | "NOT_REGISTERED";
@@ -49,6 +49,6 @@ export const registrationText = (r: Pick<PartRow, "registration_status" | "evide
 
 /** Spreadsheet-safe (csvCell neutralises formulas). Names and numbers come from student records; nothing is added or guessed. */
 export function participationCsv(rows: PartRow[]): string {
-  return toCsv([["Register number", "Name", "Department", "College email", "Phone", "Has account", "Eligibility", "Registration"],
-    ...rows.map((r) => [r.register_number, r.full_name, r.department_code, r.college_email, r.phone ?? "", r.has_account ? "Yes" : "No", ELIGIBILITY_TEXT[r.eligibility] ?? r.eligibility, registrationText(r)])]);
+  return toCsv([["Register number", "Name", "Department", "Personal email", "Phone", "Has account", "Eligibility", "Registration"],
+    ...rows.map((r) => [r.register_number, r.full_name, r.department_code, r.contact_email ?? "", r.phone ?? "", r.has_account ? "Yes" : "No", ELIGIBILITY_TEXT[r.eligibility] ?? r.eligibility, registrationText(r)])]);
 }

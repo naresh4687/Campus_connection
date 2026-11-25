@@ -27,6 +27,9 @@ export default defineConfig({
       AUTH_PEPPER: "e2e-pepper-0123456789abcdef0123456789abcdef",
       AUTH_COOKIE_SECURE: "false",
       AUTH_ALLOW_INSECURE_COOKIES: "e2e-test-server-only",
+      // Seeded administrators have no authenticator app; accounts that do enrol are still asked for a code.
+      TWO_STEP_SIGN_IN: "on",
+      AUTH_MFA_ENFORCEMENT: "off-e2e-test-server-only",
       APP_BASE_URL: "http://127.0.0.1:3100",
       S3_ENDPOINT: process.env.S3_ENDPOINT ?? "",
       S3_PUBLIC_ENDPOINT: process.env.S3_PUBLIC_ENDPOINT ?? "",

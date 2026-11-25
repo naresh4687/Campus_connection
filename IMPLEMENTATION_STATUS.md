@@ -278,3 +278,12 @@ Migrations `0009_drives.sql`, `0010_eligibility_registration.sql`. Decisions: TD
 
 ## Next step
 Your review and decisions: OD-01, OD-02, OD-05, counsel's review of `DPDP_CHECKLIST.md`, and a trial of the AI helper (or leaving it off). Then repeat the drill and reconciliation on the real environment.
+
+## Security and privacy follow-up (2026-11-25)
+
+Added after a checklist audit; **not yet individually accepted**, and uncommitted at the time of writing.
+- Two-step sign-in (TOTP + recovery codes; required for administrators when on) (migration 0048). **Switched off by default** for the demo (`TWO_STEP_SIGN_IN=on` enables it).
+- Student data download; deletion request approved by the college administrator (migration 0047). Limits are listed in `DPDP_CHECKLIST.md`.
+- Privacy notices on forms; privacy and terms drafts (retention proposal, under-18 rule, contact from settings).
+- No automatic retention, no consent capture, no QR code (setup key or app link only), and browser tests run with administrator enforcement switched off.
+- Personal email is required for new and edited students (sign-up link, admin form, CSV import, own contact details). Drive lists, reports and their CSVs show the personal email (migration 0049); the college email is for signing in. Existing students without one show as not added.

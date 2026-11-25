@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ActionButton } from "@/components/ui/action-button";
 import { Card } from "@/components/ui/card";
+import { resetMfaAction } from "@/server/auth/mfa-actions";
+import { canResetMfa } from "@/server/auth/mfa-queries";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { COLLEGE_TYPES } from "@/lib/india";
 import { fmtDate, fmtDateTime } from "@/lib/format";
@@ -19,6 +22,7 @@ export default async function CollegePage({ params }: { params: Promise<{ id: st
   if (!data) notFound();
   const { college: c, internal, admins, invitations } = data;
   const href = safeHref(c.website);
+  const resettable = (await Promise.all(admins.map(async (a) => ((await canResetMfa(s, a.id)) ? a : null)))).filter((a) => a !== null);
   const type = COLLEGE_TYPES.find((t) => t.value === c.college_type)?.label ?? c.college_type;
   return (
     <div className="space-y-6">
@@ -47,6 +51,12 @@ export default async function CollegePage({ params }: { params: Promise<{ id: st
             {admins.map((a) => <li key={a.id}>{a.full_name} · {a.email} · <StatusBadge value={a.status} /> <span className="text-muted">· last sign-in {fmtDateTime(a.last_login_at)}</span></li>)}
           </ul>
         )}
+        {resettable.map((a) => (
+          <div key={a.id} className="mt-4 text-sm">
+            <p className="mb-2 text-muted">{a.full_name} uses two-step sign-in. Remove it only after checking it is really them. It signs them out.</p>
+            <ActionButton action={resetMfaAction} fields={{ id: a.id }} label={`Remove two-step sign-in for ${a.full_name}`} variant="danger" pendingLabel="Removing…" />
+          </div>
+        ))}
         {invitations.length > 0 ? (
           <div className="mt-4 text-sm">
             <p className="font-medium">Pending invitations</p>

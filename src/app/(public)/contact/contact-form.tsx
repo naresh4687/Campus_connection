@@ -5,6 +5,7 @@ import { submitInquiryAction } from "@/server/platform/actions";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
+import { PrivacyNote } from "@/components/ui/privacy-note";
 import { Textarea } from "@/components/ui/textarea";
 
 export function ContactForm() {
@@ -24,6 +25,7 @@ export function ContactForm() {
       <div aria-hidden="true" className="absolute -left-[9999px] h-0 w-0 overflow-hidden">
         <label>Leave this empty<input type="text" name="contactUrl" tabIndex={-1} autoComplete="off" /></label>
       </div>
+      <PrivacyNote />
       <Button type="submit" disabled={pending}>{pending ? "Sending…" : "Send message"}</Button>
     </form>
   );

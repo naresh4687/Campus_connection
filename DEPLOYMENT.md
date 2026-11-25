@@ -104,6 +104,16 @@ Notes: the bucket is never public — files leave it only through short-lived si
 - One session per ROLE (`src/lib/portals.ts`, `src/server/auth/session.ts`): cookies `cc_session_platform`, `cc_session_college` (college administrator), `cc_session_placement`, `cc_session_coordinator` and `cc_session_student` (with the `__Host-` prefix when secure), so any mix of roles can be signed in side by side in one browser, one tab each, without replacing each other. The proxy decides a request's role slot from its path (`/platform…`, `/college…`, `/placement…`, `/coordinator…`, `/student…`) or, on shared pages (account, notifications), from `?as=`, and always overwrites the `x-cc-slot` header it passes on (a client-sent one, or the older `x-cc-portal`, is dropped). A cookie only counts for its own role (a session whose role differs is ignored), and every page and action still checks the role on the server. A page of a role you are not signed in as asks for that role's sign-in; it never switches to another signed-in account. Sign-out ends only that role's session. Sign-in pages never redirect (they offer "Continue as …"). Shared downloads try each signed-in account and the database decides. Limitation: two accounts with the SAME role cannot be signed in in one browser at once (use another browser profile). Cookies from before this change are ignored, so everyone signs in once more after the deploy.
 - Separate sign-in pages (`src/lib/portals.ts`): students `/login/student`, college staff `/login/college`, the platform administrator `/admin/login` (not linked, `noindex`). A correct password on the wrong page is refused and logged as `LOGIN_FAILED` with reason `wrong_sign_in_page`; students and staff are pointed to their own page, while the platform page only ever says "Invalid email or password.". The platform page is a convenience, not a secret: its protection is the password and the sign-in limits.
 
+### Two-step sign-in
+- **Switched off by default.** Set `TWO_STEP_SIGN_IN=on` to enable it; the points below apply only then.
+- Platform and college administrators must set up an authenticator app at their next sign-in; others may turn it on from Account.
+- Secrets are encrypted with a key derived from `AUTH_PEPPER`. **Changing `AUTH_PEPPER` breaks every enrolment**: remove the rows in `user_mfa` and `mfa_recovery_codes` and let people enrol again.
+- Lost phone and recovery codes: a college administrator removes it for their staff and students, the platform administrator for college administrators, and for the platform administrator run `npm run admin:reset-mfa -- <email>` with `MIGRATE_DATABASE_URL`.
+- `AUTH_MFA_ENFORCEMENT` is for the browser tests only. Never set it in a real deployment.
+
+### Legal pages
+Optional `OPERATOR_NAME`, `OPERATOR_ADDRESS` and `PRIVACY_CONTACT_EMAIL` appear on the privacy and terms pages. Both pages are drafts, including the proposed retention schedule and the under-18 rule.
+
 ## 5. Backups and restore
 
 **Production mechanism (to be set up with the hosting provider, OD-01):** managed PostgreSQL with automated daily snapshots **and point-in-time recovery**, retention agreed with the college (OD-05), stored in a different failure domain/region than the primary, access restricted and audited. Object storage needs its own versioning/replication or backup; the database does not contain file bytes.

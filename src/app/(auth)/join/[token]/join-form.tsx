@@ -6,6 +6,7 @@ import { submitJoinAction } from "@/server/join/actions";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
+import { PrivacyNote } from "@/components/ui/privacy-note";
 import { Select } from "@/components/ui/select";
 import { upperInput } from "@/lib/normalize";
 
@@ -29,7 +30,7 @@ export function JoinForm({ token, departments }: { token: string; departments: {
       </Select>
       <Field id="collegeEmail" label="College email" type="email" autoComplete="email" required defaultValue={v.collegeEmail} error={e.collegeEmail} hint="You will sign in with this email." />
       <Field id="phone" label="Mobile number" type="tel" autoComplete="tel" required maxLength={20} defaultValue={v.phone} error={e.phone} hint="Your coordinator may call or message you on this number." />
-      <Field id="personalEmail" label="Personal email (optional)" type="email" maxLength={254} defaultValue={v.personalEmail} error={e.personalEmail} />
+      <Field id="personalEmail" label="Personal email" type="email" required maxLength={254} hint="Placement drives and downloaded lists use this address." defaultValue={v.personalEmail} error={e.personalEmail} />
       <div className="grid gap-4 sm:grid-cols-3">
         <Select key={`deg-${v.degree}-${auto}`} id="degree" label="Degree" required defaultValue={auto || (v.degree ?? "")} error={e.degree}><option value="">Choose…</option>{DEGREES.map((d) => <option key={d} value={d}>{d}</option>)}</Select>
         <Select key={`adm-${v.admissionYear}`} id="admissionYear" label="Year you joined" required defaultValue={v.admissionYear ?? ""} error={e.admissionYear}><option value="">Choose…</option>{joined.map((y) => <option key={y} value={y}>{y}</option>)}</Select>
@@ -37,6 +38,7 @@ export function JoinForm({ token, departments }: { token: string; departments: {
       </div>
       <Field id="password" label="Choose a password" type="password" autoComplete="new-password" required minLength={10} maxLength={128} error={e.password} hint="At least 10 characters." />
       <Field id="confirm" label="Confirm password" type="password" autoComplete="new-password" required error={e.confirm} />
+      <PrivacyNote />
       <Button type="submit" disabled={pending} className="w-full">{pending ? "Sending…" : "Request my account"}</Button>
     </form>
   );

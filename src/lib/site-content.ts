@@ -6,9 +6,9 @@ export type Feature = { title: string; description: string; status: "available" 
 
 /** Things people may assume exist but do not (yet). Kept next to the feature list so the two stay honest together. */
 export const NOT_INCLUDED: string[] = [
-  "Email or SMS notifications — notifications appear inside CampusConnect only, and invitation and reset links are handed over by your administrator.",
+  "Email or SMS notifications — notifications appear inside CampusConnect, plus browser push messages where an installation has switched them on. Invitation and reset links are handed over by your administrator.",
   "Automatic virus scanning of uploaded files — files are checked by type and size and served only through short-lived links, but are not scanned for malware.",
-  "Self-service download or erasure of a student's own data — requests go through the college administrator.",
+  "Instant or automatic deletion — a student’s deletion request is reviewed by the college administrator, and no retention schedule runs by itself.",
   "Placement policy rules such as offer limits or company tiers.",
   "AI help with drafting drives exists but is switched off unless a college's installation enables it, and has not yet been tried with a live AI provider.",
 ];

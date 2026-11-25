@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { countRows, filterRows, parseView, parseWho, participationCsv, type PartRow } from "./participation";
 
-const row = (o: Partial<PartRow>): PartRow => ({ student_id: "s", full_name: "A", register_number: "R1", department_id: "d", department_code: "CSE", college_email: "a@x.test", phone: null, has_account: true, eligibility: "ELIGIBLE", registration_status: null, evidence_status: null, ...o });
+const row = (o: Partial<PartRow>): PartRow => ({ student_id: "s", full_name: "A", register_number: "R1", department_id: "d", department_code: "CSE", contact_email: "a@x.test", phone: null, has_account: true, eligibility: "ELIGIBLE", registration_status: null, evidence_status: null, ...o });
 const rows = [row({ student_id: "1", registration_status: "REGISTERED" }), row({ student_id: "2" }), row({ student_id: "3", registration_status: "WITHDRAWN" }), row({ student_id: "4", registration_status: "PENDING_EXTERNAL" }),
   row({ student_id: "5", eligibility: "NEEDS_DATA" }), row({ student_id: "6", eligibility: "NOT_ELIGIBLE" })];
 
